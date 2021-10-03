@@ -1,1 +1,9 @@
 # ExaAdmm.jl
+
+This repository is reserved for ExaAdmm.jl package that implements the two-level alternating direction method of multipliers for solving the component-based decomposition of alternating current optimal power flow problems.
+
+The source code is currently located at branch `youngdae/gpu-admm-two-level` of the repository `https://github.com/exanauts/ExaTron.jl` and will be refactored into this repository.
+
+## Acknowledgements
+
+This material is based upon work supported by the U.S. Department of Energy, Office of Science, under contract number DE-AC02-06CH11357.
