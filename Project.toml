@@ -1,0 +1,11 @@
+name = "ExaAdmm"
+uuid = "4d6a948c-1075-4240-a564-361a5d4e22a2"
+authors = ["Youngdae Kim <youngdae@anl.gov>"]
+version = "0.1.0"
+
+[deps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+ExaTron = "28b18bf8-76f9-41ea-81fa-0f922810b349"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
