@@ -81,7 +81,6 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     use_twolevel::Bool
     use_mpi::Bool
     load_specified::Bool
-    solve_pf::Bool
     gpu_no::Int
     comm::MPI.Comm
 
@@ -93,7 +92,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
         case::String, rho_pq::Float64, rho_va::Float64;
         case_format="matpower",
         use_gpu=false, use_linelimit=false, use_twolevel=false, use_mpi=false,
-        solve_pf=false, gpu_no::Int=1, verbose::Int=1, tight_factor=1.0,
+        gpu_no::Int=1, verbose::Int=1, tight_factor=1.0,
         horizon_length=1, load_prefix::String="", comm::MPI.Comm=MPI.COMM_WORLD
     ) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
         env = new{T,TD,TI,TM}()
@@ -107,7 +106,6 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
         env.use_mpi = use_mpi
         env.gpu_no = gpu_no
         env.use_twolevel = use_twolevel
-        env.solve_pf = solve_pf
         env.load_specified = false
         env.comm = comm
 
@@ -373,10 +371,6 @@ mutable struct Model{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
             model.c2 .*= env.params.obj_scale
             model.c1 .*= env.params.obj_scale
             model.c0 .*= env.params.obj_scale
-        end
-
-        if env.solve_pf
-            fix_power_flow_parameters(env.data, model)
         end
 
         # These are only for two-level ADMM.
