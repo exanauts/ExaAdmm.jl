@@ -23,7 +23,7 @@ Below shows an example of solving `case1354pegase.m` using `ExaAdmm.jl` on GPUs.
 ```
 $ julia --project
 julia> using ExaAdmm
-julia> env, mod = ExaAdmm.solve_acopf("case1354pegase.m"; rho_pq=1e1, rho_va=1e3, outer_iterlim=20, inner_iterlim=20, scale=1e-4, tight_factor=0.99, use_gpu=true);
+julia> env, mod = ExaAdmm.solve_acopf("case1354pegase.m"; rho_pq=1e1, rho_va=1e3, outer_iterlim=20, inner_iterlim=1000, scale=1e-4, tight_factor=0.99, use_gpu=true);
 ```
 
 The following table shows parameter values we used for solving pegase and ACTIVSg data.
