@@ -158,6 +158,7 @@ function admm_restart(
     end # while outer
     end # @timed
 
+#=
     u_curr = zeros(mod.nvar)
     v_curr = zeros(mod.nvar)
     copyto!(u_curr, sol.u_curr)
@@ -200,6 +201,6 @@ function admm_restart(
         @printf("Bus time . . . . . . . . . . . . . %12.3f (secs)\n", time_bus)
         @printf("G+Br+B time. . . . . . . . . . . . %12.3f (secs)\n", time_gen + time_br + time_bus)
     end
-
+=#
     return
 end
