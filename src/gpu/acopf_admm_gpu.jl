@@ -77,6 +77,9 @@ function admm_restart(
     outer = inner = cumul = 0
     mismatch = Inf
     z_prev_norm = z_curr_norm = Inf
+    primres = 0.0
+    dualres = 0.0
+    eps_pri = 0.0
 
     overall_time = @timed begin
     while outer < par.outer_iterlim
@@ -89,7 +92,7 @@ function admm_restart(
         while inner < par.inner_iterlim
             inner += 1
             cumul += 1
-
+            function profile()
             CUDA.@sync @cuda threads=64 blocks=(div(mod.nvar-1, 64)+1) copy_data_kernel(mod.nvar, sol.z_prev, sol.z_curr)
 
             tgpu = generator_kernel_two_level(mod, mod.baseMVA, sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho)
@@ -129,6 +132,13 @@ function admm_restart(
             dualres = CUDA.norm(sol.rd)
             z_curr_norm = CUDA.norm(sol.z_curr)
             eps_pri = sqrt_d / (2500*outer)
+            end
+
+            if (outer == 10) && (100 < inner <= 102)
+                CUDA.@profile profile()
+            else
+                profile()
+            end
 
             if par.verbose > 0
                 if inner == 1 || (inner % 50) == 0
