@@ -19,8 +19,16 @@ mutable struct Parameters
     eta::Float64        # TODO: not used
     verbose::Int
 
+    # MPI implementation
+    shift_lines::Int
+
     # Two-Level ADMM
+    initial_beta::Float64
+    beta::Float64
+    inc_c::Float64
+    theta::Float64
     outer_eps::Float64
+    shmem_size::Int
     Kf::Int             # TODO: not used
     Kf_mean::Int        # TODO: not used
     MAX_MULTIPLIER::Float64
@@ -46,7 +54,13 @@ mutable struct Parameters
         par.ABSTOL = 1e-6
         par.RELTOL = 1e-5
         par.verbose = 1
+        par.shift_lines = 0
+        par.initial_beta = 1e3
+        par.beta = 1e3
+        par.inc_c = 6.0
+        par.theta = 0.8
         par.outer_eps = 2*1e-4
+        par.shmem_size = 0
         par.Kf = 100
         par.Kf_mean = 10
         par.MAX_MULTIPLIER = 1e12
@@ -260,6 +274,87 @@ function Base.fill!(sol::SolutionTwoLevel, val)
     fill!(sol.rp_old, val)
     fill!(sol.Ax_plus_By, val)
     fill!(sol.wRIij, val)
+end
+
+abstract type AbstractUserIterationInformation end
+
+mutable struct ComponentInformation <: AbstractUserIterationInformation
+    err_pg::Float64
+    err_qg::Float64
+    err_vm::Float64
+    err_real::Float64
+    err_reactive::Float64
+    err_rateA::Float64
+    num_rateA_viols::Int
+    time_generators::Float64
+    time_branches::Float64
+    time_buses::Float64
+
+    function ComponentInformation()
+        user = new()
+        fill!(user, 0)
+        return user
+    end
+end
+
+function Base.fill!(user::ComponentInformation, val)
+    user.err_pg = val
+    user.err_qg = val
+    user.err_vm = val
+    user.err_real = val
+    user.err_reactive = val
+    user.err_rateA = val
+    user.num_rateA_viols = val
+    user.time_generators = val
+    user.time_branches = val
+    user.time_buses = val
+    return
+end
+
+mutable struct IterationInformation{U}
+    inner::Int
+    outer::Int
+    cumul::Int
+    primres::Float64
+    dualres::Float64
+    mismatch::Float64
+    eps_pri::Float64
+    norm_z_curr::Float64
+    norm_z_prev::Float64
+    time_x_update::Float64
+    time_xbar_update::Float64
+    time_z_update::Float64
+    time_l_update::Float64
+    time_lz_update::Float64
+    time_overall::Float64
+
+    user::AbstractUserIterationInformation
+
+    function IterationInformation{U}() where {U <: AbstractUserIterationInformation}
+        info = new()
+        fill!(info, 0)
+        info.user = U()
+        return info
+    end
+end
+
+
+function Base.fill!(info::IterationInformation, val)
+    info.inner = val
+    info.outer = val
+    info.cumul = val
+    info.primres = val
+    info.dualres = val
+    info.mismatch = val
+    info.eps_pri = val
+    info.norm_z_curr = val
+    info.norm_z_prev = val
+    info.time_x_update = val
+    info.time_xbar_update = val
+    info.time_z_update = val
+    info.time_l_update = val
+    info.time_lz_update = val
+    info.time_overall = val
 end
 
 abstract type AbstractOPFModel{T,TD,TI,TM} end

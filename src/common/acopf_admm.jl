@@ -14,21 +14,89 @@ function solve_acopf(case::String;
     env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; case_format=case_format,
             use_gpu=use_gpu, use_linelimit=use_linelimit, use_twolevel=false,
             tight_factor=tight_factor, gpu_no=gpu_no, verbose=verbose)
+    mod = Model{T,TD,TI,TM}(env)
+
     env.params.scale = scale
     env.params.obj_scale = obj_scale
     env.params.outer_eps = outer_eps
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
+    env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
 
-    mod = Model{T,TD,TI,TM}(env)
+    info = IterationInformation{ComponentInformation}()
 
-    if use_gpu
-        # Set rateA in membuf.
-        CUDA.@sync @cuda threads=64 blocks=(div(mod.nline-1, 64)+1) set_rateA_kernel(mod.nline, mod.membuf, mod.rateA)
-    else
-        mod.membuf[29,:] .= mod.rateA
+    acopf_set_linelimit(env, mod, info)
+    admm_restart(env, mod, info)
+
+    return env, mod, info
+end
+
+function admm_restart(
+    env::AdmmEnv, mod::Model, info::IterationInformation
+)
+    par = env.params
+
+    sqrt_d = sqrt(mod.nvar)
+    OUTER_TOL = sqrt_d*(par.outer_eps)
+
+    info.outer = info.inner = info.cumul = 0
+    info.mismatch = Inf
+    info.norm_z_prev = info.norm_z_curr = Inf
+
+    overall_time = @timed begin
+    while info.outer < par.outer_iterlim
+        info.outer += 1
+
+        acopf_admm_outer_prestep(env, mod, info)
+
+        info.inner = 0
+        while info.inner < par.inner_iterlim
+            info.inner += 1
+            info.cumul += 1
+
+            acopf_admm_inner_prestep(env, mod, info)
+
+            acopf_admm_update_x(env, mod, info)
+            acopf_admm_update_xbar(env, mod, info)
+            acopf_admm_update_z(env, mod, info)
+            acopf_admm_update_l(env, mod, info)
+            acopf_admm_update_residual(env, mod, info)
+
+            info.eps_pri = sqrt_d / (2500*info.outer)
+
+            if par.verbose > 0
+                if info.inner == 1 || (info.inner % 50) == 0
+                    @printf("%8s  %8s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
+                    "Outer", "Inner", "PrimRes", "EpsPrimRes", "DualRes", "||z||", "||Ax+By||", "OuterTol", "Beta")
+                end
+
+                @printf("%8d  %8d  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e\n",
+                        info.outer, info.inner, info.primres, info.eps_pri, info.dualres, info.norm_z_curr,
+                        info.mismatch, OUTER_TOL, par.beta)
+            end
+
+            if info.primres <= info.eps_pri || info.dualres <= par.DUAL_TOL
+                break
+            end
+        end # while inner
+
+        if info.mismatch <= OUTER_TOL
+            break
+        end
+
+        acopf_admm_update_lz(env, mod, info)
+
+        if info.norm_z_curr > par.theta*info.norm_z_prev
+            par.beta = min(par.inc_c*par.beta, 1e24)
+        end
+    end # while outer
+    end # @timed
+
+    info.time_overall = overall_time.time
+    acopf_admm_poststep(env, mod, info)
+    if par.verbose > 0
+        print_statistics(env, mod, info)
     end
 
-    admm_restart(env, mod)
-    return env, mod
+    return
 end
