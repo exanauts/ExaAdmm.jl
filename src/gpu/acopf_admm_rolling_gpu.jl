@@ -21,8 +21,6 @@ function admm_restart_rolling(
     @assert env.load_specified == true
     @assert start_period >= 1 && end_period <= size(env.load.pd,2)
 
-    par = env.params
-    sol = mod.solution
     nblk_gen = div(mod.ngen-1, 64) + 1
 
     io = open(result_file*"_tight-factor"*string(env.tight_factor)*".txt", "w")
@@ -50,20 +48,22 @@ function admm_restart_rolling(
         #save(filename*"_t"*string(t)*".jld2", "u_curr", u_curr, "v_curr", v_curr)
 
         @printf(" ** Statistics of time period %d\n", t)
-        @printf("Status  . . . . . . . . . . . . . . . . . %s\n", mod.solution.status)
-        @printf("Objective value . . . . . . . . . . . . . %.6e\n", mod.solution.objval)
-        @printf("Cumulative iterations . . . . . . . . . . %5d\n", mod.solution.cumul_iters)
-        @printf("Constraint violations (except line) . . . %.6e\n", mod.solution.max_viol_except_line)
-        @printf("Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
-        @printf("Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.solution.overall_time)
+        @printf("Status  . . . . . . . . . . . . . . . . . %s\n", mod.info.status)
+        @printf("Objective value . . . . . . . . . . . . . %.6e\n", mod.info.objval)
+        @printf("Residual  . . . . . . . . . . . . . . . . %.6e\n", mod.info.mismatch)
+        @printf("Cumulative iterations . . . . . . . . . . %5d\n", mod.info.cumul)
+        #@printf("Constraint violations (except line) . . . %.6e\n", mod.solution.max_viol_except_line)
+        #@printf("Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
+        @printf("Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.info.time_overall + mod.info.time_projection)
 
         @printf(io, " ** Statistics of time period %d\n", t)
-        @printf(io, "Status  . . . . . . . . . . . . . . . . . %s\n", mod.solution.status)
-        @printf(io, "Objective value . . . . . . . . . . . . . %.6e\n", mod.solution.objval)
-        @printf(io, "Cumulative iterations . . . . . . . . . . %5d\n", mod.solution.cumul_iters)
-        @printf(io, "Constraint violations (except line) . . . %.6e\n", mod.solution.max_viol_except_line)
-        @printf(io, "Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
-        @printf(io, "Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.solution.overall_time)
+        @printf(io, "Status  . . . . . . . . . . . . . . . . . %s\n", mod.info.status)
+        @printf(io, "Objective value . . . . . . . . . . . . . %.6e\n", mod.info.objval)
+        @printf(io, "Residual  . . . . . . . . . . . . . . . . %.6e\n", mod.info.mismatch)
+        @printf(io, "Cumulative iterations . . . . . . . . . . %5d\n", mod.info.cumul)
+        #@printf(io, "Constraint violations (except line) . . . %.6e\n", mod.solution.max_viol_except_line)
+        #@printf(io, "Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
+        @printf(io, "Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.info.time_overall + mod.info.time_projection)
 
         CUDA.@sync @cuda threads=64 blocks=nblk_gen update_real_power_current_bounds(mod.ngen, mod.gen_start,
             mod.pgmin_curr, mod.pgmax_curr, mod.pgmin, mod.pgmax,

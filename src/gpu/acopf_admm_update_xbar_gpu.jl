@@ -1,9 +1,8 @@
 function acopf_admm_update_xbar(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    info::IterationInformation{ComponentInformation}
+    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
-    sol = mod.solution
+    sol, info = mod.solution, mod.info
     nblk_bus = div(mod.nbus, 32, RoundUp)
 
     time_bus = CUDA.@timed @cuda threads=32 blocks=nblk_bus bus_kernel_two_level_alternative(mod.baseMVA, mod.nbus, mod.gen_start, mod.line_start,

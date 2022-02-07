@@ -1,4 +1,4 @@
-function compute_primal_residual_kernel(n::Int, rp, u, v, z)
+function compute_primal_residual_kernel(n::Int, rp::CuDeviceArray{Float64,1}, u::CuDeviceArray{Float64,1}, v::CuDeviceArray{Float64,1}, z::CuDeviceArray{Float64,1})
     tx = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
 
     if tx <= n
@@ -10,10 +10,9 @@ end
 
 function acopf_admm_update_residual(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    info::IterationInformation
+    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
-    sol = mod.solution
+    sol, info = mod.solution, mod.info
 
     @cuda threads=64 blocks=(div(mod.nvar-1, 64)+1) compute_primal_residual_kernel(mod.nvar, sol.rp, sol.u_curr, sol.v_curr, sol.z_curr)
     @cuda threads=64 blocks=(div(mod.nvar-1, 64)+1) vector_difference(mod.nvar, sol.rd, sol.z_curr, sol.z_prev)

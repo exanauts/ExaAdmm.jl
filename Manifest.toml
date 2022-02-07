@@ -90,9 +90,7 @@ uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 
 [[ExaTron]]
 deps = ["BenchmarkTools", "CUDA", "DelimitedFiles", "Libdl", "LinearAlgebra", "MPI", "Printf"]
-git-tree-sha1 = "a103e7f7b73f275786b3ca9746c79c8092ee6d07"
-repo-rev = "youngdae/multiperiod"
-repo-url = "https://github.com/exanauts/ExaTron.jl.git"
+path = "/home/youngdae/git-repos/ExaTron-test.jl"
 uuid = "28b18bf8-76f9-41ea-81fa-0f922810b349"
 version = "0.1.0"
 
@@ -202,9 +200,9 @@ version = "0.19.0"
 
 [[MPICH_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "c6cafe3f9747c0a0740611e2dffc4d37248fb691"
+git-tree-sha1 = "480a8be51647c9dec19ff2211e26c9f30787840b"
 uuid = "7cb0a576-ebde-5e09-9194-50597f1243b4"
-version = "3.4.2+0"
+version = "3.4.2+2"
 
 [[MacroTools]]
 deps = ["Markdown", "Random"]
@@ -222,9 +220,9 @@ uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
 
 [[MicrosoftMPI_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "e5c90234b3967684c9c6f87b4a54549b4ce21836"
+git-tree-sha1 = "a16aa086d335ed7e0170c5265247db29172af2f9"
 uuid = "9237b28f-5490-5468-be7b-bb81f5f5e6cf"
-version = "10.1.3+0"
+version = "10.1.3+2"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
@@ -241,9 +239,9 @@ uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
 
 [[OpenMPI_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "a784e5133fc7e204c900f2cf38ed37a92ff9248d"
+git-tree-sha1 = "08334c7cd6cb033274bc90918ece2174b5f84cc7"
 uuid = "fe0851c0-eecd-5654-98d4-656369965a5c"
-version = "4.1.1+2"
+version = "4.1.1+5"
 
 [[OpenSpecFun_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]

@@ -47,7 +47,7 @@ function read_raw_data(filename; case_format="matpower")
     f = open(filename, "r")
     lines = readlines(f)
     p = 1
-    data = Dict()
+    data = Dict{String,Any}()
     while p <= length(lines)
         key, p = next_key(lines, p)
         p += 1
@@ -174,6 +174,7 @@ function add_admittance_shunt(data)
     data["YttR"] = Float64[]; data["YttI"] = Float64[]
     data["YftR"] = Float64[]; data["YftI"] = Float64[]
     data["YtfR"] = Float64[]; data["YtfI"] = Float64[]
+    data["YshR"] = Float64[]; data["YshI"] = Float64[]
 
     for k=1:length(data["branch"])
         fr = data["bus2idx"][Int(data["branch"][k]["fbus"])]
@@ -200,6 +201,11 @@ function add_admittance_shunt(data)
         push!(data["YftR"], real(Yft)); push!(data["YftI"], imag(Yft))
         push!(data["YtfR"], real(Ytf)); push!(data["YtfI"], imag(Ytf))
     end
+
+    for i=1:length(data["bus"])
+        push!(data["YshR"], data["bus"][i]["Gs"]/data["baseMVA"])
+        push!(data["YshI"], data["bus"][i]["Bs"]/data["baseMVA"])
+    end
 end
 
 function add_mapping_branch_to_bus(data)
@@ -223,25 +229,11 @@ function parse_matpower(filename; case_format="matpower")
     add_admittance_shunt(data)
     add_mapping_branch_to_bus(data)
 
-    br_stat = [length(x)+length(y) for (x,y) in zip(data["frombus"],data["tobus"])]
-    thresholds = 10
-
     @printf(" ** Statistics of %s\n", case)
     @printf("  # buses     : %5d\n", length(data["bus"]))
     @printf("  # generators: %5d (%5d active)\n", length(data["mpc.gen"]), length(data["gen"]))
     @printf("  # branches  : %5d (%5d active)\n", length(data["mpc.branch"]), length(data["branch"]))
     @printf("  # gencost   : %5d (%5d active)\n", length(data["mpc.gen"]), length(data["gen"]))
-    #=
-    @printf("  # max branches      per bus: %5d\n", maximum(br_stat))
-    @printf("  # min branches      per bus: %5d\n", minimum(br_stat))
-    @printf("  # avg branches      per bus: %5.2f\n", mean(br_stat))
-    @printf("  # std branches      per bus: %5.2f\n", std(br_stat))
-    @printf("  # median branches   per bus: %5.2f\n", median(br_stat))
-    @printf("  # buses with <= %2d branches: %5d (%.2f%%)\n",
-            thresholds,
-            length(findall(x->x<=thresholds, br_stat)),
-            100*(length(findall(x->x<=thresholds, br_stat))/length(data["bus"])))
-    =#
 
     return data
 end

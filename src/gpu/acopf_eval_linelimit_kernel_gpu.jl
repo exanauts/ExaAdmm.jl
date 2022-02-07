@@ -58,7 +58,6 @@ end
     YtfR::Float64, YtfI::Float64)
 
     tx = threadIdx().x
-    ty = threadIdx().y
     I = blockIdx().x + shift
 
     @inbounds begin
@@ -134,6 +133,9 @@ end
         g3 += param[7,I]
         g3 += param[9,I]*(pij - param[17,I])*dpij_dx
         g3 += param[10,I]*(qij - param[18,I])*dqij_dx
+#        if tx == 1
+#            @cuprintf("g3 = %.16e param = %.16e\n", g3, param[10,I]*(qij-param[18,I])*dqij_dx)
+#        end
         g3 += param[11,I]*(pji - param[19,I])*dpji_dx
         g3 += param[12,I]*(qji - param[20,I])*dqji_dx
         g3 += param[15,I]*(x[3] - param[23,I])
@@ -169,7 +171,7 @@ end
         # Derivative with respect to sji.
         g6 = param[26,I] + param[27,I]*ji_sqsum
 
-        if tx == 1 && ty == 1
+        if tx == 1
             g[1] = scale*g1
             g[2] = scale*g2
             g[3] = scale*g3
@@ -194,7 +196,6 @@ end
     YtfR::Float64, YtfI::Float64)
 
     tx = threadIdx().x
-    ty = threadIdx().y
     I = blockIdx().x + shift
 
     @inbounds begin
@@ -209,7 +210,7 @@ end
         ij_sqsum = pij^2 + qij^2 + x[5]
         ji_sqsum = pji^2 + qji^2 + x[6]
 
-        if tx == 1 && ty == 1
+        if tx == 1
             # d2f_dvidvi
 
             dpij_dvi = 2*YffR*x[1] + YftR*x[2]*cos_ij + YftI*x[2]*sin_ij

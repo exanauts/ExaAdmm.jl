@@ -1,8 +1,9 @@
 function print_statistics(
     env::AdmmEnv,
-    mod::Model
+    mod::MultiPeriodModel
 )
     info = mod.info
+    nline = sum(mod.models[i].nline for i=1:mod.len_horizon)
 
     if env.use_projection
         @printf(" ** Constraint violations \n")
@@ -11,8 +12,9 @@ function print_statistics(
         @printf("Voltage bounds                   = %.6e\n", info.user.err_vm)
         @printf("Real power balance               = %.6e\n", info.user.err_real)
         @printf("Reactive power balance           = %.6e\n", info.user.err_reactive)
-        @printf("RateA number of violations       = %d (%d)\n", info.user.num_rateA_viols, mod.nline)
+        @printf("RateA number of violations       = %d (%d)\n", info.user.num_rateA_viols, nline)
         @printf("RateA maximum violation          = %.6e\n", info.user.err_rateA)
+        @printf("Ramp                             = %.6e\n", info.user.err_ramp)
     end
 
     @printf(" ** Statistics\n")
@@ -21,8 +23,7 @@ function print_statistics(
     @printf("Outer iterations . . . . . . . . . %12d\n", info.outer)
     @printf("Cumulative iterations  . . . . . . %12d\n", info.cumul)
     @printf("Time per iteration . . . . . . . . %12.3f (secs/iter)\n", info.time_overall / info.cumul)
-    @printf("Overall time . . . . . . . . . . . %12.3f (secs)\n", info.time_overall + info.time_projection)
-    @printf("Projection time  . . . . . . . . . %12.3f (secs)\n", info.time_projection)
+    @printf("Overall time . . . . . . . . . . . %12.3f (secs)\n", info.time_overall)
     @printf("Generator time . . . . . . . . . . %12.3f (secs)\n", info.user.time_generators)
     @printf("Branch time. . . . . . . . . . . . %12.3f (secs)\n", info.user.time_branches)
     @printf("Bus time . . . . . . . . . . . . . %12.3f (secs)\n", info.user.time_buses)

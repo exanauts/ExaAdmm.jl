@@ -59,6 +59,7 @@ mutable struct Gener
 end
 
 struct OPFData
+  nw::Dict{String,Any}
   buses::Array{Bus}
   lines::Array{Line}
   generators::Array{Gener}
@@ -216,7 +217,7 @@ function opf_loaddata_matpower(case_name, lineOff=Line(); VI=Array{Int}, VD=Arra
   # generators at each bus
   BusGeners = mapGenersToBuses(buses, generators, busIdx)
 
-  return OPFData(buses, lines, generators, bus_ref, data["baseMVA"], busIdx, FromLines, ToLines, BusGeners)
+  return OPFData(data, buses, lines, generators, bus_ref, data["baseMVA"], busIdx, FromLines, ToLines, BusGeners)
 end
 
 function opf_loaddata_dlm(case_name, lineOff=Line(); VI=Array{Int}, VD=Array{Float64})
@@ -348,7 +349,7 @@ function opf_loaddata_dlm(case_name, lineOff=Line(); VI=Array{Int}, VD=Array{Flo
 
   #println(generators)
   #println(bus_ref)
-  return OPFData(buses, lines, generators, bus_ref, baseMVA, busIdx, FromLines, ToLines, BusGeners)
+  return OPFData(Dict{String,Any}(), buses, lines, generators, bus_ref, baseMVA, busIdx, FromLines, ToLines, BusGeners)
 end
 
 function opf_loaddata(case_name; VI=Array{Int}, VD=Array{Float64}, case_format="MATPOWER")

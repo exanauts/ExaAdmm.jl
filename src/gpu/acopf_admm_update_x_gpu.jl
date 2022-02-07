@@ -1,12 +1,27 @@
-function acopf_admm_update_x(
+function acopf_admm_update_x_gen(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
     mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    info::IterationInformation{ComponentInformation}
+    gen_solution::EmptyGeneratorSolution{Float64,CuArray{Float64,1}}
 )
-    par, sol = env.params, mod.solution
-    shmem_size = env.params.shmem_size
+    sol, info = mod.solution, mod.info
     time_gen = generator_kernel_two_level(mod, mod.baseMVA, sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho)
+    info.user.time_generators += time_gen.time
+    info.time_x_update += time_gen.time
+end
 
+function acopf_admm_update_x_line(
+    env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+)
+    par, sol, info = env.params, mod.solution, mod.info
+    shmem_size = env.params.shmem_size
+
+#=
+    tmp = mod.nline
+    mod.nline = 1
+    par.shift_lines=3990
+    @printf("GPU x_line_update\n")
+=#
     if env.use_linelimit
         time_br = CUDA.@timed @cuda threads=32 blocks=mod.nline shmem=shmem_size auglag_linelimit_two_level_alternative(
                                             mod.n, mod.nline, mod.line_start,
@@ -21,9 +36,20 @@ function acopf_admm_update_x(
                                                         par.shift_lines, mod.membuf, mod.YffR, mod.YffI, mod.YftR, mod.YftI,
                                                         mod.YttR, mod.YttI, mod.YtfR, mod.YtfI, mod.FrVmBound, mod.ToVmBound)
     end
-
-    info.time_x_update += time_gen.time + time_br.time
-    info.user.time_generators += time_gen.time
+#=
+    @printf("GPU x_line_update DONE\n")
+    mod.nline = tmp
+=#
+    info.time_x_update += time_br.time
     info.user.time_branches += time_br.time
+    return
+end
+
+function acopf_admm_update_x(
+    env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+)
+    acopf_admm_update_x_gen(env, mod, mod.gen_solution)
+    acopf_admm_update_x_line(env, mod)
     return
 end
