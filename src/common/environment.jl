@@ -88,9 +88,11 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     case::String
     data::OPFData
     load::Load{TM}
-    initial_rho_pq::Float64
-    initial_rho_va::Float64
-    tight_factor::Float64
+    storage_ratio::T
+    droop::T
+    initial_rho_pq::T
+    initial_rho_va::T
+    tight_factor::T
     horizon_length::Int
     use_gpu::Bool
     use_linelimit::Bool
@@ -108,13 +110,18 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     function AdmmEnv{T,TD,TI,TM}(
         case::String, rho_pq::Float64, rho_va::Float64;
         case_format="matpower",
-        use_gpu=false, use_linelimit=false, use_twolevel=false, use_mpi=false, use_projection=false,
-        gpu_no::Int=1, verbose::Int=1, tight_factor=1.0,
+        use_gpu=false, use_linelimit=true, use_twolevel=false, use_mpi=false, use_projection=false,
+        gpu_no::Int=0, verbose::Int=1, tight_factor=1.0, droop=0.04, storage_ratio=0.0, storage_charge_max=1.0,
         horizon_length=1, load_prefix::String="", comm::MPI.Comm=MPI.COMM_WORLD
     ) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+        Random.seed!(0)
+
         env = new{T,TD,TI,TM}()
         env.case = case
-        env.data = opf_loaddata(env.case; VI=TI, VD=TD, case_format=case_format)
+        env.data = opf_loaddata(env.case; storage_ratio=storage_ratio, storage_charge_max=storage_charge_max,
+                                          VI=TI, VD=TD, case_format=case_format)
+        env.storage_ratio = storage_ratio
+        env.droop = droop
         env.initial_rho_pq = rho_pq
         env.initial_rho_va = rho_va
         env.tight_factor = tight_factor
@@ -414,6 +421,7 @@ mutable struct IterationInformation{U}
     primres::Float64
     dualres::Float64
     mismatch::Float64
+    auglag::Float64
     eps_pri::Float64
     norm_z_curr::Float64
     norm_z_prev::Float64
@@ -445,6 +453,7 @@ function Base.fill!(info::IterationInformation, val)
     info.primres = val
     info.dualres = val
     info.mismatch = val
+    info.auglag = val
     info.eps_pri = val
     info.norm_z_curr = val
     info.norm_z_prev = val
@@ -468,6 +477,7 @@ function Base.copy(ref::IterationInformation{ComponentInformation})
     info.primres = ref.primres
     info.dualres = ref.dualres
     info.mismatch = ref.mismatch
+    info.auglag = ref.auglag
     info.eps_pri = ref.eps_pri
     info.norm_z_curr = ref.norm_z_curr
     info.norm_z_prev = ref.norm_z_prev
@@ -541,8 +551,18 @@ mutable struct Model{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     Vmin::TD
     Vmax::TD
 
+    chg_min::TD
+    chg_max::TD
+    energy_min::TD
+    energy_max::TD
+    eta_chg::TD
+    eta_dischg::TD
+
+    StorageStart::TI
+    StorageIdx::TI
+
     membuf::TM      # memory buffer for line kernel
-    gen_membuf::TM  # memory buffer for generatork kernel
+    gen_membuf::TM  # memory buffer for generator kernel
 
     # Two-Level ADMM
     nvar_u::Int
@@ -586,6 +606,8 @@ mutable struct Model{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
             model.FrVaBound, model.ToVaBound, model.rateA = get_branch_data(env.data; use_gpu=env.use_gpu, tight_factor=env.tight_factor)
         model.FrStart, model.FrIdx, model.ToStart, model.ToIdx, model.GenStart, model.GenIdx, model.Pd, model.Qd, model.Vmin, model.Vmax = get_bus_data(env.data; use_gpu=env.use_gpu)
         model.brBusIdx = get_branch_bus_index(env.data; use_gpu=env.use_gpu)
+        model.chg_min, model.chg_max, model.energy_min, model.energy_max, model.eta_chg, model.eta_dischg = get_storage_data(env.data; use_gpu=env.use_gpu)
+        model.StorageIdx, model.StorageStart = get_bus_storage_index(env.data; use_gpu=env.use_gpu)
 
         model.pgmin_curr = TD(undef, model.ngen)
         model.pgmax_curr = TD(undef, model.ngen)
@@ -695,4 +717,155 @@ function Base.copy(ref::Model{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:A
     model.nvar_padded = ref.nvar_padded
 
     return model
+end
+
+abstract type AbstractPowerGrid{T,TD,TI,TM} end
+
+mutable struct PowerGrid{T,TD,TI,TM} <: AbstractPowerGrid{T,TD,TI,TM}
+    baseMVA::T
+    droop::T
+    ngen::Int
+    nline::Int
+    nbus::Int
+    nstorage::Int
+
+    pgmin::TD
+    pgmax::TD
+    qgmin::TD
+    qgmax::TD
+    vgmin::TD
+    vgmax::TD
+    alpha::TD
+    ramp_rate::TD
+    pg_setpoint::TD
+    vm_setpoint::TD
+    c2::TD
+    c1::TD
+    c0::TD
+    YshR::TD
+    YshI::TD
+    YffR::TD
+    YffI::TD
+    YftR::TD
+    YftI::TD
+    YttR::TD
+    YttI::TD
+    YtfR::TD
+    YtfI::TD
+    FrVmBound::TD
+    ToVmBound::TD
+    FrVaBound::TD
+    ToVaBound::TD
+    rateA::TD
+    FrStart::TI
+    FrIdx::TI
+    ToStart::TI
+    ToIdx::TI
+    GenStart::TI
+    GenIdx::TI
+    Pd::TD
+    Qd::TD
+    Vmin::TD
+    Vmax::TD
+    brBusIdx::TI
+
+    StoStart::TI
+    StoIdx::TI
+    chg_min::TD
+    chg_max::TD
+    eta_chg::TD
+    eta_dis::TD
+    energy_min::TD
+    energy_max::TD
+    energy_setpoint::TD
+
+    function PowerGrid{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
+        grid = new{T,TD,TI,TM}()
+        grid.baseMVA = env.data.baseMVA
+        grid.pgmin, grid.pgmax, grid.qgmin, grid.qgmax, grid.c2, grid.c1, grid.c0 = get_generator_data(env.data; use_gpu=env.use_gpu)
+        grid.YshR, grid.YshI, grid.YffR, grid.YffI, grid.YftR, grid.YftI,
+            grid.YttR, grid.YttI, grid.YtfR, grid.YtfI,
+            grid.FrVmBound, grid.ToVmBound,
+            grid.FrVaBound, grid.ToVaBound, grid.rateA = get_branch_data(env.data; use_gpu=env.use_gpu, tight_factor=env.tight_factor)
+        grid.FrStart, grid.FrIdx, grid.ToStart, grid.ToIdx, grid.GenStart, grid.GenIdx, grid.Pd, grid.Qd, grid.Vmin, grid.Vmax = get_bus_data(env.data; use_gpu=env.use_gpu)
+        grid.brBusIdx = get_branch_bus_index(env.data; use_gpu=env.use_gpu)
+        grid.vgmin, grid.vgmax, grid.vm_setpoint = get_generator_bus_data(env.data; use_gpu=env.use_gpu)
+        grid.droop = env.droop
+        grid.alpha, grid.pg_setpoint = get_generator_primary_control(env.data; droop=env.droop, use_gpu=env.use_gpu)
+        grid.chg_min, grid.chg_max, grid.energy_min, grid.energy_max, grid.energy_setpoint, grid.eta_chg, grid.eta_dis = get_storage_data(env.data; use_gpu=env.use_gpu)
+        grid.StoIdx, grid.StoStart = get_bus_storage_index(env.data; use_gpu=env.use_gpu)
+
+        grid.ngen = length(env.data.generators)
+        grid.nline = length(env.data.lines)
+        grid.nbus = length(env.data.buses)
+        grid.nstorage = length(env.data.storages)
+
+        return grid
+    end
+end
+
+mutable struct ComplementarityModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
+    grid::AbstractPowerGrid{T,TD,TI,TM}
+
+    info::IterationInformation
+    solution::AbstractSolution{T,TD}
+    gen_solution::AbstractSolution{T,TD}
+
+    n::Int
+    nvar::Int
+    nvar_padded::Int
+    nline_padded::Int
+
+    gen_start::Int
+    line_start::Int
+
+    pgmin_curr::TD   # taking ramping into account for rolling horizon
+    pgmax_curr::TD   # taking ramping into account for rolling horizon
+
+    membuf::TM       # memory ubuffer for line kernel
+
+    function ComplementarityModel{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
+        model = new{T,TD,TI,TM}()
+        model.grid = PowerGrid{T,TD,TI,TM}(env)
+
+        # Additional variables for voltage stability: ngen
+        #  - voltage magnitude for the bus attached to a generator
+        #
+        # Additional variables for frequency control: ngen
+        #  - frequency deviation allocated for each generator
+        #
+        # Storage model variables: nstorage
+        #  - charge - discharge amount
+        #
+        # Energy level will be included in the future along with multi-period implementation.
+        #
+        # If we include them all, the # of additional variables: 2*ngen + nstorage
+        # Including (Pg,Qg), the total number of generator variables will be 4*ngen + nstorage.
+
+        model.n = (env.use_linelimit == true) ? 6 : 4
+        model.nline_padded = model.grid.nline
+        model.nvar = 4*model.grid.ngen + model.grid.nstorage + 8*model.grid.nline
+#        model.nvar = 3*model.grid.ngen + 8*model.grid.nline
+        model.nvar_padded = model.nvar + 8*(model.nline_padded - model.grid.nline)
+        model.gen_start = 1
+        model.line_start = 4*model.grid.ngen + model.grid.nstorage + 1
+#        model.line_start = 3*model.grid.ngen + 1
+
+        model.solution = SolutionOneLevel{T,TD}(model.nvar_padded)
+        init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va)
+        model.gen_solution = EmptyGeneratorSolution{T,TD}()
+
+        model.pgmin_curr = TD(undef, model.grid.ngen)
+        model.pgmax_curr = TD(undef, model.grid.ngen)
+        copyto!(model.pgmin_curr, model.grid.pgmin)
+        copyto!(model.pgmax_curr, model.grid.pgmax)
+
+        model.membuf = TM(undef, (31, model.grid.nline))
+        fill!(model.membuf, 0.0)
+        model.membuf[29,:] .= model.grid.rateA
+
+        model.info = IterationInformation{ComponentInformation}()
+
+        return model
+    end
 end

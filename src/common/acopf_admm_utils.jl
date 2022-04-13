@@ -1,6 +1,6 @@
 function print_statistics(
     env::AdmmEnv,
-    mod::Model
+    mod::AbstractOPFModel
 )
     info = mod.info
 

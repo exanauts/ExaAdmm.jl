@@ -1,7 +1,7 @@
 function solve_acopf(case::String;
     case_format="matpower",
     outer_iterlim=20, inner_iterlim=1000, rho_pq=400.0, rho_va=40000.0,
-    obj_scale=1.0, scale=1e-4,
+    obj_scale=1.0, scale=1e-4, storage_ratio=0.0, storage_charge_max=1.0,
     use_gpu=false, use_linelimit=true, use_projection=false, tight_factor=0.99,
     outer_eps=2*1e-4, gpu_no=0, verbose=1
 )
@@ -14,6 +14,7 @@ function solve_acopf(case::String;
     env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; case_format=case_format,
             use_gpu=use_gpu, use_linelimit=use_linelimit, use_twolevel=false,
             use_projection=use_projection, tight_factor=tight_factor, gpu_no=gpu_no,
+            storage_ratio=storage_ratio, storage_charge_max=storage_charge_max,
             verbose=verbose)
     mod = Model{T,TD,TI,TM}(env)
 
@@ -45,12 +46,13 @@ function admm_restart(
 
     if par.verbose > 0
         acopf_admm_update_residual(env, mod)
-        @printf("%8s  %8s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
-        "Outer", "Inner", "PrimRes", "EpsPrimRes", "DualRes", "||z||", "||Ax+By||", "OuterTol", "Beta")
+        @printf("%8s  %8s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
+                "Outer", "Inner", "Objval", "AugLag", "PrimRes", "EpsPrimRes",
+                "DualRes", "||z||", "||Ax+By||", "OuterTol", "Beta")
 
-        @printf("%8d  %8d  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e\n",
-                info.outer, info.inner, info.primres, info.eps_pri, info.dualres, info.norm_z_curr,
-                info.mismatch, OUTER_TOL, par.beta)
+        @printf("%8d  %8d  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e\n",
+                info.outer, info.inner, info.objval, info.auglag, info.primres, info.eps_pri,
+                info.dualres, info.norm_z_curr, info.mismatch, OUTER_TOL, par.beta)
     end
 
     info.status = :IterationLimit
@@ -74,14 +76,15 @@ function admm_restart(
             info.eps_pri = sqrt_d / (2500*info.outer)
 
             if par.verbose > 0
-                if (info.inner % 50) == 0
-                    @printf("%8s  %8s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
-                    "Outer", "Inner", "PrimRes", "EpsPrimRes", "DualRes", "||z||", "||Ax+By||", "OuterTol", "Beta")
+                if (info.cumul % 50) == 0
+                    @printf("%8s  %8s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
+                            "Outer", "Inner", "Objval", "AugLag", "PrimRes", "EpsPrimRes",
+                            "DualRes", "||z||", "||Ax+By||", "OuterTol", "Beta")
                 end
 
-                @printf("%8d  %8d  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e\n",
-                        info.outer, info.inner, info.primres, info.eps_pri, info.dualres, info.norm_z_curr,
-                        info.mismatch, OUTER_TOL, par.beta)
+                @printf("%8d  %8d  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e\n",
+                        info.outer, info.inner, info.objval, info.auglag, info.primres, info.eps_pri,
+                        info.dualres, info.norm_z_curr, info.mismatch, OUTER_TOL, par.beta)
             end
 
             if info.primres <= info.eps_pri #|| info.dualres <= par.DUAL_TOL

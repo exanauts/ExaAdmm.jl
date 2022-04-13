@@ -8,6 +8,10 @@ using SparseArrays
 using MPI
 using CUDA
 using ExaTron
+using Random
+
+using JuMP
+using Ipopt
 
 include("common/parse_matpower.jl")
 include("common/opfdata.jl")
@@ -16,6 +20,7 @@ include("common/check_violations.jl")
 include("common/acopf_admm_utils.jl")
 include("common/acopf_admm.jl")
 include("common/acopf_admm_increment.jl")
+include("common/acopf_ipopt.jl")
 
 # CPU implementation for solving single-period ACOPF
 include("cpu/acopf_init_solution_cpu.jl")
@@ -93,5 +98,29 @@ include("cpu/pf_projection.jl")
 include("common/acopf_admm_rolling.jl")
 include("cpu/acopf_admm_rolling_cpu.jl")
 include("gpu/acopf_admm_rolling_gpu.jl")
+
+# MPEC on CPUs
+include("common/mpec_admm.jl")
+include("common/mpec_admm_increment.jl")
+include("cpu/mpec_init_solution_cpu.jl")
+include("cpu/mpec_bus_kernel_cpu.jl")
+include("cpu/mpec_admm_update_x_cpu.jl")
+include("cpu/mpec_admm_update_xbar_cpu.jl")
+include("cpu/mpec_admm_update_z_cpu.jl")
+include("cpu/mpec_admm_update_l_cpu.jl")
+include("cpu/mpec_admm_update_residual_cpu.jl")
+include("cpu/mpec_admm_update_lz_cpu.jl")
+include("cpu/mpec_admm_prepoststep_cpu.jl")
+
+# MPEC on GPUs
+include("gpu/mpec_init_solution_gpu.jl")
+include("gpu/mpec_bus_kernel_gpu.jl")
+include("gpu/mpec_admm_update_x_gpu.jl")
+include("gpu/mpec_admm_update_xbar_gpu.jl")
+include("gpu/mpec_admm_update_z_gpu.jl")
+include("gpu/mpec_admm_update_l_gpu.jl")
+include("gpu/mpec_admm_update_residual_gpu.jl")
+include("gpu/mpec_admm_update_lz_gpu.jl")
+include("gpu/mpec_admm_prepoststep_gpu.jl")
 
 end # module
