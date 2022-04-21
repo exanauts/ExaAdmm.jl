@@ -63,8 +63,8 @@ function eval_grad_f_polar_linelimit_kernel_cpu(
         qji = -YttI*x[2]^2 - YtfI*vi_vj_cos - YtfR*vi_vj_sin
 
         # Common terms for line limits
-        ij_sqsum = pij^2 + qij^2 + x[5]
-        ji_sqsum = pji^2 + qji^2 + x[6]
+        ij_sqsum = (pij^2 + qij^2) + x[5]
+        ji_sqsum = (pji^2 + qji^2) + x[6]
 
         # Derivative with respect to vi.
         dpij_dx = 2*YffR*x[1] + YftR*x[2]*cos_ij + YftI*x[2]*sin_ij
@@ -92,8 +92,8 @@ function eval_grad_f_polar_linelimit_kernel_cpu(
         # Derivative with respect to vj.
         dpij_dx = YftR*x[1]*cos_ij + YftI*x[1]*sin_ij
         dqij_dx = -YftI*x[1]*cos_ij + YftR*x[1]*sin_ij
-        dpji_dx = 2*YttR*x[2] + YtfR*x[1]*cos_ij - YtfI*x[1]*sin_ij
-        dqji_dx = -2*YttI*x[2] - YtfI*x[1]*cos_ij - YtfR*x[1]*sin_ij
+        dpji_dx = (2*YttR*x[2] + YtfR*x[1]*cos_ij) - YtfI*x[1]*sin_ij
+        dqji_dx = (-2*YttI*x[2] - YtfI*x[1]*cos_ij) - YtfR*x[1]*sin_ij
 
         g2 = param[1,I]*(dpij_dx)
         g2 += param[2,I]*(dqij_dx)

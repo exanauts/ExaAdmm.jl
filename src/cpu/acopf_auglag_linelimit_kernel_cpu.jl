@@ -18,7 +18,7 @@ function auglag_linelimit_two_level_alternative(
     xl = zeros(n)
     xu = zeros(n)
 
-    @inbounds for I=shift_lines+1:nline
+    @inbounds for I=shift_lines+1:shift_lines+nline
         YffR = _YffR[I]; YffI = _YffI[I]
         YftR = _YftR[I]; YftI = _YftI[I]
         YttR = _YttR[I]; YttI = _YttI[I]
@@ -148,6 +148,7 @@ function auglag_linelimit_two_level_alternative(
             end
 
             if it >= max_auglag
+                println("max_auglag reached for line I = ", I, " cnorm = ", cnorm)
                 terminate = true
             end
         end

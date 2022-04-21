@@ -58,16 +58,30 @@ mutable struct Gener
   coeff::Array
 end
 
+mutable struct Storage
+  bus::Int
+  chg_min::Float64
+  chg_max::Float64
+  energy_min::Float64
+  energy_max::Float64
+  energy_setpoint::Float64
+  eta_chg::Float64
+  eta_dischg::Float64
+end
+
 struct OPFData
+  nw::Dict{String,Any}
   buses::Array{Bus}
   lines::Array{Line}
   generators::Array{Gener}
+  storages::Array{Storage}
   bus_ref::Int
   baseMVA::Float64
   BusIdx::Dict{Int,Int}    #map from bus ID to bus index
   FromLines::Array         #From lines for each bus (Array of Array)
   ToLines::Array           #To lines for each bus (Array of Array)
   BusGenerators::Array     #list of generators for each bus (Array of Array)
+  BusStorages::Array
 end
 
 mutable struct Ybus{VD}
@@ -115,7 +129,7 @@ function get_load(name::String; load_scale=1.0, use_gpu=false)
   return load
 end
 
-function opf_loaddata_matpower(case_name, lineOff=Line(); VI=Array{Int}, VD=Array{Float64}, case_format="matpower")
+function opf_loaddata_matpower(case_name, lineOff=Line(); storage_ratio=0.0, storage_charge_max=1.0, VI=Array{Int}, VD=Array{Float64}, case_format="matpower")
   data = parse_matpower(case_name; case_format=case_format)
 
   #
@@ -207,6 +221,23 @@ function opf_loaddata_matpower(case_name, lineOff=Line(); VI=Array{Int}, VD=Arra
     generators[i].coeff = [data["gencost"][i]["c2"], data["gencost"][i]["c1"], data["gencost"][i]["c0"]]
   end
 
+  nstorage = (storage_ratio > 0) ? ceil(Int, nbus*storage_ratio) : 0
+  storages = Array{Storage}(undef, nstorage)
+  if nstorage > 0
+    bus_perm = Random.randperm(nbus)
+    for s=1:nstorage
+      storages[s] = Storage(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+      storages[s].bus = buses[bus_perm[s]].bus_i
+      storages[s].chg_min = 0.0
+      storages[s].chg_max = storage_charge_max
+      storages[s].energy_min = 0.0
+      storages[s].energy_max = 1.2*storage_charge_max
+      storages[s].energy_setpoint = (storages[s].energy_min + storages[s].energy_max)/2
+      storages[s].eta_chg = 0.9
+      storages[s].eta_dischg = 1.1
+    end
+  end
+
   # build a dictionary between buses ids and their indexes
   busIdx = mapBusIdToIdx(buses)
 
@@ -216,10 +247,13 @@ function opf_loaddata_matpower(case_name, lineOff=Line(); VI=Array{Int}, VD=Arra
   # generators at each bus
   BusGeners = mapGenersToBuses(buses, generators, busIdx)
 
-  return OPFData(buses, lines, generators, bus_ref, data["baseMVA"], busIdx, FromLines, ToLines, BusGeners)
+  # Storages at each bus
+  BusStorages = mapStoragesToBuses(buses, storages, busIdx)
+
+  return OPFData(data, buses, lines, generators, storages, bus_ref, data["baseMVA"], busIdx, FromLines, ToLines, BusGeners, BusStorages)
 end
 
-function opf_loaddata_dlm(case_name, lineOff=Line(); VI=Array{Int}, VD=Array{Float64})
+function opf_loaddata_dlm(case_name, lineOff=Line(); storage_ratio=0.0, storage_charge_max=1.0, VI=Array{Int}, VD=Array{Float64})
   #
   # load buses
   #
@@ -337,6 +371,23 @@ function opf_loaddata_dlm(case_name, lineOff=Line(); VI=Array{Int}, VD=Array{Flo
     end
   end
 
+  nstorage = (storage_ratio > 0) ? ceil(Int, nbus*storage_ratio) : 0
+  storages = Array{Storage}(undef, nstorage)
+  if nstorage > 0
+    bus_perm = Random.randperm(nstorage)
+    for s=1:nstorage
+      storages[s] = Storage(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+      storages[s].bus = buses[bus_perm[s]].bus_i
+      storages[s].chg_min = 0.0
+      storages[s].chg_max = storage_charge_max
+      storages[s].energy_min = 0.0
+      storages[s].energy_max = 1.2*storage_charge_max
+      storages[s].energy_setpoint = (storages[s].energy_min + storages[s].energy_max)/2
+      storages[s].eta_chg = 0.9
+      storages[s].eta_dischg = 1.1
+    end
+  end
+
   # build a dictionary between buses ids and their indexes
   busIdx = mapBusIdToIdx(buses)
 
@@ -346,17 +397,20 @@ function opf_loaddata_dlm(case_name, lineOff=Line(); VI=Array{Int}, VD=Array{Flo
   # generators at each bus
   BusGeners = mapGenersToBuses(buses, generators, busIdx)
 
+  # storages at each bus
+  BusStorages = mapStoragesToBuses(buses, storages, busIdx)
+
   #println(generators)
   #println(bus_ref)
-  return OPFData(buses, lines, generators, bus_ref, baseMVA, busIdx, FromLines, ToLines, BusGeners)
+  return OPFData(Dict{String,Any}(), buses, lines, generators, storages, bus_ref, baseMVA, busIdx, FromLines, ToLines, BusGeners, BusStorages)
 end
 
-function opf_loaddata(case_name; VI=Array{Int}, VD=Array{Float64}, case_format="MATPOWER")
+function opf_loaddata(case_name; storage_ratio=0.0, storage_charge_max=1.0, VI=Array{Int}, VD=Array{Float64}, case_format="MATPOWER")
   format = lowercase(case_format)
   if format in ["matpower", "pglib"]
-    return opf_loaddata_matpower(case_name; VI=VI, VD=VD, case_format=format)
+    return opf_loaddata_matpower(case_name; storage_ratio=storage_ratio, storage_charge_max=storage_charge_max, VI=VI, VD=VD, case_format=format)
   else
-    return opf_loaddata_dlm(case_name; VI=VI, VD=VD)
+    return opf_loaddata_dlm(case_name; storage_ratio=storage_ratio, storage_charge_max=storage_charge_max, VI=VI, VD=VD)
   end
 end
 
@@ -474,6 +528,15 @@ function mapGenersToBuses(buses, generators,busDict)
     push!(gen2bus[busID], g)
   end
   return gen2bus
+end
+
+function mapStoragesToBuses(buses, storages, busDict)
+  sto2bus = [Int[] for b in 1:length(buses)]
+  for s=1:length(storages)
+    busID = busDict[storages[s].bus]
+    push!(sto2bus[busID], s)
+  end
+  return sto2bus
 end
 
 function get_generator_data(data::OPFData; use_gpu=false)
@@ -636,5 +699,104 @@ function get_branch_bus_index(data::OPFData; use_gpu=false)
       return cu_brBusIdx
   else
       return brBusIdx
+  end
+end
+
+function get_generator_bus_data(data::OPFData; use_gpu=false)
+  ngen = length(data.generators)
+
+  if use_gpu
+    vgmin = CuArray{Float64}(undef, ngen)
+    vgmax = CuArray{Float64}(undef, ngen)
+    vm_setpoint = CuArray{Float64}(undef, ngen)
+  else
+    vgmin = zeros(ngen)
+    vgmax = zeros(ngen)
+    vm_setpoint = zeros(ngen)
+  end
+
+  Vgmin = Float64[data.buses[data.BusIdx[data.generators[g].bus]].Vmin for g in 1:ngen]
+  Vgmax = Float64[data.buses[data.BusIdx[data.generators[g].bus]].Vmax for g in 1:ngen]
+  Vm_setpoint = zeros(ngen)
+  Vm_setpoint .= (Vgmin .+ Vgmax) ./ 2
+
+  copyto!(vgmin, Vgmin)
+  copyto!(vgmax, Vgmax)
+  copyto!(vm_setpoint, Vm_setpoint)
+
+  return vgmin, vgmax, vm_setpoint
+end
+
+
+function get_generator_primary_control(data::OPFData; droop::Float64=0.04, use_gpu=false)
+  ngen = length(data.generators)
+
+  if use_gpu
+      alpha_g = CuArray{Float64}(undef, ngen)
+      pg_setpoint = CuArray{Float64}(undef, ngen)
+  else
+      alpha_g = Array{Float64}(undef, ngen)
+      pg_setpoint = Array{Float64}(undef, ngen)
+  end
+
+  Alpha_g = Float64[-((1/droop)*data.generators[g].Pmax) for g in 1:ngen]
+  Pg_setpoint = Float64[(data.generators[g].Pmin + data.generators[g].Pmax)/2 for g in 1:ngen]
+
+  copyto!(alpha_g, Alpha_g)
+  copyto!(pg_setpoint, Pg_setpoint)
+
+  return alpha_g, pg_setpoint
+end
+
+function get_storage_data(data::OPFData; use_gpu=false)
+  nstorage = length(data.storages)
+
+  chg_min = Float64[data.storages[s].chg_min for s=1:nstorage]
+  chg_max = Float64[data.storages[s].chg_max for s=1:nstorage]
+  energy_min = Float64[data.storages[s].energy_min for s=1:nstorage]
+  energy_max = Float64[data.storages[s].energy_max for s=1:nstorage]
+  eta_chg = Float64[data.storages[s].eta_chg for s=1:nstorage]
+  eta_dis = Float64[data.storages[s].eta_dischg for s=1:nstorage]
+  energy_setpoint = Float64[data.storages[s].energy_setpoint for s=1:nstorage]
+
+  if use_gpu
+    cuChg_min = CuArray{Float64}(undef, nstorage)
+    cuChg_max = CuArray{Float64}(undef, nstorage)
+    cuEnergy_min = CuArray{Float64}(undef, nstorage)
+    cuEnergy_max = CuArray{Float64}(undef, nstorage)
+    cuEta_chg = CuArray{Float64}(undef, nstorage)
+    cuEta_dis = CuArray{Float64}(undef, nstorage)
+    cuEnergy_setpoint = CuArray{Float64}(undef, nstorage)
+
+    copyto!(cuChg_min, chg_min)
+    copyto!(cuChg_max, chg_max)
+    copyto!(cuEnergy_min, energy_min)
+    copyto!(cuEnergy_max, energy_max)
+    copyto!(cuEta_chg, eta_chg)
+    copyto!(cuEta_dis, eta_dis)
+    copyto!(cuEnergy_setpoint, energy_setpoint)
+
+    return cuChg_min, cuChg_max, cuEnergy_min, cuEnergy_max, cuEnergy_setpoint, cuEta_chg, cuEta_dis
+  else
+    return chg_min, chg_max, energy_min, energy_max, energy_setpoint, eta_chg, eta_dis
+  end
+end
+
+function get_bus_storage_index(data::OPFData; use_gpu=false)
+  nbus = length(data.buses)
+
+  StorageIdx = Int[s for b=1:nbus for s in data.BusStorages[b]]
+  StorageStart = accumulate(+, vcat([1], [length(data.BusStorages[b]) for b=1:nbus]))
+
+  if use_gpu
+    cuStorageIdx = CuArray{Int}(undef, length(StorageIdx))
+    cuStorageStart = CuArray{Int}(undef, length(StorageStart))
+
+    copyto!(cuStorageIdx, StorageIdx)
+    copyto!(cuStorageStart, StorageStart)
+
+    return cuStorageIdx, cuStorageStart
+  else
+    return StorageIdx, StorageStart
   end
 end

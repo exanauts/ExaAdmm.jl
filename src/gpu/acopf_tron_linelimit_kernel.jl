@@ -59,7 +59,14 @@ Driver to run TRON on GPU. This should be called from a kernel.
     search = true
 
     while search
-
+#=
+        if threadIdx().x == 1
+            @cuprintf("iter = %d\n", minor_iter)
+            for i=1:n
+                @cuprintf("  x[%d] = %.16e\n", i, x[i])
+            end
+        end
+=#
         # [0|1]: Evaluate function.
 
         if task == 0 || task == 1
@@ -98,7 +105,11 @@ Driver to run TRON on GPU. This should be called from a kernel.
         end
 
         # Call Tron.
-
+#=
+        if tx == 1
+            @cuprintln("minor_iter = ", minor_iter, " task = ", task, " f = ", f)
+        end
+=#
         if search
             delta, task = ExaTron.dtron(n, x, xl, xu, f, g, A, frtol, fatol, fmin, cgtol,
                                         cg_itermax, delta, task, B, L, xc, s, indfree, gfree,
@@ -109,7 +120,11 @@ Driver to run TRON on GPU. This should be called from a kernel.
 
         if task == 3
             gnorm_inf = ExaTron.dgpnorm(n, x, xl, xu, g)
-
+#=
+            if tx == 1
+                @cuprintln("  gnorm_inf = ", gnorm_inf)
+            end
+=#
             if gnorm_inf <= gtol
                 task = 4
             end

@@ -34,11 +34,12 @@ function admm_restart_rolling(
         mod.Qd .= env.load.qd[:,t]
         admm_restart(env, mod)
         @printf(" ** Statistics of time period %d\n", t)
-        @printf("Status  . . . . . . . . . . . . . . . . . %s\n", mod.solution.status)
-        @printf("Objective value . . . . . . . . . . . . . %.6e\n", mod.solution.objval)
-        @printf("Constraint violations (except line) . . . %.6e\n", mod.solution.max_viol_except_line)
-        @printf("Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
-        @printf("Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.solution.overall_time)
+        @printf("Status  . . . . . . . . . . . . . . . . . %s\n", mod.info.status)
+        @printf("Objective value . . . . . . . . . . . . . %.6e\n", mod.info.objval)
+        @printf("Residual  . . . . . . . . . . . . . . . . %.6e\n", mod.info.mismatch)
+        #@printf("Constraint violations (except line) . . . %.6e\n", mod.solution.max_viol_except_line)
+        #@printf("Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
+        @printf("Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.info.time_overall)
         update_real_power_current_bounds(mod.ngen, mod.gen_start,
             mod.pgmin_curr, mod.pgmax_curr, mod.pgmin, mod.pgmax,
             mod.ramp_rate, mod.solution.u_curr)
