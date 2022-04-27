@@ -158,4 +158,11 @@ include("models/mpec/mpec_admm_update_residual_gpu.jl")
 include("models/mpec/mpec_admm_update_lz_gpu.jl")
 include("models/mpec/mpec_admm_prepoststep_gpu.jl")
 =#
+
+## bowenQP files
+include("QPsub_cpu/test_trivial.jl")
+include("QPsub_cpu/environmentQP.jl")
+include("QPsub_cpu/testQP.jl")
+include("QPsub_cpu/generatorQP.jl")
+
 end # module
