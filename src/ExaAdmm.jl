@@ -10,6 +10,9 @@ using CUDA
 using ExaTron
 using Random
 
+
+
+## original files 
 include("utils/parse_matpower.jl")
 include("utils/opfdata.jl")
 include("utils/environment.jl")
@@ -202,5 +205,11 @@ include("gpu/mpec_admm_update_residual_gpu.jl")
 include("gpu/mpec_admm_update_lz_gpu.jl")
 include("gpu/mpec_admm_prepoststep_gpu.jl")
 =#
+
+## bowenQP files
+include("QPsub_cpu/test_trivial.jl")
+include("QPsub_cpu/environmentQP.jl")
+include("QPsub_cpu/testQP.jl")
+include("QPsub_cpu/generatorQP.jl")
 
 end # module
