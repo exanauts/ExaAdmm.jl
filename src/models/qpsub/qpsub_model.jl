@@ -10,7 +10,7 @@ mutable struct ParameterSQP
     trust_rad::Float64
     function ParameterSQP()
         par = new()
-        par.trust_rad = 1.0
+        # par.trust_rad = 1.0
         return par
     end
 end
@@ -20,7 +20,7 @@ abstract type AbstractAdmmEnvSQP{T,TD,TI,TM} end
 """
     AdmmEnv{T,TD,TI,TM}
 
-This structure carries everything required to run ADMM from a current reference solution.
+This structure carries data source and ADMM parameters required.
 """
 mutable struct AdmmEnvSQP{T,TD,TI,TM} <: AbstractAdmmEnvSQP{T,TD,TI,TM}
     #grid info
@@ -48,7 +48,7 @@ abstract type AbstractSolutionSQP{T,TD} end
 """
     SolutionACOPF{T,TD}
 
-This contains the current ACOPF solution to generate QP subproblem including Lagrangian Multiplier PI + Radius Δ
+This contains the current ACOPF solution from SQP solver 
 """
 mutable struct SolutionACOPF{T,TD} <: AbstractSolutionSQP{T,TD}
     #curr_sol_acopf
@@ -69,6 +69,39 @@ function Base.fill!(sol::SolutionACOPF, val)
     fill!(sol.pg, val)
     fill!(sol.qg, val)
 end
+
+"""
+    Coeff_SQP{T,TD}
+
+This contains the other coefficients from SQP solver (e.g., bounds on d_pg) 
+"""
+mutable struct Coeff_SQP{T,TD} <: AbstractSolutionSQP{T,TD}
+    #curr_sol_acopf
+    dpg_min::TD
+    dpg_max::TD
+    dqg_max::TD
+    dqg_min::TD
+    #curr_pi_acopf
+    function Coeff_SQP{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
+        sol = new{T,TD}(
+            TD(undef,ngen), #dpg_min
+            TD(undef,ngen), #dpg_max
+            TD(undef,ngen), #dqg_min
+            TD(undef,ngen), #dqg_max
+        )
+        fill!(sol, 0.0, 1.0)
+        return sol
+    end
+end
+
+function Base.fill!(sol::Coeff_SQP, valmin, valmax)
+    fill!(sol.dpg_min, valmin)
+    fill!(sol.dpg_max, valmax)
+    fill!(sol.dpg_min, valmin)
+    fill!(sol.dpg_max, valmax)
+end
+
+
 
 """
     SolutionQP_gen{T,TD}
@@ -102,7 +135,22 @@ This contains the solutions of ALL bus QP subproblem
 """
 mutable struct SolutionQP_bus{T,TD} <: AbstractSolutionSQP{T,TD}
     #curr_sol_busQP
-    #curr_lambda_busQP
+    #note: each bus may contain multiple generators but each generator is only copied once
+    pg::TD
+    qg::TD
+    function SolutionQP_bus{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
+        sol = new{T,TD}(
+            TD(undef,ngen), #pg
+            TD(undef,ngen), #qg
+        )
+        fill!(sol, 0.0)
+        return sol
+    end
+end
+
+function Base.fill!(sol::SolutionQP_bus, val)
+    fill!(sol.pg, val)
+    fill!(sol.qg, val)
 end
 
 """
@@ -112,23 +160,23 @@ This contains the solutions of ALL branch QP subproblem
 """
 mutable struct SolutionQP_br{T,TD} <: AbstractSolutionSQP{T,TD}
     #curr_sol_brQP
-    #curr_lambda_brQP
+    
 end
 
 ##############
 """
-lam_rho_gen
+lam_rho_pi_gen
 
 This contains the rho and lamb parameters used in genQP and busQP.
 """
-mutable struct lam_rho_gen{T,TD} <: AbstractSolutionSQP{T,TD}
+mutable struct Lam_rho_pi_gen{T,TD} <: AbstractSolutionSQP{T,TD}
     #curr_sol_genQP
     lam_pg::TD
     lam_qg::TD
     rho_pg::TD
     rho_qg::TD
 
-    function lam_rho_gen{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
+    function Lam_rho_pi_gen{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
         sol = new{T,TD}(
             TD(undef,ngen), #lam_pg
             TD(undef,ngen), #lam_qg
@@ -140,7 +188,7 @@ mutable struct lam_rho_gen{T,TD} <: AbstractSolutionSQP{T,TD}
     end
 end
 
-function Base.fill!(sol::lam_rho_gen, val)
+function Base.fill!(sol::Lam_rho_pi_gen, val)
     fill!(sol.lam_pg, val)
     fill!(sol.lam_qg, val)
     fill!(sol.rho_pg, val)

@@ -25,26 +25,27 @@ end
 ## bundled param (require individual param)
 function generatorQP(
     env::AdmmEnvSQP,
-    sol_genQP::SolutionQP_gen, sol_ACOPF::SolutionACOPF, lam_rho::lam_rho_gen, sol_busQP::SolutionQP_bus
+    sol_genQP::SolutionQP_gen, coeff::Coeff_SQP, lam_rho::Lam_rho_pi_gen, sol_busQP::SolutionQP_bus
 )
     ngen = size(env.data.generators,1)
     baseMVA = env.data.baseMVA
     c2=zeros(Float64,ngen)
     c1=zeros(Float64,ngen)
-    pgmin_curr=zeros(Float64,3)
-    pgmax_curr=zeros(Float64,3)
-    qgmin_curr=zeros(Float64,3)
-    qgmax_curr=zeros(Float64,3)
+    # pgmin_curr=coeff.dpg_min
+    # pgmax_curr=coeff.dpg_max
+    # qgmin_curr=coeff.dqg_min
+    # qgmax_curr=coeff.dqg_man
 
     for i = 1:ngen
         c2[i]=env.data.generators[i].coeff[1]
         c1[i]=env.data.generators[i].coeff[2]
-        pgmin_curr[i]=max(env.data.generators[i].Pmin - sol_ACOPF.pg[i], -env.params.trust_rad)
-        pgmax_curr[i]=min(env.data.generators[i].Pmax - sol_ACOPF.pg[i], env.params.trust_rad)
-        qgmin_curr[i]=max(env.data.generators[i].Qmin - sol_ACOPF.qg[i], -env.params.trust_rad)
-        qgmax_curr[i]=min(env.data.generators[i].Qmax - sol_ACOPF.qg[i], env.params.trust_rad)
+        # pgmin_curr[i]=max(env.data.generators[i].Pmin - sol_ACOPF.pg[i], -env.params.trust_rad)
+        # pgmax_curr[i]=min(env.data.generators[i].Pmax - sol_ACOPF.pg[i], env.params.trust_rad)
+        # qgmin_curr[i]=max(env.data.generators[i].Qmin - sol_ACOPF.qg[i], -env.params.trust_rad)
+        # qgmax_curr[i]=min(env.data.generators[i].Qmax - sol_ACOPF.qg[i], env.params.trust_rad)
     end
 
-    tcpu = @timed generatorQP(baseMVA,ngen,lam_rho.lam_pg,sol_busQP)
+    tcpu = @timed generatorQP(baseMVA,ngen,lam_rho.lam_pg,sol_genQP.pg, sol_busQP.pg, lam_rho.rho_pg,
+    lam_rho.lam_qg,sol_genQP.qg, sol_busQP.qg, lam_rho.rho_qg, coeff.dpg_min, coeff.dpg_max, coeff.dqg_min, coeff.dqg_max, c2, c1)
     return tcpu
 end
