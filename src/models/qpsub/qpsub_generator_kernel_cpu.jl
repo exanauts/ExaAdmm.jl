@@ -9,20 +9,22 @@ function generatorQP(
 )
     for I=1:ngen
         #compute curr_genQP_pg
-        curr_genQP_pg[I] = max(pgmin_curr[I],
+        @inbounds curr_genQP_pg[I] = max(pgmin_curr[I],
                         min(pgmax_curr[I],
                             (-(c1[I]*baseMVA + curr_lambda_pg[I] + rho_pg[I]*(-curr_busQP_pg[I]))) / (2*c2[I]*(baseMVA^2) + rho_pg[I])))
+
+                            @inbounds curr_genQP_pg[I] = 1.0 #for debug 
         #compute curr_genQP_qg
-        curr_genQP_qg[I] = max(qgmin_curr[I],
+        @inbounds curr_genQP_qg[I] = max(qgmin_curr[I],
         min(qgmax_curr[I],
-            (-(c1[I]*baseMVA + curr_lambda_qg[I] + rho_qg[I]*(-curr_busQP_qg[I]))) / (2*c2[I]*(baseMVA^2) + rho_qg[I])))
-  
+            (-(curr_lambda_qg[I] + rho_qg[I]*(-curr_busQP_qg[I]))) / rho_qg[I]))
+                            @inbounds curr_genQP_qg[I] = 1.0 #for debug 
     end
     return #curr_sol_genQP
 end
 
 
-## bundled param (require individual param)
+## bundled param 1 (require individual param)
 function generatorQP(
     env::AdmmEnvSQP,
     sol_genQP::SolutionQP_gen, coeff::Coeff_SQP, lam_rho::Lam_rho_pi_gen, sol_busQP::SolutionQP_bus
@@ -37,15 +39,27 @@ function generatorQP(
     # qgmax_curr=coeff.dqg_man
 
     for i = 1:ngen
-        c2[i]=env.data.generators[i].coeff[1]
-        c1[i]=env.data.generators[i].coeff[2]
+        @inbounds c2[i]=env.data.generators[i].coeff[1]
+        @inbounds c1[i]=env.data.generators[i].coeff[2]
         # pgmin_curr[i]=max(env.data.generators[i].Pmin - sol_ACOPF.pg[i], -env.params.trust_rad)
         # pgmax_curr[i]=min(env.data.generators[i].Pmax - sol_ACOPF.pg[i], env.params.trust_rad)
         # qgmin_curr[i]=max(env.data.generators[i].Qmin - sol_ACOPF.qg[i], -env.params.trust_rad)
         # qgmax_curr[i]=min(env.data.generators[i].Qmax - sol_ACOPF.qg[i], env.params.trust_rad)
     end
 
-    tcpu = @timed generatorQP(baseMVA,ngen,lam_rho.lam_pg,sol_genQP.pg, sol_busQP.pg, lam_rho.rho_pg,
-    lam_rho.lam_qg,sol_genQP.qg, sol_busQP.qg, lam_rho.rho_qg, coeff.dpg_min, coeff.dpg_max, coeff.dqg_min, coeff.dqg_max, c2, c1)
+    tcpu = @timed generatorQP(baseMVA,ngen,lam_rho.lam_pg,sol_genQP.dpg, sol_busQP.dpg, lam_rho.rho_pg,
+    lam_rho.lam_qg,sol_genQP.dqg, sol_busQP.dqg, lam_rho.rho_qg, coeff.dpg_min, coeff.dpg_max, coeff.dqg_min, coeff.dqg_max, c2, c1)
+    return tcpu
+end
+
+
+## bundled param 2 (require individual param)
+function generatorQP(
+    env::AdmmEnvSQP, mod::ModelQpsub
+)
+    tcpu = @timed generatorQP(env.data.baseMVA, mod.ngen, 
+    mod.lam_rho_pi_gen.lam_pg, mod.gen_qp.dpg, mod.bus_qp.dpg, mod.lam_rho_pi_gen.rho_pg,
+    mod.lam_rho_pi_gen.lam_qg, mod.gen_qp.dqg, mod.bus_qp.dqg, mod.lam_rho_pi_gen.rho_qg, 
+    mod.coeff_sqp.dpg_min, mod.coeff_sqp.dpg_max, mod.coeff_sqp.dqg_min, mod.coeff_sqp.dqg_max, mod.c2, mod.c1)
     return tcpu
 end
