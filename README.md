@@ -8,7 +8,7 @@ We have tested `ExaAdmm.jl` using `Julia@v1.6.3` and `CUDA.jl@v3.4.2`.
 
 ```
 $ git clone https://github.com/exanauts/ExaAdmm.jl
-$ cd ExaAdmm
+$ cd ExaAdmm.jl
 $ julia --project deps/deps.jl
 ```
 
