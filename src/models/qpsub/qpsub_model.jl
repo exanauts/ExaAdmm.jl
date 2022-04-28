@@ -97,8 +97,8 @@ end
 function Base.fill!(sol::Coeff_SQP, valmin, valmax)
     fill!(sol.dpg_min, valmin)
     fill!(sol.dpg_max, valmax)
-    fill!(sol.dpg_min, valmin)
-    fill!(sol.dpg_max, valmax)
+    fill!(sol.dqg_min, valmin)
+    fill!(sol.dqg_max, valmax)
 end
 
 
@@ -110,13 +110,13 @@ This contains the solutions of ALL generator QP subproblem
 """
 mutable struct SolutionQP_gen{T,TD} <: AbstractSolutionSQP{T,TD}
     #curr_sol_genQP
-    pg::TD
-    qg::TD
+    dpg::TD
+    dqg::TD
 
     function SolutionQP_gen{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
         sol = new{T,TD}(
-            TD(undef,ngen), #pg
-            TD(undef,ngen), #qg
+            TD(undef,ngen), #dpg
+            TD(undef,ngen), #dqg
         )
         fill!(sol, 0.0)
         return sol
@@ -124,8 +124,8 @@ mutable struct SolutionQP_gen{T,TD} <: AbstractSolutionSQP{T,TD}
 end
 
 function Base.fill!(sol::SolutionQP_gen, val)
-    fill!(sol.pg, val)
-    fill!(sol.qg, val)
+    fill!(sol.dpg, val)
+    fill!(sol.dqg, val)
 end
 
 """
@@ -136,12 +136,12 @@ This contains the solutions of ALL bus QP subproblem
 mutable struct SolutionQP_bus{T,TD} <: AbstractSolutionSQP{T,TD}
     #curr_sol_busQP
     #note: each bus may contain multiple generators but each generator is only copied once
-    pg::TD
-    qg::TD
+    dpg::TD
+    dqg::TD
     function SolutionQP_bus{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
         sol = new{T,TD}(
-            TD(undef,ngen), #pg
-            TD(undef,ngen), #qg
+            TD(undef,ngen), #dpg
+            TD(undef,ngen), #dqg
         )
         fill!(sol, 0.0)
         return sol
@@ -149,8 +149,8 @@ mutable struct SolutionQP_bus{T,TD} <: AbstractSolutionSQP{T,TD}
 end
 
 function Base.fill!(sol::SolutionQP_bus, val)
-    fill!(sol.pg, val)
-    fill!(sol.qg, val)
+    fill!(sol.dpg, val)
+    fill!(sol.dqg, val)
 end
 
 """
@@ -205,7 +205,53 @@ abstract type AbstractOPFModelSQP{T,TD,TI,TM} end
 
 This contains the parameters and solutions in all problem solving.
 """
-mutable struct ModelSQP{T,TD,TI,TM} <: AbstractOPFModelSQP{T,TD,TI,TM}
-    #SolutionQP
+mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModelSQP{T,TD,TI,TM}
     #SolutionACOPF 
+    acopf_sol::AbstractSolutionSQP{T,TD}
+    #SolutionQP
+    gen_qp::AbstractSolutionSQP{T,TD}
+    bus_qp::AbstractSolutionSQP{T,TD}
+
+    #lamda_rho_pi
+    lam_rho_pi_gen::AbstractSolutionSQP{T,TD}
+
+    #coeff from SQP
+    coeff_sqp::AbstractSolutionSQP{T,TD}
+    
+    ngen::Int64
+    nline::Int64
+    nbus::Int64
+
+    c2::TD
+    c1::TD
+    c0::TD 
+
+
+    function ModelQpsub{T,TD,TI,TM}() where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+        return new{T,TD,TI,TM}()
+    end
+
+    function ModelQpsub{T,TD,TI,TM}(env::AdmmEnvSQP{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+        model = new{T,TD,TI,TM}()
+        model.ngen = length(env.data.generators)
+        model.nline = length(env.data.lines)
+        model.nbus = length(env.data.buses)
+
+        model.acopf_sol = SolutionACOPF{T,TD}(model.ngen)
+        model.gen_qp = SolutionQP_gen{T,TD}(model.ngen)
+        model.bus_qp = SolutionQP_bus{T,TD}(model.ngen)
+        model.lam_rho_pi_gen = Lam_rho_pi_gen{T,TD}(model.ngen)
+        model.coeff_sqp = Coeff_SQP{T,TD}(model.ngen)
+
+        model.c2=zeros(Float64,model.ngen)
+        model.c1=zeros(Float64,model.ngen)
+        model.c0=zeros(Float64,model.ngen)
+    for i = 1:model.ngen
+        @inbounds model.c2[i]=env.data.generators[i].coeff[1]
+        @inbounds model.c1[i]=env.data.generators[i].coeff[2]
+        @inbounds model.c0[i]=env.data.generators[i].coeff[3]
+    end
+
+        return model 
+    end
 end

@@ -16,16 +16,24 @@ function solve_qpsub(case::String; case_format="matpower", verbose = 1
 
     env6 = SolutionQP_bus{T,TD}(size(env.data.generators,1))
 
+    mod = ModelQpsub{T,TD,TI,TM}(env)
+
     #generator 
+    println(mod.gen_qp)
+
+    tgen = generatorQP(env,mod)
+
+    println(mod.gen_qp)
 
     #branch
 
     #bus problem 
     
-    return env, env2, env3, env4, env5, env6
+    return env, env2, env3, env4, env5, env6, mod, tgen 
 end
 
-## test code 
-# env, env2, env3, env4, env5, env6 = ExaAdmm.solve_qpsub("case9.m");
+## test code example 
+# env, env2, env3, env4, env5, env6, mod, tgen = ExaAdmm.solve_qpsub("case9.m");
+# ExaAdmm.generatorQP(env,mod)
 
 # env, mod = ExaAdmm.solve_acopf("case1354pegase.m");
