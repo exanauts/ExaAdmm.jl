@@ -4,7 +4,11 @@ function solve_qpsub(case::String; case_format="matpower", verbose = 1
 )
     # test each QP subproblem functions here 
     T = Float64; TD = Array{Float64,1}; TI = Array{Int64,1}; TM = Array{Float64,2}
-    env = AdmmEnvSQP{T,TD,TI,TM}(case; case_format=case_format, verbose = verbose)
+
+    rho_pq=400.0; rho_va=40000.0
+
+    # env = AdmmEnvSQP{T,TD,TI,TM}(case; case_format=case_format, verbose = verbose) #new environ 
+    env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va) #old environ
     
     env2 = SolutionQP_gen{T,TD}(size(env.data.generators,1))
 
