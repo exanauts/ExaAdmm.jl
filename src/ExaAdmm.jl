@@ -10,6 +10,10 @@ using CUDA
 using ExaTron
 using Random
 
+## added by bowen 
+using Test
+using JuMP
+using Ipopt
 
 
 ## original files 
@@ -208,6 +212,7 @@ include("gpu/mpec_admm_prepoststep_gpu.jl")
 
 ## bowenQP files
 include("other_test/test_trivial.jl")
+include("other_test/tron_qp.jl")
 include("models/qpsub/qpsub_model.jl")
 include("models/qpsub/qpsub_generator_kernel_cpu.jl")
 include("interface/solve_qpsub.jl")
