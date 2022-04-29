@@ -54,8 +54,11 @@ end
 
 
 ## bundled param 2 (require individual param)
+# function generatorQP(
+#     env::AdmmEnvSQP, mod::ModelQpsub
+# )
 function generatorQP(
-    env::AdmmEnvSQP, mod::ModelQpsub
+    env::AdmmEnv, mod::ModelQpsub
 )
     tcpu = @timed generatorQP(env.data.baseMVA, mod.ngen, 
     mod.lam_rho_pi_gen.lam_pg, mod.gen_qp.dpg, mod.bus_qp.dpg, mod.lam_rho_pi_gen.rho_pg,

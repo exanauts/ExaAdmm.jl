@@ -231,7 +231,8 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModelSQP{T,TD,TI,TM}
         return new{T,TD,TI,TM}()
     end
 
-    function ModelQpsub{T,TD,TI,TM}(env::AdmmEnvSQP{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+    # function ModelQpsub{T,TD,TI,TM}(env::AdmmEnvSQP{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}} #new environ
+    function ModelQpsub{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}} #old environ
         model = new{T,TD,TI,TM}()
         model.ngen = length(env.data.generators)
         model.nline = length(env.data.lines)
