@@ -16,7 +16,7 @@ function mpacopf_update_z_kernel(
     return
 end
 
-function acopf_admm_update_z(
+function admm_update_z(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
     mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )

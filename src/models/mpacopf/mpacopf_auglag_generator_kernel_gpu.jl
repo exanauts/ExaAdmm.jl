@@ -14,9 +14,9 @@ function auglag_generator_kernel(
     tx = threadIdx().x
     I = blockIdx().x
 
-    x = CUDA.CuDynamicSharedArray(Float64, n)
-    xl = CUDA.CuDynamicSharedArray(Float64, n, n*sizeof(Float64))
-    xu = CUDA.CuDynamicSharedArray(Float64, n, (2*n)*sizeof(Float64))
+    x = @cuDynamicSharedMem(Float64, n)
+    xl = @cuDynamicSharedMem(Float64, n, n*sizeof(Float64))
+    xu = @cuDynamicSharedMem(Float64, n, (2*n)*sizeof(Float64))
 
     @inbounds begin
         # x[1]      : p_{t,I}
@@ -39,6 +39,7 @@ function auglag_generator_kernel(
                             (-(l[qg_idx]+rho[qg_idx]*(-v[qg_idx]+z[qg_idx]))) / rho[qg_idx]))
 
         c2 = _c2[I]; c1 = _c1[I]; c0 = _c0[I]
+
         xl[1] = xl[2] = pgmin[I]
         xu[1] = xu[2] = pgmax[I]
         xl[3] = -ramp_limit[I]
@@ -74,7 +75,7 @@ function auglag_generator_kernel(
             it += 1
 
             # Solve the generator problem.
-            tron_generator_kernel(n, 500, 200, 1e-6, scale, x, xl, xu, param, c2, c1, c0, baseMVA)
+            status, minor_iter = tron_generator_kernel(n, 500, 200, 1e-6, scale, x, xl, xu, param, c2, c1, c0, baseMVA)
 
             # Check the termination condition.
             cviol = x[1] - x[2] - x[3]
