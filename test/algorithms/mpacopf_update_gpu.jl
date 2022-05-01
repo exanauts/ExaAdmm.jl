@@ -330,7 +330,6 @@
         @test norm(l_curr[i][63:70] .- L_BR[i][57:64], Inf) <= atol # Line 8 t=1
         @test norm(l_curr[i][71:78] .- L_BR[i][65:72], Inf) <= atol # Line 9 t=1
     end
-    @show l_curr
 
     # residual update
     ExaAdmm.admm_update_residual(env, mod)
