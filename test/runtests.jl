@@ -24,6 +24,7 @@ try
     if CUDA.functional()
         @testset "Testing ADMM algorithms on GPUs" begin
             include("algorithms/acopf_update_gpu.jl")
+            include("algorithms/mpacopf_update_gpu.jl")
         end
     end
 catch e
