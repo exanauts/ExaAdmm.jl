@@ -10,24 +10,24 @@ Driver to run TRON on GPU. This should be called from a kernel.
     tx = threadIdx().x
     I = blockIdx().x
 
-    g = @cuDynamicSharedMem(Float64, n, (3*n)*sizeof(Float64))
-    xc = @cuDynamicSharedMem(Float64, n, (4*n)*sizeof(Float64))
-    s = @cuDynamicSharedMem(Float64, n, (5*n)*sizeof(Float64))
-    wa = @cuDynamicSharedMem(Float64, n, (6*n)*sizeof(Float64))
-    wa1 = @cuDynamicSharedMem(Float64, n, (7*n)*sizeof(Float64))
-    wa2 = @cuDynamicSharedMem(Float64, n, (8*n)*sizeof(Float64))
-    wa3 = @cuDynamicSharedMem(Float64, n, (9*n)*sizeof(Float64))
-    wa4 = @cuDynamicSharedMem(Float64, n, (10*n)*sizeof(Float64))
-    wa5 = @cuDynamicSharedMem(Float64, n, (11*n)*sizeof(Float64))
-    gfree = @cuDynamicSharedMem(Float64, n, (12*n)*sizeof(Float64))
-    dsave = @cuDynamicSharedMem(Float64, n, (13*n)*sizeof(Float64))
-    indfree = @cuDynamicSharedMem(Int, n, (14*n)*sizeof(Float64))
-    iwa = @cuDynamicSharedMem(Int, 2*n, n*sizeof(Int) + (14*n)*sizeof(Float64))
-    isave = @cuDynamicSharedMem(Int, n, (3*n)*sizeof(Int) + (14*n)*sizeof(Float64))
+    g = CuDynamicSharedArray(Float64, n, (3*n)*sizeof(Float64))
+    xc = CuDynamicSharedArray(Float64, n, (4*n)*sizeof(Float64))
+    s = CuDynamicSharedArray(Float64, n, (5*n)*sizeof(Float64))
+    wa = CuDynamicSharedArray(Float64, n, (6*n)*sizeof(Float64))
+    wa1 = CuDynamicSharedArray(Float64, n, (7*n)*sizeof(Float64))
+    wa2 = CuDynamicSharedArray(Float64, n, (8*n)*sizeof(Float64))
+    wa3 = CuDynamicSharedArray(Float64, n, (9*n)*sizeof(Float64))
+    wa4 = CuDynamicSharedArray(Float64, n, (10*n)*sizeof(Float64))
+    wa5 = CuDynamicSharedArray(Float64, n, (11*n)*sizeof(Float64))
+    gfree = CuDynamicSharedArray(Float64, n, (12*n)*sizeof(Float64))
+    dsave = CuDynamicSharedArray(Float64, n, (13*n)*sizeof(Float64))
+    indfree = CuDynamicSharedArray(Int, n, (14*n)*sizeof(Float64))
+    iwa = CuDynamicSharedArray(Int, 2*n, n*sizeof(Int) + (14*n)*sizeof(Float64))
+    isave = CuDynamicSharedArray(Int, n, (3*n)*sizeof(Int) + (14*n)*sizeof(Float64))
 
-    A = @cuDynamicSharedMem(Float64, (n,n), (14*n)*sizeof(Float64)+(4*n)*sizeof(Int))
-    B = @cuDynamicSharedMem(Float64, (n,n), (14*n+n^2)*sizeof(Float64)+(4*n)*sizeof(Int))
-    L = @cuDynamicSharedMem(Float64, (n,n), (14*n+2*n^2)*sizeof(Float64)+(4*n)*sizeof(Int))
+    A = CuDynamicSharedArray(Float64, (n,n), (14*n)*sizeof(Float64)+(4*n)*sizeof(Int))
+    B = CuDynamicSharedArray(Float64, (n,n), (14*n+n^2)*sizeof(Float64)+(4*n)*sizeof(Int))
+    L = CuDynamicSharedArray(Float64, (n,n), (14*n+2*n^2)*sizeof(Float64)+(4*n)*sizeof(Int))
 
     if tx <= n
         @inbounds for j=1:n

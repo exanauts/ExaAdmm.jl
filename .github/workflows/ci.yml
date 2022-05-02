@@ -1,0 +1,49 @@
+name: Run tests
+
+on:
+  push:
+    branches:
+      - youngdae/abstraction
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  test-github-cpuonly:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        julia-version: ['1.7']
+        julia-arch: [x64]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: ${{ matrix.julia-version }}
+      - run: julia --project deps/deps.jl
+      - uses: julia-actions/julia-buildpkg@latest
+      - uses: julia-actions/julia-runtest@latest
+
+  test-moonshot:
+    env:
+      CUDA_VISIBLE_DEVICES: 1
+      JULIA_DEPOT_PATH: /scratch/github-actions/julia_depot_exaadmmm
+      JULIA_CUDA_USE_BINARYBUILDER: true
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        julia-version: ['1.7']
+        julia-arch: [x64]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: ${{ matrix.julia-version }}
+      - run: julia --project deps/deps.jl
+      - uses: julia-actions/julia-buildpkg@latest
+      - uses: julia-actions/julia-runtest@latest
