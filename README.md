@@ -1,4 +1,5 @@
 # ExaAdmm.jl
+[![Run tests](https://github.com/exanauts/ExaAdmm.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/exanauts/ExaAdmm.jl/actions/workflows/ci.yml)
 
 ExaAdmm.jl implements the two-level alternating direction method of multipliers for solving the component-based decomposition of alternating current optimal power flow problems on GPUs.
 
