@@ -1,5 +1,5 @@
 @inline function eval_f_generator_kernel(
-    I::Int, scale::Float64, x::CuDeviceArray{Float64,1}, param::CuDeviceArray{Float64,2},
+    I, scale::Float64, x::CuDeviceArray{Float64,1}, param::CuDeviceArray{Float64,2},
     c2::Float64, c1::Float64, c0::Float64, baseMVA::Float64
 )
     f = 0.0
@@ -30,7 +30,7 @@
 end
 
 @inline function eval_grad_f_generator_kernel(
-    I::Int, scale::Float64, x::CuDeviceArray{Float64,1}, g::CuDeviceArray{Float64,1}, param::CuDeviceArray{Float64,2},
+    I, scale::Float64, x::CuDeviceArray{Float64,1}, g::CuDeviceArray{Float64,1}, param::CuDeviceArray{Float64,2},
     c2::Float64, c1::Float64, c0::Float64, baseMVA::Float64
 )
     tx = threadIdx().x
@@ -52,7 +52,7 @@ end
 end
 
 @inline function eval_h_generator_kernel(
-    I::Int, scale::Float64, x::CuDeviceArray{Float64,1}, A::CuDeviceArray{Float64,2},
+    I, scale::Float64, x::CuDeviceArray{Float64,1}, A::CuDeviceArray{Float64,2},
     param::CuDeviceArray{Float64,2},
     c2::Float64, c1::Float64, c0::Float64, baseMVA::Float64
 )

@@ -14,9 +14,9 @@ function auglag_generator_kernel(
     tx = threadIdx().x
     I = blockIdx().x
 
-    x = @cuDynamicSharedMem(Float64, n)
-    xl = @cuDynamicSharedMem(Float64, n, n*sizeof(Float64))
-    xu = @cuDynamicSharedMem(Float64, n, (2*n)*sizeof(Float64))
+    x = CuDynamicSharedArray(Float64, n)
+    xl = CuDynamicSharedArray(Float64, n, n*sizeof(Float64))
+    xu = CuDynamicSharedArray(Float64, n, (2*n)*sizeof(Float64))
 
     @inbounds begin
         # x[1]      : p_{t,I}
