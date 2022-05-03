@@ -1,7 +1,7 @@
 """
 Driver to run TRON on GPU. This should be called from a kernel.
 """
-function tron_generator_kernel(
+@inline function tron_generator_kernel(
     n::Int, max_feval::Int, max_minor::Int, gtol::Float64, scale::Float64,
     x::CuDeviceArray{Float64,1}, xl::CuDeviceArray{Float64,1}, xu::CuDeviceArray{Float64,1},
     param::CuDeviceArray{Float64,2},
@@ -10,24 +10,24 @@ function tron_generator_kernel(
     tx = threadIdx().x
     I = blockIdx().x
 
-    g = CUDA.CuDynamicSharedArray(Float64, n, (3*n)*sizeof(Float64))
-    xc = CUDA.CuDynamicSharedArray(Float64, n, (4*n)*sizeof(Float64))
-    s = CUDA.CuDynamicSharedArray(Float64, n, (5*n)*sizeof(Float64))
-    wa = CUDA.CuDynamicSharedArray(Float64, n, (6*n)*sizeof(Float64))
-    wa1 = CUDA.CuDynamicSharedArray(Float64, n, (7*n)*sizeof(Float64))
-    wa2 = CUDA.CuDyamicSharedArray(Float64, n, (8*n)*sizeof(Float64))
-    wa3 = CUDA.CuDyamicSharedArray(Float64, n, (9*n)*sizeof(Float64))
-    wa4 = CUDA.CuDyamicSharedArray(Float64, n, (10*n)*sizeof(Float64))
-    wa5 = CUDA.CuDyamicSharedArray(Float64, n, (11*n)*sizeof(Float64))
-    gfree = CUDA.CuDyamicSharedArray(Float64, n, (12*n)*sizeof(Float64))
-    dsave = CUDA.CuDyamicSharedArray(Float64, n, (13*n)*sizeof(Float64))
-    indfree = CUDA.CuDyamicSharedArray(Int, n, (14*n)*sizeof(Float64))
-    iwa = CUDA.CuDyamicSharedArray(Int, 2*n, n*sizeof(Int) + (14*n)*sizeof(Float64))
-    isave = CUDA.CuDyamicSharedArray(Int, n, (3*n)*sizeof(Int) + (14*n)*sizeof(Float64))
+    g = CuDynamicSharedArray(Float64, n, (3*n)*sizeof(Float64))
+    xc = CuDynamicSharedArray(Float64, n, (4*n)*sizeof(Float64))
+    s = CuDynamicSharedArray(Float64, n, (5*n)*sizeof(Float64))
+    wa = CuDynamicSharedArray(Float64, n, (6*n)*sizeof(Float64))
+    wa1 = CuDynamicSharedArray(Float64, n, (7*n)*sizeof(Float64))
+    wa2 = CuDynamicSharedArray(Float64, n, (8*n)*sizeof(Float64))
+    wa3 = CuDynamicSharedArray(Float64, n, (9*n)*sizeof(Float64))
+    wa4 = CuDynamicSharedArray(Float64, n, (10*n)*sizeof(Float64))
+    wa5 = CuDynamicSharedArray(Float64, n, (11*n)*sizeof(Float64))
+    gfree = CuDynamicSharedArray(Float64, n, (12*n)*sizeof(Float64))
+    dsave = CuDynamicSharedArray(Float64, n, (13*n)*sizeof(Float64))
+    indfree = CuDynamicSharedArray(Int, n, (14*n)*sizeof(Float64))
+    iwa = CuDynamicSharedArray(Int, 2*n, n*sizeof(Int) + (14*n)*sizeof(Float64))
+    isave = CuDynamicSharedArray(Int, n, (3*n)*sizeof(Int) + (14*n)*sizeof(Float64))
 
-    A = CUDA.CuDyamicSharedArray(Float64, (n,n), (14*n)*sizeof(Float64)+(4*n)*sizeof(Int))
-    B = CUDA.CuDyamicSharedArray(Float64, (n,n), (14*n+n^2)*sizeof(Float64)+(4*n)*sizeof(Int))
-    L = CUDA.CuDyamicSharedArray(Float64, (n,n), (14*n+2*n^2)*sizeof(Float64)+(4*n)*sizeof(Int))
+    A = CuDynamicSharedArray(Float64, (n,n), (14*n)*sizeof(Float64)+(4*n)*sizeof(Int))
+    B = CuDynamicSharedArray(Float64, (n,n), (14*n+n^2)*sizeof(Float64)+(4*n)*sizeof(Int))
+    L = CuDynamicSharedArray(Float64, (n,n), (14*n+2*n^2)*sizeof(Float64)+(4*n)*sizeof(Int))
 
     if tx <= n
         @inbounds for j=1:n
@@ -118,6 +118,5 @@ function tron_generator_kernel(
 
     CUDA.sync_threads()
 
-#    return status, minor_iter
-    return
+    return status, minor_iter
 end

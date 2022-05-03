@@ -15,9 +15,9 @@ function auglag_linelimit_two_level_alternative(
     I = blockIdx().x
     id_line = I + shift_lines
 
-    x = @cuDynamicSharedMem(Float64, n)
-    xl = @cuDynamicSharedMem(Float64, n, n*sizeof(Float64))
-    xu = @cuDynamicSharedMem(Float64, n, (2*n)*sizeof(Float64))
+    x = CuDynamicSharedArray(Float64, n)
+    xl = CuDynamicSharedArray(Float64, n, n*sizeof(Float64))
+    xu = CuDynamicSharedArray(Float64, n, (2*n)*sizeof(Float64))
 
     @inbounds begin
         YffR = _YffR[id_line]; YffI = _YffI[id_line]

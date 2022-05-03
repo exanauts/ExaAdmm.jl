@@ -10,9 +10,9 @@ function mpacopf_admm_update_x_gen(
 
     for i=2:mod.len_horizon
         submod, subsol, sol_ramp = mod.models[i], mod.models[i].solution, mod.solution[i]
-#        time_gen = @timed begin
+        time_gen = @timed begin
 
-        @device_code_warntype @cuda threads=32 blocks=ngen shmem=shmem_size auglag_generator_kernel(
+        @cuda threads=32 blocks=ngen shmem=shmem_size auglag_generator_kernel(
             3, submod.ngen, submod.gen_start,
             info.inner, par.max_auglag, par.mu_max, 1.0,
             subsol.u_curr, subsol.v_curr, subsol.z_curr,
@@ -25,10 +25,10 @@ function mpacopf_admm_update_x_gen(
             submod.ramp_rate,
             submod.c2, submod.c1, submod.c0, submod.baseMVA)
         CUDA.synchronize()
-#        end
+        end
 
-#        submod.info.time_x_update += time_gen.time
-#        submod.info.user.time_generators += time_gen.time
+        submod.info.time_x_update += time_gen.time
+        submod.info.user.time_generators += time_gen.time
     end
     return
 end

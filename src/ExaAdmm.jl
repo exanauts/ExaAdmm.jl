@@ -89,7 +89,6 @@ include("models/mpacopf/mpacopf_admm_update_residual_cpu.jl")
 include("models/mpacopf/mpacopf_admm_update_lz_cpu.jl")
 include("models/mpacopf/mpacopf_admm_prepoststep_cpu.jl")
 
-#=
 # GPU specific implementation
 include("models/mpacopf/mpacopf_init_solution_gpu.jl")
 include("models/mpacopf/mpacopf_eval_generator_kernel_gpu.jl")
@@ -103,7 +102,6 @@ include("models/mpacopf/mpacopf_admm_update_l_gpu.jl")
 include("models/mpacopf/mpacopf_admm_update_residual_gpu.jl")
 include("models/mpacopf/mpacopf_admm_update_lz_gpu.jl")
 include("models/mpacopf/mpacopf_admm_prepoststep_gpu.jl")
-=#
 
 #=
 # CPU implementation for solving single-period ACOPF
