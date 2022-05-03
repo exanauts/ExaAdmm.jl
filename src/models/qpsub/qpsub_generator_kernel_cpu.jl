@@ -26,7 +26,7 @@ end
 
 ## bundled param 1 (require individual param)
 function generatorQP(
-    env::AdmmEnvSQP,
+    env::AdmmEnv,
     sol_genQP::SolutionQP_gen, coeff::Coeff_SQP, lam_rho::Lam_rho_pi_gen, sol_busQP::SolutionQP_bus
 )
     ngen = size(env.data.generators,1)
@@ -61,8 +61,12 @@ function generatorQP(
     env::AdmmEnv, mod::ModelQpsub
 )
     tcpu = @timed generatorQP(env.data.baseMVA, mod.ngen, 
-    mod.lam_rho_pi_gen.lam_pg, mod.gen_qp.dpg, mod.bus_qp.dpg, mod.lam_rho_pi_gen.rho_pg,
-    mod.lam_rho_pi_gen.lam_qg, mod.gen_qp.dqg, mod.bus_qp.dqg, mod.lam_rho_pi_gen.rho_qg, 
+    mod.lam_rho_pi_gen.lam_pg, mod.gen_qp.dpg, mod.bus_qp.dpg_c, mod.lam_rho_pi_gen.rho_pg,
+    mod.lam_rho_pi_gen.lam_qg, mod.gen_qp.dqg, mod.bus_qp.dqg_c, mod.lam_rho_pi_gen.rho_qg, 
     mod.coeff_sqp.dpg_min, mod.coeff_sqp.dpg_max, mod.coeff_sqp.dqg_min, mod.coeff_sqp.dqg_max, mod.c2, mod.c1)
+    
+    ## using Hessian and linear coefficient from SQP  
+    
     return tcpu
 end
+
