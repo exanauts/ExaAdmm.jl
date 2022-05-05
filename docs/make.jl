@@ -1,11 +1,11 @@
 using Pkg
 
-# Pkg.develop(PackageSpec(path=joinpath(dirname(@__FILE__), "..")))
+Pkg.develop(PackageSpec(path=joinpath(dirname(@__FILE__), "..")))
 # when first running instantiate
-# Pkg.instantiate()
+Pkg.instantiate()
 
 using Documenter
-# using ExaAdmm
+using ExaAdmm
 
 makedocs(
     sitename = "ExaAdmm.jl",
@@ -13,7 +13,7 @@ makedocs(
         prettyurls = Base.get(ENV, "CI", nothing) == "true",
         mathengine = Documenter.KaTeX()
     ),
-    # modules = [ExaAdmm],
+    modules = [ExaAdmm],
     repo = "https://github.com/exanauts/ExaAdmm.jl/blob/{commit}{path}#{line}",
     strict = true,
     checkdocs = :exports,
@@ -22,4 +22,12 @@ makedocs(
         "Quick Start" => "quickstart.md",
         "How to Implement New Model" => "dev.md",
     ]
+)
+
+deploydocs(
+    repo = "github.com/exanauts/ExaAdmm.jl.git",
+    target = "build",
+    devbranch = "main",
+    devurl = "main",
+    push_preview = true,
 )
