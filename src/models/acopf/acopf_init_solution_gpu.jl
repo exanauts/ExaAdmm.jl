@@ -28,10 +28,10 @@ function init_branch_bus_kernel_one_level(n::Int, line_start::Int, rho_va::Float
         wR0 = sqrt(wij0 * wji0)
 
         pij_idx = line_start + 8*(l-1)
-        u[pij_idx] = YffR[l] * wij0 + YftR[l] * wR0
-        u[pij_idx+1] = -YffI[l] * wij0 - YftI[l] * wR0
-        u[pij_idx+2] = YttR[l] * wji0 + YtfR[l] * wR0
-        u[pij_idx+3] = -YttI[l] * wji0 - YtfI[l] * wR0
+        v[pij_idx] = YffR[l] * wij0 + YftR[l] * wR0
+        v[pij_idx+1] = -YffI[l] * wij0 - YftI[l] * wR0
+        v[pij_idx+2] = YttR[l] * wji0 + YtfR[l] * wR0
+        v[pij_idx+3] = -YttI[l] * wji0 - YtfI[l] * wR0
         v[pij_idx+4] = wij0
         v[pij_idx+5] = wji0
         v[pij_idx+6] = 0.0
