@@ -20,5 +20,6 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Quick Start" => "quickstart.md",
+        "How to Implement New Model" => "dev.md",
     ]
 )
