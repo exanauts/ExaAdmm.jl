@@ -399,7 +399,7 @@
         if i > 1
             sol = mod.solution[i]
             submod = mod.models[i]
-            v_curr = @view mod.models[i-1].solution.v_curr[submod.gen_start:2:submod.gen_start+2*submod.ngen-1]
+            v_curr = @view mod.models[i-1].solution.v_curr[submod.gen_start:2:submod.gen_start+2*submod.grid_data.ngen-1]
             @test norm(sol.rp .- (sol.u_curr .- v_curr .+ sol.z_curr), Inf) <= atol
             @test norm(sol.rd .- (sol.z_curr .- sol.z_prev),               Inf) <= atol
             @test norm(sol.Ax_plus_By .- (sol.u_curr .- v_curr),       Inf) <= atol
