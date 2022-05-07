@@ -1,5 +1,5 @@
 # ExaAdmm.jl
-[![Run tests](https://github.com/exanauts/ExaAdmm.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/exanauts/ExaAdmm.jl/actions/workflows/ci.yml)
+[![][build-stable-img]][build-url] [![][docs-stable-img]][docs-stable-url]
 
 ExaAdmm.jl implements the two-level alternating direction method of multipliers for solving the component-based decomposition of alternating current optimal power flow problems on GPUs.
 
@@ -43,3 +43,8 @@ We have used the same `tight_factor=0.99`, `outer_iterlim=20`, and `inner_iterli
 
 This research was supported by the Exascale ComputingProject (17-SC-20-SC),  a collaborative effort of the U.S. Department of Energy Office of Science and the National Nuclear Security Administration.
 This material is based upon work supported by the U.S. Department of Energy, Office of Science, under contract number DE-AC02-06CH11357.
+
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://exanauts.github.io/ExaAdmm.jl/
+[build-url]: https://github.com/exanauts/ExaAdmm.jl/actions/workflows/ci.yml
+[build-stable-img]: https://github.com/exanauts/ExaAdmm.jl/actions/workflows/ci.yml/badge.svg

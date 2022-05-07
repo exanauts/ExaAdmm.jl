@@ -1,0 +1,5 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+ExaAdmm = "4d6a948c-1075-4240-a564-361a5d4e22a2"
+ExaTron = "28b18bf8-76f9-41ea-81fa-0f922810b349"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
