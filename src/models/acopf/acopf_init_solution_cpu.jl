@@ -4,23 +4,23 @@ function init_solution!(
     rho_pq::Float64, rho_va::Float64
 )
 
-    ngen = model.ngen
-    nline = model.nline
+    ngen = model.grid_data.ngen
+    nline = model.grid_data.nline
 
-    brBusIdx = model.brBusIdx
-    Vmax = model.Vmax; Vmin = model.Vmin
-    YffR = model.YffR; YffI = model.YffI
-    YttR = model.YttR; YttI = model.YttI
-    YftR = model.YftR; YftI = model.YftI
-    YtfR = model.YtfR; YtfI = model.YtfI
+    brBusIdx = model.grid_data.brBusIdx
+    Vmax = model.grid_data.Vmax; Vmin = model.grid_data.Vmin
+    YffR = model.grid_data.YffR; YffI = model.grid_data.YffI
+    YttR = model.grid_data.YttR; YttI = model.grid_data.YttI
+    YftR = model.grid_data.YftR; YftI = model.grid_data.YftI
+    YtfR = model.grid_data.YtfR; YtfI = model.grid_data.YtfI
 
     fill!(sol, 0.0)
     sol.rho .= rho_pq
 
     for g=1:ngen
         pg_idx = model.gen_start + 2*(g-1)
-        sol.v_curr[pg_idx] = 0.5*(model.pgmin[g] + model.pgmax[g])
-        sol.v_curr[pg_idx+1] = 0.5*(model.qgmin[g] + model.qgmax[g])
+        sol.v_curr[pg_idx] = 0.5*(model.grid_data.pgmin[g] + model.grid_data.pgmax[g])
+        sol.v_curr[pg_idx+1] = 0.5*(model.grid_data.qgmin[g] + model.grid_data.qgmax[g])
     end
 
     for l=1:nline
