@@ -11,6 +11,9 @@ on:
 
 jobs:
   test-github-cpuonly:
+    env:
+      DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -26,6 +29,7 @@ jobs:
       - run: julia --project deps/deps.jl
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
+      - run: julia --project=docs/ docs/make.jl
 
   test-moonshot:
     env:
