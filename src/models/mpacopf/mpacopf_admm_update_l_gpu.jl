@@ -9,7 +9,7 @@ function admm_update_l(
     end
     for i=2:mod.len_horizon
         submod, sol_ramp = mod.models[i], mod.solution[i]
-        ltime = CUDA.@timed @cuda threads=64 blocks=(div(submod.ngen-1, 64)+1) update_l_kernel(submod.ngen, sol_ramp.l_curr, sol_ramp.z_curr, sol_ramp.lz, par.beta)
+        ltime = CUDA.@timed @cuda threads=64 blocks=(div(submod.grid_data.ngen-1, 64)+1) update_l_kernel(submod.grid_data.ngen, sol_ramp.l_curr, sol_ramp.z_curr, sol_ramp.lz, par.beta)
         submod.info.time_l_update += ltime.time
     end
     return

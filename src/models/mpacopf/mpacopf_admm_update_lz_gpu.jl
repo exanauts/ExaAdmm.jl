@@ -9,7 +9,7 @@ function admm_update_lz(
     end
     for i=2:mod.len_horizon
         submod, sol_ramp = mod.models[i], mod.solution[i]
-        lztime = CUDA.@timed @cuda threads=64 blocks=(div(submod.ngen-1, 64)+1) update_lz_kernel(submod.ngen, par.MAX_MULTIPLIER, sol_ramp.z_curr, sol_ramp.lz, par.beta)
+        lztime = CUDA.@timed @cuda threads=64 blocks=(div(submod.grid_data.ngen-1, 64)+1) update_lz_kernel(submod.grid_data.ngen, par.MAX_MULTIPLIER, sol_ramp.z_curr, sol_ramp.lz, par.beta)
         submod.info.time_lz_update += lztime.time
     end
     return

@@ -27,8 +27,8 @@ function admm_update_z(
     end
     for i=2:mod.len_horizon
         submod, sol_ramp = mod.models[i-1], mod.solution[i]
-        ztime = CUDA.@timed @cuda threads=64 blocks=(div(submod.ngen-1, 64)+1) mpacopf_update_z_kernel(
-            submod.ngen, submod.gen_start, sol_ramp.u_curr, submod.solution.v_curr, sol_ramp.z_curr,
+        ztime = CUDA.@timed @cuda threads=64 blocks=(div(submod.grid_data.ngen-1, 64)+1) mpacopf_update_z_kernel(
+            submod.grid_data.ngen, submod.gen_start, sol_ramp.u_curr, submod.solution.v_curr, sol_ramp.z_curr,
             sol_ramp.l_curr, sol_ramp.rho, sol_ramp.lz, par.beta
         )
         submod.info.time_z_update += ztime.time
