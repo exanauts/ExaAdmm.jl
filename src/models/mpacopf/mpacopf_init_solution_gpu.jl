@@ -23,8 +23,8 @@ function init_solution!(
         fill!(sol[i], 0.0)
         sol[i].rho .= rho_pq
         if i > 1
-            CUDA.@sync @cuda threads=64 blocks=(div(mod.models[i].ngen-1,64)+1) init_ramp_solution_kernel(
-                mod.models[i].ngen, mod.models[i].gen_start,
+            CUDA.@sync @cuda threads=64 blocks=(div(mod.models[i].grid_data.ngen-1,64)+1) init_ramp_solution_kernel(
+                mod.models[i].grid_data.ngen, mod.models[i].gen_start,
                 sol[i].u_curr, sol[i].s_curr,
                 mod.models[i].solution.u_curr, mod.models[i-1].solution.v_curr
             )

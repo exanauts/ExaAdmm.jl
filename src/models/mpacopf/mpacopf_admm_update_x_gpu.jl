@@ -5,25 +5,25 @@ function mpacopf_admm_update_x_gen(
     par, info = env.params, mod.info
 
     shmem_size = env.params.gen_shmem_size
-    ngen = mod.models[1].ngen
+    ngen = mod.models[1].grid_data.ngen
     acopf_admm_update_x_gen(env, mod.models[1], mod.models[1].gen_solution)
 
     for i=2:mod.len_horizon
-        submod, subsol, sol_ramp = mod.models[i], mod.models[i].solution, mod.solution[i]
+        submod, subsol, sol_ramp, subdata = mod.models[i], mod.models[i].solution, mod.solution[i], mod.models[i].grid_data
         time_gen = @timed begin
 
         @cuda threads=32 blocks=ngen shmem=shmem_size auglag_generator_kernel(
-            3, submod.ngen, submod.gen_start,
+            3, subdata.ngen, submod.gen_start,
             info.inner, par.max_auglag, par.mu_max, 1.0,
             subsol.u_curr, subsol.v_curr, subsol.z_curr,
             subsol.l_curr, subsol.rho,
             sol_ramp.u_curr, mod.models[i-1].solution.v_curr, sol_ramp.z_curr,
             sol_ramp.l_curr, sol_ramp.rho, sol_ramp.s_curr,
             submod.gen_membuf,
-            submod.pgmin, submod.pgmax,
-            submod.qgmin, submod.qgmax,
-            submod.ramp_rate,
-            submod.c2, submod.c1, submod.c0, submod.baseMVA)
+            subdata.pgmin, subdata.pgmax,
+            subdata.qgmin, subdata.qgmax,
+            subdata.ramp_rate,
+            subdata.c2, subdata.c1, subdata.c0, subdata.baseMVA)
         CUDA.synchronize()
         end
 

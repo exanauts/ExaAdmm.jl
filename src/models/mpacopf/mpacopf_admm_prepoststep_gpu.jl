@@ -46,7 +46,7 @@ function admm_poststep(
     end
 
     nvar = mod.models[1].nvar
-    ngen = mod.models[1].ngen
+    ngen = mod.models[1].grid_data.ngen
     u_curr = zeros(nvar)
     u_prev = zeros(nvar)
     ramp_rate = zeros(ngen)
@@ -54,7 +54,7 @@ function admm_poststep(
     for i=2:mod.len_horizon
         copyto!(u_curr, mod.models[i].solution.u_curr)
         copyto!(u_prev, mod.models[i-1].solution.u_curr)
-        copyto!(ramp_rate, mod.models[i].ramp_rate)
+        copyto!(ramp_rate, mod.models[i].grid_data.ramp_rate)
         mod.models[i].info.user.err_ramp = check_ramp_violations(mod.models[i], u_curr, u_prev, ramp_rate)
     end
 
@@ -121,7 +121,7 @@ function admm_poststep(
     end
 
     nvar = mod.models[1].nvar
-    ngen = mod.models[1].ngen
+    ngen = mod.models[1].grid_data.ngen
     u_curr = zeros(nvar)
     u_prev = zeros(nvar)
     ramp_rate = zeros(ngen)
@@ -129,7 +129,7 @@ function admm_poststep(
     for i=2:mod.len_horizon
         copyto!(u_curr, mod.models[i].solution.u_curr)
         copyto!(u_prev, mod.models[i-1].solution.u_curr)
-        copyto!(ramp_rate, mod.models[i].ramp_rate)
+        copyto!(ramp_rate, mod.models[i].grid_data.ramp_rate)
         mod.models[i].info.user.err_ramp = check_ramp_violations(mod.models[i], u_curr, u_prev, ramp_rate)
     end
 

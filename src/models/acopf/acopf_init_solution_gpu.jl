@@ -51,11 +51,13 @@ function init_solution!(
     fill!(sol, 0.0)
     sol.rho .= rho_pq
 
-    @cuda threads=64 blocks=(div(model.ngen-1,64)+1) init_generator_kernel_one_level(model.ngen, model.gen_start,
-                    model.pgmax, model.pgmin, model.qgmax, model.qgmin, sol.v_curr)
-    @cuda threads=64 blocks=(div(model.nline-1,64)+1) init_branch_bus_kernel_one_level(model.nline, model.line_start, rho_va,
-                model.brBusIdx, model.Vmax, model.Vmin, model.YffR, model.YffI, model.YftR, model.YftI,
-                model.YtfR, model.YtfI, model.YttR, model.YttI, sol.u_curr, sol.v_curr, sol.rho)
+    data = model.grid_data
+
+    @cuda threads=64 blocks=(div(data.ngen-1,64)+1) init_generator_kernel_one_level(data.ngen, model.gen_start,
+                    data.pgmax, data.pgmin, data.qgmax, data.qgmin, sol.v_curr)
+    @cuda threads=64 blocks=(div(data.nline-1,64)+1) init_branch_bus_kernel_one_level(data.nline, model.line_start, rho_va,
+                data.brBusIdx, data.Vmax, data.Vmin, data.YffR, data.YffI, data.YftR, data.YftI,
+                data.YtfR, data.YtfI, data.YttR, data.YttI, sol.u_curr, sol.v_curr, sol.rho)
     CUDA.synchronize()
 
 end
