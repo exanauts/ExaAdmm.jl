@@ -81,4 +81,75 @@ mutable struct GridData{T,TD,TI,TM} <: AbstractGridData{T,TD,TI,TM}
 
         return grid
     end
+
+    function GridData{T,TD,TI,TM}() where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
+        grid = new{T,TD,TI,TM}()
+        return grid
+    end
+end
+
+"""
+This is to share grid data between models. Some fields that could be modified are deeply copied.
+"""
+function Base.copy(ref::GridData{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+    data = GridData{T,TD,TI,TM}()
+
+    data.baseMVA = ref.baseMVA
+    data.droop = ref.droop
+    data.ngen = ref.ngen
+    data.nline = ref.nline
+    data.nbus = ref.nbus
+    data.nstorage = ref.nstorage
+
+    data.pgmin = ref.pgmin
+    data.pgmax = ref.pgmax
+    data.qgmin = ref.qgmin
+    data.qgmax = ref.qgmax
+    data.vgmin = ref.vgmin
+    data.vgmax = ref.vgmax
+    data.alpha = ref.alpha
+    data.ramp_rate = ref.ramp_rate
+    data.pg_setpoint = ref.pg_setpoint
+    data.vm_setpoint = ref.vm_setpoint
+    data.c2 = ref.c2
+    data.c1 = ref.c1
+    data.c0 = ref.c0
+    data.YshR = ref.YshR
+    data.YshI = ref.YshI
+    data.YffR = ref.YffR
+    data.YffI = ref.YffI
+    data.YftR = ref.YftR
+    data.YftI = ref.YftI
+    data.YttR = ref.YttR
+    data.YttI = ref.YttI
+    data.YtfR = ref.YtfR
+    data.YtfI = ref.YtfI
+    data.FrVmBound = ref.FrVmBound
+    data.ToVmBound = ref.ToVmBound
+    data.FrVaBound = ref.FrVaBound
+    data.ToVaBound = ref.ToVaBound
+    data.rateA = ref.rateA
+    data.FrStart = ref.FrStart
+    data.FrIdx = ref.FrIdx
+    data.ToStart = ref.ToStart
+    data.ToIdx = ref.ToIdx
+    data.GenStart = ref.GenStart
+    data.GenIdx = ref.GenIdx
+    data.Pd = copy(ref.Pd)
+    data.Qd = copy(ref.Qd)
+    data.Vmin = ref.Vmin
+    data.Vmax = ref.Vmax
+    data.brBusIdx = ref.brBusIdx
+
+    data.StoStart = ref.StoStart
+    data.StoIdx = ref.StoIdx
+    data.chg_min = ref.chg_min
+    data.chg_max = ref.chg_max
+    data.eta_chg = ref.eta_chg
+    data.eta_dis = ref.eta_dis
+    data.energy_min = ref.energy_min
+    data.energy_max = ref.energy_max
+    data.energy_setpoint = ref.energy_setpoint
+
+    return data
 end

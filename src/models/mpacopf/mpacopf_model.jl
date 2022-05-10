@@ -73,23 +73,23 @@ mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         mod.models = Vector{ModelAcopf{T,TD,TI,TM}}(undef, num_periods)
         mod.models[1] = ModelAcopf{T,TD,TI,TM}(env; ramp_ratio=ramp_ratio)
-        mod.models[1].gen_membuf = TM(undef, (12,mod.models[1].ngen))
+        mod.models[1].gen_membuf = TM(undef, (12,mod.models[1].grid_data.ngen))
         fill!(mod.models[1].gen_membuf, 0.0)
         for i=2:num_periods
             mod.models[i] = copy(mod.models[1])
-            mod.models[i].gen_membuf = TM(undef, (8,mod.models[i].ngen))
+            mod.models[i].gen_membuf = TM(undef, (8,mod.models[i].grid_data.ngen))
             fill!(mod.models[i].gen_membuf, 0.0)
         end
         for (i,t) in enumerate(start_period:end_period)
-            mod.models[i].Pd .= env.load.pd[:,t]
-            mod.models[i].Qd .= env.load.qd[:,t]
+            mod.models[i].grid_data.Pd .= env.load.pd[:,t]
+            mod.models[i].grid_data.Qd .= env.load.qd[:,t]
         end
         n = mod.models[1].n
         env.params.shmem_size = sizeof(Float64)*(14*n+3*n^2) + sizeof(Int)*(4*n)
         env.params.gen_shmem_size = sizeof(Float64)*(14*3+3*3^2) + sizeof(Int)*(4*3)
 
         mod.solution = Vector{SolutionRamping{T,TD}}(undef, num_periods)
-        ngen = mod.models[1].ngen
+        ngen = mod.models[1].grid_data.ngen
         for i=1:num_periods
             mod.solution[i] = SolutionRamping{T,TD}(ngen, ngen, i, num_periods)
         end
@@ -99,7 +99,7 @@ mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         if num_periods == 1
             mod.nvar = mod.models[1].nvar
         else
-            mod.nvar = mod.models[1].nvar + mod.models[1].ngen
+            mod.nvar = mod.models[1].nvar + mod.models[1].grid_data.ngen
         end
 
         mod.info = IterationInformation{ComponentInformation}()
@@ -129,20 +129,20 @@ mutable struct ModelMpacopfLoose{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         mod.models = Vector{ModelAcopf{T,TD,TI,TM}}(undef, num_periods)
         mod.models[1] = Model{T,TD,TI,TM}(env; ramp_ratio=ramp_ratio)
-        mod.models[1].gen_membuf = TM(undef, (8,mod.models[1].ngen))
+        mod.models[1].gen_membuf = TM(undef, (8,mod.models[1].grid_data.ngen))
         fill!(mod.models[1].gen_membuf, 0.0)
         for i=2:num_periods
             mod.models[i] = copy(mod.models[1])
-            mod.models[i].gen_membuf = TM(undef, (8,mod.models[i].ngen))
+            mod.models[i].gen_membuf = TM(undef, (8,mod.models[i].grid_data.ngen))
             fill!(mod.models[i].gen_membuf, 0.0)
         end
         for (i,t) in enumerate(start_period:end_period)
-            mod.models[i].Pd .= env.load.pd[:,t]
-            mod.models[i].Qd .= env.load.qd[:,t]
+            mod.models[i].grid_data.Pd .= env.load.pd[:,t]
+            mod.models[i].grid_data.Qd .= env.load.qd[:,t]
         end
 
         mod.solution = Vector{SolutionRamping{T,TD}}(undef, num_periods)
-        ngen = mod.models[1].ngen
+        ngen = mod.models[1].grid_data.ngen
         mod.nvar = 2*ngen*(num_periods-1)
         for i=1:num_periods
             mod.solution[i] = SolutionRamping{T,TD}(ngen, 2*ngen, i, num_periods)

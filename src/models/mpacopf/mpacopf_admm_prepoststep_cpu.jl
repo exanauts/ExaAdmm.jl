@@ -36,7 +36,7 @@ end
 
 function check_ramp_violations(mod::ModelAcopf, u_curr::Vector{Float64}, u_prev::Vector{Float64}, ramp_rate::Vector{Float64})
     max_viol = 0.0
-    for g=1:mod.ngen
+    for g=1:mod.grid_data.ngen
         pg_idx = mod.gen_start + 2*(g-1)
         max_viol = max(max_viol, max(0.0, -(ramp_rate[g]-abs(u_curr[pg_idx]-u_prev[pg_idx]))))
     end
@@ -51,7 +51,7 @@ function admm_poststep(
         admm_poststep(env, mod.models[i])
     end
     for i=2:mod.len_horizon
-        mod.models[i].info.user.err_ramp = check_ramp_violations(mod.models[i], mod.models[i].solution.u_curr, mod.models[i-1].solution.u_curr, mod.models[i].ramp_rate)
+        mod.models[i].info.user.err_ramp = check_ramp_violations(mod.models[i], mod.models[i].solution.u_curr, mod.models[i-1].solution.u_curr, mod.models[i].grid_data.ramp_rate)
     end
 
     info = mod.info

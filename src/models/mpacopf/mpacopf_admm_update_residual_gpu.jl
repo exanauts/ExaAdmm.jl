@@ -34,10 +34,10 @@ function admm_update_residual(
 
     for i=2:mod.len_horizon
         submod, sol_ramp = mod.models[i-1], mod.solution[i]
-        @cuda threads=64 blocks=(div(submod.ngen-1, 64)+1) mpacopf_compute_primal_residual_kernel(submod.ngen, submod.gen_start, sol_ramp.rp, sol_ramp.u_curr, submod.solution.v_curr, sol_ramp.z_curr)
-        @cuda threads=64 blocks=(div(submod.ngen-1, 64)+1) vector_difference(submod.ngen, sol_ramp.rd, sol_ramp.z_curr, sol_ramp.z_prev)
+        @cuda threads=64 blocks=(div(submod.grid_data.ngen-1, 64)+1) mpacopf_compute_primal_residual_kernel(submod.grid_data.ngen, submod.gen_start, sol_ramp.rp, sol_ramp.u_curr, submod.solution.v_curr, sol_ramp.z_curr)
+        @cuda threads=64 blocks=(div(submod.grid_data.ngen-1, 64)+1) vector_difference(submod.grid_data.ngen, sol_ramp.rd, sol_ramp.z_curr, sol_ramp.z_prev)
         CUDA.synchronize()
-        @cuda threads=64 blocks=(div(submod.ngen-1, 64)+1) vector_difference(submod.ngen, sol_ramp.Ax_plus_By, sol_ramp.rp, sol_ramp.z_curr)
+        @cuda threads=64 blocks=(div(submod.grid_data.ngen-1, 64)+1) vector_difference(submod.grid_data.ngen, sol_ramp.Ax_plus_By, sol_ramp.rp, sol_ramp.z_curr)
 
         mod.models[i].info.primres = sqrt(mod.models[i].info.primres^2 + CUDA.norm(sol_ramp.rp)^2)
         mod.models[i].info.dualres = sqrt(mod.models[i].info.dualres^2 + CUDA.norm(sol_ramp.rd)^2)

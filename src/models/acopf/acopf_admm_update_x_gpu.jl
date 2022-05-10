@@ -3,8 +3,8 @@ function acopf_admm_update_x_gen(
     mod::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
     gen_solution::EmptyGeneratorSolution{Float64,CuArray{Float64,1}}
 )
-    sol, info = mod.solution, mod.info
-    time_gen = generator_kernel_two_level(mod, mod.baseMVA, sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho)
+    sol, info, data = mod.solution, mod.info, mod.grid_data
+    time_gen = generator_kernel_two_level(mod, data.baseMVA, sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho)
     info.user.time_generators += time_gen.time
     info.time_x_update += time_gen.time
 end
@@ -13,7 +13,7 @@ function acopf_admm_update_x_line(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
     mod::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
-    par, sol, info = env.params, mod.solution, mod.info
+    par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
     shmem_size = env.params.shmem_size
 
 #=
@@ -23,18 +23,18 @@ function acopf_admm_update_x_line(
     @printf("GPU x_line_update\n")
 =#
     if env.use_linelimit
-        time_br = CUDA.@timed @cuda threads=32 blocks=mod.nline shmem=shmem_size auglag_linelimit_two_level_alternative(
-                                            mod.n, mod.nline, mod.line_start,
+        time_br = CUDA.@timed @cuda threads=32 blocks=data.nline shmem=shmem_size auglag_linelimit_two_level_alternative(
+                                            mod.n, data.nline, mod.line_start,
                                             info.inner, par.max_auglag, par.mu_max, par.scale,
                                             sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho,
-                                            par.shift_lines, mod.membuf, mod.YffR, mod.YffI, mod.YftR, mod.YftI,
-                                            mod.YttR, mod.YttI, mod.YtfR, mod.YtfI,
-                                            mod.FrVmBound, mod.ToVmBound, mod.FrVaBound, mod.ToVaBound)
+                                            par.shift_lines, mod.membuf, data.YffR, data.YffI, data.YftR, data.YftI,
+                                            data.YttR, data.YttI, data.YtfR, data.YtfI,
+                                            data.FrVmBound, data.ToVmBound, data.FrVaBound, data.ToVaBound)
     else
-        time_br = CUDA.@timed @cuda threads=32 blocks=mode.nline shmem=shmem_size polar_kernel_two_level_alternative(mod.n, mod.nline, mod.line_start, par.scale,
+        time_br = CUDA.@timed @cuda threads=32 blocks=data.nline shmem=shmem_size polar_kernel_two_level_alternative(mod.n, data.nline, mod.line_start, par.scale,
                                                         sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho,
-                                                        par.shift_lines, mod.membuf, mod.YffR, mod.YffI, mod.YftR, mod.YftI,
-                                                        mod.YttR, mod.YttI, mod.YtfR, mod.YtfI, mod.FrVmBound, mod.ToVmBound)
+                                                        par.shift_lines, mod.membuf, data.YffR, data.YffI, data.YftR, data.YftI,
+                                                        data.YttR, data.YttI, data.YtfR, data.YtfI, data.FrVmBound, data.ToVmBound)
     end
 #=
     @printf("GPU x_line_update DONE\n")

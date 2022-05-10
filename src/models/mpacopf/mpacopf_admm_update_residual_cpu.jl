@@ -21,7 +21,7 @@ function admm_update_residual(
 
     for i=2:mod.len_horizon
         submod, sol_ramp = mod.models[i-1], mod.solution[i]
-        v_curr = @view submod.solution.v_curr[submod.gen_start:2:submod.gen_start+2*submod.ngen-1]
+        v_curr = @view submod.solution.v_curr[submod.gen_start:2:submod.gen_start+2*submod.grid_data.ngen-1]
         sol_ramp.rp .= sol_ramp.u_curr .- v_curr .+ sol_ramp.z_curr
         sol_ramp.rd .= sol_ramp.z_curr .- sol_ramp.z_prev
         sol_ramp.Ax_plus_By .= sol_ramp.rp .- sol_ramp.z_curr

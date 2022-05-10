@@ -9,7 +9,7 @@ function init_solution!(
         fill!(sol[i], 0.0)
         sol[i].rho .= rho_pq
         if i > 1
-            for g=1:mod.models[i].ngen
+            for g=1:mod.models[i].grid_data.ngen
                 gen_start = mod.models[i].gen_start
                 sol[i].u_curr[g] = mod.models[i-1].solution.v_curr[gen_start+2*(g-1)]
                 sol[i].s_curr[g] = mod.models[i].solution.u_curr[gen_start+2*(g-1)] - sol[i].u_curr[g]
@@ -30,7 +30,7 @@ function init_solution!(
 
     # Set initial point for ramp variables.
     for i=2:mod.len_horizon
-        for g=1:mod.models[i].ngen
+        for g=1:mod.models[i].grid_data.ngen
             gen_start = mod.models[i].gen_start
             sol[i].u_curr[g] = mod.models[i-1].solution.u_curr[gen_start+2*(g-1)]
             sol[i].v_curr[g] = mod.models[i-1].solution.u_curr[gen_start+2*(g-1)]

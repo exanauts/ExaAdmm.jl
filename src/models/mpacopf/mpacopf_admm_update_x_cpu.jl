@@ -10,18 +10,18 @@ function mpacopf_admm_update_x_gen(
 
     acopf_admm_update_x_gen(env, mod.models[1], mod.models[1].gen_solution)
     for i=2:mod.len_horizon
-        submod, subsol, sol_ramp = mod.models[i], mod.models[i].solution, mod.solution[i]
-        time_gen = @timed auglag_generator_kernel(3, submod.ngen, submod.gen_start,
+        submod, subsol, sol_ramp, subdata = mod.models[i], mod.models[i].solution, mod.solution[i], mod.models[i].grid_data
+        time_gen = @timed auglag_generator_kernel(3, subdata.ngen, submod.gen_start,
             info.inner, par.max_auglag, par.mu_max, 1.0,
             subsol.u_curr, subsol.v_curr, subsol.z_curr,
             subsol.l_curr, subsol.rho,
             sol_ramp.u_curr, mod.models[i-1].solution.v_curr, sol_ramp.z_curr,
             sol_ramp.l_curr, sol_ramp.rho, sol_ramp.s_curr,
             submod.gen_membuf,
-            submod.pgmin, submod.pgmax,
-            submod.qgmin, submod.qgmax,
-            submod.ramp_rate,
-            submod.c2, submod.c1, submod.c0, submod.baseMVA)
+            subdata.pgmin, subdata.pgmax,
+            subdata.qgmin, subdata.qgmax,
+            subdata.ramp_rate,
+            subdata.c2, subdata.c1, subdata.c0, subdata.baseMVA)
 
         submod.info.time_x_update += time_gen.time
         submod.info.user.time_generators += time_gen.time
@@ -54,7 +54,7 @@ function acopf_admm_update_x_gen_first(
 )
     u, v, z, l, rho = mod.solution.u_curr, mod.solution.v_curr, mod.solution.z_curr, mod.solution.l_curr, mod.solution.rho
     r_v, r_z, r_l, r_rho = sol_ramp.v_curr, sol_ramp.z_curr, sol_ramp.l_curr, sol_ramp.rho
-    c2, c1, baseMVA = mod.c2, mod.c1, mod.baseMVA
+    c2, c1, baseMVA = mod.grid_data.c2, mod.grid_data.c1, mod.grid_data.baseMVA
 
     for I=1:mod.ngen
         pg_idx = mod.gen_start + 2*(I-1)
