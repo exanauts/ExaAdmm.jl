@@ -1,46 +1,34 @@
-## current main function (similar to solve_acopf) 
-# test each QP subproblem functions here 
-function solve_qpsub(case::String; case_format="matpower", verbose = 1
+function solve_qpsub(case::String;
+    case_format="matpower",
+    outer_iterlim=20, inner_iterlim=1000, rho_pq=400.0, rho_va=40000.0,
+    obj_scale=1.0, scale=1e-4, storage_ratio=0.0, storage_charge_max=1.0,
+    use_gpu=false, use_linelimit=true, use_projection=false, tight_factor=1.0,
+    outer_eps=2*1e-4, gpu_no=0, verbose=1
 )
-    # test each QP subproblem functions here 
-    T = Float64; TD = Array{Float64,1}; TI = Array{Int64,1}; TM = Array{Float64,2}; TS = Array{Float64,3}
+    T = Float64; TD = Array{Float64,1}; TI = Array{Int,1}; TM = Array{Float64,2}
+    if use_gpu
+        CUDA.device!(gpu_no)
+        TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
+    end
 
-    rho_pq=400.0; rho_va=40000.0 #Place Holder  
+    env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; case_format=case_format,
+            use_gpu=use_gpu, use_linelimit=use_linelimit, use_twolevel=false,
+            use_projection=use_projection, tight_factor=tight_factor, gpu_no=gpu_no,
+            storage_ratio=storage_ratio, storage_charge_max=storage_charge_max,
+            verbose=verbose)
+    mod = ModelQpsub{T,TD,TI,TM}(env)
 
-    # env = AdmmEnvSQP{T,TD,TI,TM}(case; case_format=case_format, verbose = verbose) #new environ 
-    env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va) #old environ
-    mod_old = ModelAcopf{T,TD,TI,TM}(env) #old model help debug and understand 
-    
-    mod = ModelQpsub{T,TD,TI,TM,TS}(env)
+    env.params.scale = scale
+    env.params.obj_scale = obj_scale
+    env.params.outer_eps = outer_eps
+    env.params.outer_iterlim = outer_iterlim
+    env.params.inner_iterlim = inner_iterlim
+    env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
 
-    env2 = SolutionQP_gen{T,TD}(mod.ngen)
+    # admm_two_level(env, mod)
 
-    env3 = SolutionACOPF{T,TD}(mod.ngen)
+    # testing ADMM progress 
+    # admm_test(env,mod)
 
-    env4 = Lam_rho_pi_gen{T,TD}(mod.ngen)
-     
-    env5 = Coeff_SQP{T,TD,TM,TS}(mod.ngen,mod.nline,mod.nbus) 
-
-    env6 = SolutionQP_bus{T,TD}(mod.ngen, mod.nbus)
-
-    env7 = SolutionQP_br{T,TD}(mod.nline)
-
-    #generator 
-    println(mod.gen_qp)
-
-    tgen = generatorQP(env,mod)
-
-    println(mod.gen_qp)
-
-    #branch
-
-    #bus problem 
-    
-    return env, env2, env3, env4, env5, env6, env7, mod, tgen, mod_old 
+    return env, mod
 end
-
-## one_line_test 
-# env, env2, env3, env4, env5, env6, env7, mod, tgen, mod_old = ExaAdmm.solve_qpsub("case9.m");
-# ExaAdmm.generatorQP(env,mod)
-
-# env, mod = ExaAdmm.solve_acopf("case1354pegase.m");
