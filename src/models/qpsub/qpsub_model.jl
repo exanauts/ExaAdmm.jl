@@ -1,351 +1,134 @@
-## T = Float64; TD = Array{Float64,1}; TI = Array{Int64,1}; TM = Array{Float64,2}; TS = Array{Float64,3}
-
-##############
-# """
-# ParameterSQP
-
-# This contains the parameters used in SQP + ADMM algorithm.
-# """
-# mutable struct ParameterSQP
-#     trust_rad::Float64
-#     function ParameterSQP()
-#         par = new()
-#         # par.trust_rad = 1.0
-#         return par
-#     end
-# end
-
-##############
-# abstract type AbstractAdmmEnvSQP{T,TD,TI,TM} end
-# """
-#     AdmmEnv{T,TD,TI,TM}
-
-# This structure carries data source and ADMM parameters required.
-# """
-# mutable struct AdmmEnvSQP{T,TD,TI,TM} <: AbstractAdmmEnvSQP{T,TD,TI,TM}
-#     #grid info
-#     case::String
-#     data::OPFData  
-#     params::ParameterSQP
-#     #ParameterSQP
-
-#     function AdmmEnvSQP{T,TD,TI,TM}(
-#         case::String; case_format="matpower", verbose::Int=1
-#     )where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
-
-#     env = new{T,TD,TI,TM}()
-#     env.case = case
-#     env.data = opf_loaddata(env.case;
-#     VI=TI, VD=TD, case_format=case_format,verbose=verbose) 
-#     env.params = ParameterSQP()
-#       return env
-#     end
-# end
-
-
-############## append matrix type to AbstractSolution{T,TD}
-abstract type AbstractSolutionSQP{T,TD,TM,TS} end
-"""
-    SolutionACOPF{T,TD}
-
-This contains the current ACOPF solution from SQP solver 
-"""
-mutable struct SolutionACOPF{T,TD} <: AbstractSolution{T,TD}
-    #curr_sol_acopf
-    pg::TD
-    qg::TD
-    #curr_pi_acopf
-    function SolutionACOPF{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
-        sol = new{T,TD}(
-            TD(undef,ngen), #pg
-            TD(undef,ngen), #qg
-        )
-        fill!(sol, 0.0)
-        return sol
-    end
-end
-
-function Base.fill!(sol::SolutionACOPF, val)
-    fill!(sol.pg, val)
-    fill!(sol.qg, val)
-end
-
-"""
-    Coeff_SQP{T,TD}
-
-This contains the other coefficients from SQP solver (e.g., bounds on d_i, constraint coefficient, Hessian and linear term) 
-"""
-mutable struct Coeff_SQP{T,TD,TM,TS} <: AbstractSolutionSQP{T,TD,TM,TS}
-    #curr_read from SQP
-    #gen
-    dpg_min::TD
-    dpg_max::TD
-    dqg_max::TD
-    dqg_min::TD
-    Hpg::TM #hessian term for all pg; f = 1/2dHd + hd  
-    hpg::TD #linear term for all pg 
-
-    #line 6 variables in each line (i,j) [w_i w_j wRij wIij theta_i theta_j]
-    Hpij::TS #hessian term for all lines; f = 1/2dHd + hd   
-    hpij::TM #linear for all lines
-    dwRij_min::TD
-    dwRij_max::TD
-    dwIij_min::TD
-    dwIij_max::TD
-
-    #bus (share with line [w_i theta_i])
-    dwi_min::TD
-    dwi_max::TD
-    dthetai_min::TD
-    dthetai_max::TD
-
-
-    ## coefficient for linear equality 
-
-
-
-    function Coeff_SQP{T,TD,TM,TS}(ngen::Int64, nline::Int64, nbus::Int64) where {T, TD<:AbstractArray{T}, TM<:AbstractArray{T,2}, TS<:AbstractArray{T,3}}
-        sol = new{T,TD,TM,TS}(
-            #gen 
-            TD(undef,ngen), #dpg_min
-            TD(undef,ngen), #dpg_max
-            TD(undef,ngen), #dqg_min
-            TD(undef,ngen), #dqg_max
-            TM(undef,ngen,ngen), #Hpg
-            TD(undef,ngen), #hpg
-
-            #line
-            TS(undef,6,6,nline), #Hpij
-            TM(undef,6,nline), #hpij
-            TD(undef,nline), #dwRij_min
-            TD(undef,nline), #dwRij_max
-            TD(undef,nline), #dwIij_min
-            TD(undef,nline), #dwIij_max
-
-            #bus
-            TD(undef,nbus), #dwi_min
-            TD(undef,nbus), #dwi_max
-            TD(undef,nbus), #dthetai_min
-            TD(undef,nbus) #dthetai_max
-        )
-        fill!(sol, 0.0, 1.0)
-        return sol
-    end
-end
-
-function Base.fill!(sol::Coeff_SQP, valmin, valmax)
-    #gen 
-    fill!(sol.dpg_min, valmin) #dpg_min
-    fill!(sol.dpg_max, valmax) #dpg_max
-    fill!(sol.dqg_min, valmin) #dqg_min
-    fill!(sol.dqg_max, valmax) #dqg_max
-    fill!(sol.Hpg,valmax) #Hpg
-    fill!(sol.hpg,valmax) #hpg
-
-    #line
-    fill!(sol.Hpij,valmax) #Hpij
-    fill!(sol.hpij,valmax) #hpij 
-    fill!(sol.dwRij_min,valmin) #dwRij_min
-    fill!(sol.dwRij_max,valmax) #dwRij_max
-    fill!(sol.dwIij_min,valmin) #dwIij_min
-    fill!(sol.dwIij_max,valmax) #dwIij_max
-
-    #bus
-    fill!(sol.dwi_min,valmin) #dwi_min
-    fill!(sol.dwi_max,valmax) #dwi_max
-    fill!(sol.dthetai_min,valmin) #dthetai_min
-    fill!(sol.dthetai_max,valmax) #dthetai_max
-end
-
-
-
-"""
-    SolutionQP_gen{T,TD}
-
-This contains the solutions of ALL generator QP subproblem 
-"""
-mutable struct SolutionQP_gen{T,TD} <: AbstractSolution{T,TD}
-    #curr_sol_genQP
-    dpg::TD
-    dqg::TD
-
-    function SolutionQP_gen{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
-        sol = new{T,TD}(
-            TD(undef,ngen), #dpg
-            TD(undef,ngen), #dqg
-        )
-        fill!(sol, 0.0)
-        return sol
-    end
-end
-
-function Base.fill!(sol::SolutionQP_gen, val)
-    fill!(sol.dpg, val)
-    fill!(sol.dqg, val)
-end
-
-"""
-    SolutionQP_bus{T,TD}
-
-This contains the solutions of ALL bus QP subproblem 
-"""
-mutable struct SolutionQP_bus{T,TD} <: AbstractSolution{T,TD}
-    #curr_sol_busQP
-    #note: each bus may contain multiple generators but each generator is only copied once
-    dpg_c::TD
-    dqg_c::TD
-    dwi::TD
-    dthetai::TD 
-    # dwRij_i_c::TM
-    # dwRji_j_c::TM
-    # dwIij_i_c::TM
-    # dwIji_j_c::TM
-
-    function SolutionQP_bus{T,TD}(ngen::Int64,nbus::Int64) where {T, TD<:AbstractArray{T}}
-        sol = new{T,TD}(
-            TD(undef,ngen), #dpg_c
-            TD(undef,ngen), #dqg_c
-            TD(undef,nbus), #dwi
-            TD(undef,nbus) #dtheta
-        )
-        fill!(sol, 0.0)
-        return sol
-    end
-end
-
-function Base.fill!(sol::SolutionQP_bus, val)
-    fill!(sol.dpg_c, val) #dpg_c
-    fill!(sol.dqg_c, val) #dqg_c
-    fill!(sol.dwi, val) #dwi
-    fill!(sol.dthetai, val) #dthetai
-end
-
-"""
-    SolutionQP_br{T,TD}
-
-This contains the solutions of ALL branch QP subproblem 
-"""
-mutable struct SolutionQP_br{T,TD} <: AbstractSolution{T,TD}
-    #curr_sol_brQP
-    dwRij::TD
-    dwIij::TD
-    
-    function SolutionQP_br{T,TD}(nline::Int64) where {T, TD<:AbstractArray{T}}
-        sol = new{T,TD}(
-            TD(undef,nline), #dwRij
-            TD(undef,nline), #dwIij
-        )
-        fill!(sol, 0.0)
-        return sol
-    end   
-end
-
-function Base.fill!(sol::SolutionQP_br, val)
-    fill!(sol.dwRij, val) #dpg_c
-    fill!(sol.dwIij, val) #dqg_c
-end
-
-##############
-"""
-lam_rho_pi_gen
-
-This contains the rho and lamb parameters used in genQP and busQP.
-"""
-mutable struct Lam_rho_pi_gen{T,TD} <: AbstractSolution{T,TD}
-    #curr_sol_genQP
-    lam_pg::TD
-    lam_qg::TD
-    rho_pg::TD
-    rho_qg::TD
-
-    function Lam_rho_pi_gen{T,TD}(ngen::Int64) where {T, TD<:AbstractArray{T}}
-        sol = new{T,TD}(
-            TD(undef,ngen), #lam_pg
-            TD(undef,ngen), #lam_qg
-            TD(undef,ngen), #rho_pg
-            TD(undef,ngen), #rho_qg
-        )
-        fill!(sol, 1.0)
-        return sol
-    end
-end
-
-function Base.fill!(sol::Lam_rho_pi_gen, val)
-    fill!(sol.lam_pg, val)
-    fill!(sol.lam_qg, val)
-    fill!(sol.rho_pg, val)
-    fill!(sol.rho_qg, val)
-end
-
-
-
-##############
-abstract type AbstractOPFModelSQP{T,TD,TI,TM,TS} end
-
 """
     Model{T,TD,TI}
 
-This contains the parameters and solutions in all problem solving.
+This contains the parameters specific to ACOPF model instance.
 """
-mutable struct ModelQpsub{T,TD,TI,TM,TS} <: AbstractOPFModelSQP{T,TD,TI,TM,TS}
-    #params
-    ngen::Int64
-    nline::Int64
-    nbus::Int64
+mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
+    info::IterationInformation
+    solution::AbstractSolution{T,TD}
 
-    c2::TD
-    c1::TD
-    c0::TD  
+    # Used for multiple dispatch for multi-period case.
+    gen_solution::AbstractSolution{T,TD}
 
-    #SolutionACOPF 
-    acopf_sol::AbstractSolution{T,TD}
+    n::Int
+    nvar::Int
 
-    #SolutionQP
-    gen_qp::AbstractSolution{T,TD}
-    bus_qp::AbstractSolution{T,TD}
-    br_qp::AbstractSolution{T,TD}
+    gen_start::Int
+    line_start::Int
 
-    #lamda_rho_pi
-    lam_rho_pi_gen::AbstractSolution{T,TD}
+    pgmin_curr::TD   # taking ramping into account for rolling horizon
+    pgmax_curr::TD   # taking ramping into account for rolling horizon
 
-    #coeff from SQP
-    coeff_sqp::AbstractSolutionSQP{T,TD,TM,TS}
-    
-    
+    grid_data::GridData{T,TD,TI,TM}
 
+    membuf::TM      # memory buffer for line kernel
+    gen_membuf::TM  # memory buffer for generator kernel
 
-    function ModelQpsub{T,TD,TI,TM,TS}() where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2},TS<:AbstractArray{T,3}}
-        return new{T,TD,TI,TM,TS}()
+    # Two-Level ADMM
+    nvar_u::Int
+    nvar_v::Int
+    bus_start::Int # this is for varibles of type v.
+
+    # Padded sizes for MPI
+    nline_padded::Int
+    nvar_u_padded::Int
+    nvar_padded::Int
+
+    function ModelQpsub{T,TD,TI,TM}() where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+        return new{T,TD,TI,TM}()
     end
 
-    # function ModelQpsub{T,TD,TI,TM}(env::AdmmEnvSQP{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}} #new environ
-    function ModelQpsub{T,TD,TI,TM,TS}(env::AdmmEnv{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2},TS<:AbstractArray{T,3}} #old environ
-        model = new{T,TD,TI,TM,TS}()
+    function ModelQpsub{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}; ramp_ratio=0.02) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+        model = new{T,TD,TI,TM}()
 
-        #params
-        model.ngen = length(env.data.generators)
-        model.nline = length(env.data.lines)
-        model.nbus = length(env.data.buses)
+        model.grid_data = GridData{T,TD,TI,TM}(env)
 
-        model.c0 = Float64[env.data.generators[g].coeff[3] for g in 1:model.ngen]
-        model.c1 = Float64[env.data.generators[g].coeff[2] for g in 1:model.ngen]
-        model.c2 = Float64[env.data.generators[g].coeff[1] for g in 1:model.ngen]
+        model.n = (env.use_linelimit == true) ? 6 : 4
+        model.nline_padded = model.grid_data.nline
 
-        #solution acopf
-        model.acopf_sol = SolutionACOPF{T,TD}(model.ngen)
+        # Memory space is padded for the lines as a multiple of # processes.
+        if env.use_mpi
+            nprocs = MPI.Comm_size(env.comm)
+            model.nline_padded = nprocs * div(model.grid_data.nline, nprocs, RoundUp)
+        end
+
+        model.nvar = 2*model.grid_data.ngen + 8*model.grid_data.nline
+        model.nvar_padded = model.nvar + 8*(model.nline_padded - model.grid_data.nline)
+        model.gen_start = 1
+        model.line_start = 2*model.grid_data.ngen + 1
         
 
-        #solution qp
-        model.gen_qp = SolutionQP_gen{T,TD}(model.ngen)
-        model.bus_qp = SolutionQP_bus{T,TD}(model.ngen, model.nbus)
-        model.br_qp = SolutionQP_br{T,TD}(model.nline)
+        model.pgmin_curr = TD(undef, model.grid_data.ngen)
+        model.pgmax_curr = TD(undef, model.grid_data.ngen)
+        copyto!(model.pgmin_curr, model.grid_data.pgmin)
+        copyto!(model.pgmax_curr, model.grid_data.pgmax)
 
-        #lambda_rho_pi
-        model.lam_rho_pi_gen = Lam_rho_pi_gen{T,TD}(model.ngen)
+        model.grid_data.ramp_rate = TD(undef, model.grid_data.ngen)
+        model.grid_data.ramp_rate .= ramp_ratio.*model.grid_data.pgmax
 
-        #coeff from SQP 
-        model.coeff_sqp = Coeff_SQP{T,TD,TM,TS}(model.ngen, model.nline, model.nbus)
+        if env.params.obj_scale != 1.0
+            model.grid_data.c2 .*= env.params.obj_scale
+            model.grid_data.c1 .*= env.params.obj_scale
+            model.grid_data.c0 .*= env.params.obj_scale
+        end
 
-        return model 
+        # These are only for two-level ADMM.
+        model.nvar_u = 2*model.grid_data.ngen + 8*model.grid_data.nline
+        model.nvar_u_padded = model.nvar_u + 8*(model.nline_padded - model.grid_data.nline)
+        model.nvar_v = 2*model.grid_data.ngen + 4*model.grid_data.nline + 2*model.grid_data.nbus
+        model.bus_start = 2*model.grid_data.ngen + 4*model.grid_data.nline + 1
+        if env.use_twolevel
+            model.nvar = model.nvar_u + model.nvar_v
+            model.nvar_padded = model.nvar_u_padded + model.nvar_v
+        end
+
+        # Memory space is allocated based on the padded size.
+        model.solution = ifelse(env.use_twolevel,
+            SolutionTwoLevel{T,TD}(model.nvar_padded, model.nvar_v, model.nline_padded),
+            SolutionOneLevel{T,TD}(model.nvar_padded))
+        init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va)
+        model.gen_solution = EmptyGeneratorSolution{T,TD}()
+
+        model.membuf = TM(undef, (31, model.grid_data.nline))
+        fill!(model.membuf, 0.0)
+        model.membuf[29,:] .= model.grid_data.rateA
+
+        model.info = IterationInformation{ComponentInformation}()
+
+        return model
     end
+end
+
+"""
+This is to share power network data between models. Some fields that could be modified are deeply copied.
+"""
+function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+    model = ModelQpsub{T,TD,TI,TM}()
+
+    model.solution = copy(ref.solution)
+    model.gen_solution = copy(ref.gen_solution)
+    model.info = copy(ref.info)
+    model.grid_data = copy(ref.grid_data)
+
+    model.n = ref.n
+    model.nvar = ref.nvar
+
+    model.gen_start = ref.gen_start
+    model.line_start = ref.line_start
+
+    model.pgmin_curr = copy(ref.pgmin_curr)
+    model.pgmax_curr = copy(ref.pgmax_curr)
+
+    model.membuf = copy(ref.membuf)
+    model.gen_membuf = copy(ref.gen_membuf)
+
+    model.nvar_u = ref.nvar_u
+    model.nvar_v = ref.nvar_v
+    model.bus_start = ref.bus_start
+
+    model.nline_padded = ref.nline_padded
+    model.nvar_padded = ref.nvar_padded
+    model.nvar_u_padded = ref.nvar_u_padded
+
+    return model
 end

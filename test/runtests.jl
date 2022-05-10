@@ -1,7 +1,7 @@
 using Test
 using LinearAlgebra
 using Printf
-using CUDA
+# using CUDA
 
 using ExaAdmm
 using LazyArtifacts
@@ -28,6 +28,9 @@ init_time = time()
 
     @testset "Testing ADMM algorithms using KA" begin
         include("algorithms/acopf_update_ka.jl")
+    end
+    @testset "Testing QPsub algorithms on CPUs" begin
+        include("algorithms/qpsub_update_cpu.jl")
     end
 end
 

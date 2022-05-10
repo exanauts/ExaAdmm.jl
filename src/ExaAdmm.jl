@@ -163,12 +163,31 @@ include("models/mpec/mpec_admm_update_lz_gpu.jl")
 include("models/mpec/mpec_admm_prepoststep_gpu.jl")
 =#
 
-## bowenQP files
+# Interface to use ADMM solving QPsub.
+include("interface/solve_qpsub.jl")
+
+# Define "struct ModelAcopf" for encapsulating an ACOPF model.
+include("models/qpsub/qpsub_model.jl")
+include("models/qpsub/qpsub_admm_increment.jl")
+
+# CPU
+include("models/qpsub/qpsub_init_solution_cpu.jl")
+include("models/qpsub/qpsub_generator_kernel_cpu.jl")
+include("models/qpsub/qpsub_eval_linelimit_kernel_cpu.jl")
+include("models/qpsub/qpsub_auglag_linelimit_kernel_cpu.jl")
+include("models/qpsub/qpsub_bus_kernel_cpu.jl")
+include("models/qpsub/qpsub_admm_update_x_cpu.jl")
+include("models/qpsub/qpsub_admm_update_xbar_cpu.jl")
+include("models/qpsub/qpsub_admm_update_z_cpu.jl")
+include("models/qpsub/qpsub_admm_update_l_cpu.jl")
+include("models/qpsub/qpsub_admm_update_residual_cpu.jl")
+include("models/qpsub/qpsub_admm_update_lz_cpu.jl")
+include("models/qpsub/qpsub_admm_prepoststep_cpu.jl")
+
+# Other
 include("other_test/test_trivial.jl")
 include("other_test/tron_qp.jl")
-include("models/qpsub/qpsub_model.jl")
-include("models/qpsub/qpsub_generator_kernel_cpu.jl")
-include("interface/solve_qpsub.jl")
+include("other_test/admm_test.jl")
 
 
 end # module
