@@ -1,3 +1,6 @@
+"""
+Increment outer iteration counter by one.
+"""
 function admm_increment_outer(
     env::AdmmEnv,
     mod::ModelAcopf
@@ -6,6 +9,9 @@ function admm_increment_outer(
     return
 end
 
+"""
+Reset inner iteration counter to zero.
+"""
 function admm_increment_reset_inner(
     env::AdmmEnv,
     mod::ModelAcopf
@@ -14,6 +20,9 @@ function admm_increment_reset_inner(
     return
 end
 
+"""
+Increment inner iteration counter by one.
+"""
 function admm_increment_inner(
     env::AdmmEnv,
     mod::ModelAcopf

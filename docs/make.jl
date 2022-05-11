@@ -19,8 +19,7 @@ makedocs(
     checkdocs = :exports,
     pages = [
         "Home" => "index.md",
-        "Quick Start" => "quickstart.md",
-        "How to Implement New Model" => "dev.md",
+        "Development Guide" => "dev.md"
     ]
 )
 
