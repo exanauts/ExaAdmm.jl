@@ -29,7 +29,6 @@ env, mod = ExaAdmm.solve_acopf(
     tight_factor=0.99, 
     use_gpu=true
 );
-```
 
 The following table shows parameter values we used for solving pegase and ACTIVSg data.
 
