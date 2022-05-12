@@ -3,7 +3,7 @@ Implement any algorithmic steps required before each outer iteration.
 """
 function admm_outer_prestep(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
     sol, info = mod.solution, mod.info
     info.norm_z_prev = norm(sol.z_curr)
@@ -15,7 +15,7 @@ Implement any algorithmic steps required before each inner iteration.
 """
 function admm_inner_prestep(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
     sol = mod.solution
     sol.z_prev .= sol.z_curr
@@ -27,7 +27,7 @@ Implement any steps required after the algorithm terminates.
 """
 function admm_poststep(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
     data, sol, info, grid_data = env.data, mod.solution, mod.info, mod.grid_data
 

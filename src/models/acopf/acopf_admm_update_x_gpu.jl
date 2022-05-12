@@ -1,6 +1,6 @@
 function acopf_admm_update_x_gen(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    mod::AbstractOPFModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
     gen_solution::EmptyGeneratorSolution{Float64,CuArray{Float64,1}}
 )
     sol, info, data = mod.solution, mod.info, mod.grid_data
@@ -11,7 +11,7 @@ end
 
 function acopf_admm_update_x_line(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::AbstractOPFModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
     shmem_size = env.params.shmem_size
@@ -47,7 +47,7 @@ end
 
 function admm_update_x(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::AbstractOPFModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
     acopf_admm_update_x_gen(env, mod, mod.gen_solution)
     acopf_admm_update_x_line(env, mod)

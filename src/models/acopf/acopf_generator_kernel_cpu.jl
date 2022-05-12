@@ -25,7 +25,7 @@ function generator_kernel_two_level(
     baseMVA::Float64, u, xbar, zu, lu, rho_u
 )
     tcpu = @timed generator_kernel_two_level(baseMVA, model.grid_data.ngen, model.gen_start,
-                u, xbar, zu, lu, rho_u, model.pgmin_curr, model.pgmax_curr, model.grid_data.qgmin, model.grid_data.qgmax, 
+                u, xbar, zu, lu, rho_u, model.pgmin_curr, model.pgmax_curr, model.grid_data.qgmin, model.grid_data.qgmax,
                 model.grid_data.c2, model.grid_data.c1)
     return tcpu
 end
