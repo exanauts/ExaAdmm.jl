@@ -14,7 +14,7 @@ function acopf_admm_update_x_line(
     mod::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
-    shmem_size = env.params.shmem_size
+    shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
 
 #=
     tmp = mod.nline

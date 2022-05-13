@@ -85,8 +85,6 @@ mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
             mod.models[i].grid_data.Qd .= env.load.qd[:,t]
         end
         n = mod.models[1].n
-        env.params.shmem_size = sizeof(Float64)*(14*n+3*n^2) + sizeof(Int)*(4*n)
-        env.params.gen_shmem_size = sizeof(Float64)*(14*3+3*3^2) + sizeof(Int)*(4*3)
 
         mod.solution = Vector{SolutionRamping{T,TD}}(undef, num_periods)
         ngen = mod.models[1].grid_data.ngen

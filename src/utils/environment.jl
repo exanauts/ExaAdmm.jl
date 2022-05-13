@@ -28,8 +28,6 @@ mutable struct Parameters
     inc_c::Float64
     theta::Float64
     outer_eps::Float64
-    shmem_size::Int
-    gen_shmem_size::Int
     Kf::Int             # TODO: not used
     Kf_mean::Int        # TODO: not used
     MAX_MULTIPLIER::Float64
@@ -61,8 +59,6 @@ mutable struct Parameters
         par.inc_c = 6.0
         par.theta = 0.8
         par.outer_eps = 2*1e-4
-        par.shmem_size = 0
-        par.gen_shmem_size = 0
         par.Kf = 100
         par.Kf_mean = 10
         par.MAX_MULTIPLIER = 1e12
