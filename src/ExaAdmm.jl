@@ -163,7 +163,7 @@ include("models/qpsub/qpsub_admm_update_lz_cpu.jl")
 include("models/qpsub/qpsub_admm_prepoststep_cpu.jl")
 
 # Other
-include("other_test/test_trivial.jl")
+# include("other_test/test_trivial.jl")
 include("other_test/tron_qp.jl")
 include("other_test/admm_test.jl")
 
