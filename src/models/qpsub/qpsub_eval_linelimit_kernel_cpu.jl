@@ -1,3 +1,12 @@
+"""
+   Internal Solution Structure for branch
+
+branch structure from u        :   p_ij            q_ij             p_ji    q_ji    | wi(ij)  wj(ji) thetai(ij) thetaj(ji)
+branch structure for Tron(x)   :   t_ij(linelimit) t_ji(linelimit)  w_ijR   w_ijI   | wi(ij)  wj(ji) thetai(ij) thetaj(ji)
+
+Original Hessian from SQP      :   w_ijR   w_ijI   wi(ij)  wj(ji)  thetai(ij)  thetaj(ji)  
+"""
+
 function eval_f_polar_linelimit_kernel_cpu_qpsub(
     I::Int, x, param, scale::Float64,
     YffR::Float64, YffI::Float64,

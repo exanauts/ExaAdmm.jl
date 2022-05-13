@@ -3,6 +3,24 @@
 
 This contains the parameters specific to ACOPF model instance.
 """
+
+"""
+    Solution Structure 
+
+solution.u contain variables for generator and branch kernel
+solution.v contains variables for bus kernel
+
+                       all gen    |           all line                            |       all  line 
+structure for u :   pg      qg    |  p_ij            q_ij      p_ji     q_ji      | wi(ij)  wj(ji) thetai(ij) thetaj(ji)
+structure for v :   pg(i)   qg(i) |  p_ij(i)         q_ij(i)   p_ji(j)  q_ji(j)   | wi      wj     thetai     thetaj
+
+structure for l and ρ is wrt all element of [x - xbar + z]  with same dimension   
+
+Note: line has shared nodes => xbar contain duplications. 
+For example line(1,2) and line(2,3): w2 and theta2 exist twice in v.
+
+
+"""
 mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     info::IterationInformation
     solution::AbstractSolution{T,TD}
@@ -88,7 +106,8 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
             SolutionOneLevel{T,TD}(model.nvar_padded))
         init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va)
         model.gen_solution = EmptyGeneratorSolution{T,TD}()
-
+        
+        #memory buffer used in the auglag_linelimit with Tron 
         model.membuf = TM(undef, (31, model.grid_data.nline))
         fill!(model.membuf, 0.0)
         model.membuf[29,:] .= model.grid_data.rateA
