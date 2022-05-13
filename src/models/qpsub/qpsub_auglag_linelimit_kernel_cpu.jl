@@ -1,3 +1,12 @@
+"""
+   Internal Solution Structure for branch
+
+branch structure from u        :   p_ij            q_ij             p_ji    q_ji    | wi(ij)  wj(ji) thetai(ij) thetaj(ji)
+branch structure for Tron(x)   :   t_ij(linelimit) t_ji(linelimit)  w_ijR   w_ijI   | wi(ij)  wj(ji) thetai(ij) thetaj(ji)
+
+Original Hessian from SQP      :   w_ijR   w_ijI   wi(ij)  wj(ji)  thetai(ij)  thetaj(ji)  
+"""
+
 function auglag_linelimit_two_level_alternative_qpsub(
     n::Int, nline::Int, line_start::Int,
     major_iter::Int, max_auglag::Int, mu_max::Float64, scale::Float64,
@@ -10,6 +19,8 @@ function auglag_linelimit_two_level_alternative_qpsub(
     _YtfR::Array{Float64,1}, _YtfI::Array{Float64,1},
     frVmBound::Array{Float64,1}, toVmBound::Array{Float64,1},
     frVaBound::Array{Float64,1}, toVaBound::Array{Float64,1})
+
+    #major_iter: info.inner 
 
     avg_auglag_it = 0
     avg_minor_it = 0
@@ -34,9 +45,9 @@ function auglag_linelimit_two_level_alternative_qpsub(
         xu[3] = frVaBound[2*I]
         xl[4] = toVaBound[2*I-1]
         xu[4] = toVaBound[2*I]
-        xl[5] = -param[29,I]
+        xl[5] = -param[29,I] #slack for line limit
         xu[5] = 0.0
-        xl[6] = -param[29,I]
+        xl[6] = -param[29,I] #slack for line limit 
         xu[6] = 0.0
 
         x[1] = min(xu[1], max(xl[1], sqrt(u[pij_idx+4])))
@@ -71,7 +82,7 @@ function auglag_linelimit_two_level_alternative_qpsub(
         param[23,I] = xbar[pij_idx+6] - z[pij_idx+6]
         param[24,I] = xbar[pij_idx+7] - z[pij_idx+7]
 
-        if major_iter == 1
+        if major_iter == 1 #info.inner = 1 (first inner iteration)
             param[27,I] = 10.0
             mu = 10.0
         else
@@ -147,14 +158,15 @@ function auglag_linelimit_two_level_alternative_qpsub(
                 param[27,I] = mu
             end
 
-            if it >= max_auglag
+            if it >= max_auglag #maximum iteration for auglag 
                 println("max_auglag reached for line I = ", I, " cnorm = ", cnorm)
                 terminate = true
             end
         end
-
+        
+        #internal solutions are not recorded
         avg_auglag_it += it
-        avg_minor_it += (avg_tron_minor / it)
+        avg_minor_it += (avg_tron_minor / it) #tron iteration for each auglag iter 
         vi_vj_cos = x[1]*x[2]*cos(x[3] - x[4])
         vi_vj_sin = x[1]*x[2]*sin(x[3] - x[4])
         u[pij_idx] = YffR*x[1]^2 + YftR*vi_vj_cos + YftI*vi_vj_sin
@@ -168,5 +180,5 @@ function auglag_linelimit_two_level_alternative_qpsub(
         param[27,I] = mu
     end
 
-    return (avg_auglag_it / nline), (avg_minor_it / nline)
+    return (avg_auglag_it / nline), (avg_minor_it / nline) #average auglag iter and tron iter with nline 
 end

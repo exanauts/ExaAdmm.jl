@@ -9,10 +9,10 @@ nline = model.grid_data.nline
 
 brBusIdx = model.grid_data.brBusIdx
 Vmax = model.grid_data.Vmax; Vmin = model.grid_data.Vmin
-# YffR = model.grid_data.YffR; YffI = model.grid_data.YffI
-# YttR = model.grid_data.YttR; YttI = model.grid_data.YttI
-# YftR = model.grid_data.YftR; YftI = model.grid_data.YftI
-# YtfR = model.grid_data.YtfR; YtfI = model.grid_data.YtfI
+YffR = model.grid_data.YffR; YffI = model.grid_data.YffI
+YttR = model.grid_data.YttR; YttI = model.grid_data.YttI
+YftR = model.grid_data.YftR; YftI = model.grid_data.YftI
+YtfR = model.grid_data.YtfR; YtfI = model.grid_data.YtfI
 
 fill!(sol, 0.0)
 sol.rho .= rho_pq
@@ -29,14 +29,14 @@ end
         wR0 = sqrt(wij0 * wji0)
 
         pij_idx = model.line_start + 8*(l-1)
-        # sol.v_curr[pij_idx] = YffR[l] * wij0 + YftR[l] * wR0  #p_ij 
-        # sol.v_curr[pij_idx+1] = -YffI[l] * wij0 - YftI[l] * wR0 #q_ij
-        # sol.v_curr[pij_idx+2] = YttR[l] * wji0 + YtfR[l] * wR0 #p_ji
-        # sol.v_curr[pij_idx+3] = -YttI[l] * wji0 - YtfI[l] * wR0 #q_ji
-        sol.v_curr[pij_idx] = wR0  #wR_ij 
-        sol.v_curr[pij_idx+1] = 0  #wI_ij
-        sol.v_curr[pij_idx+2] = wR0 #wR_ji
-        sol.v_curr[pij_idx+3] = 0 #wI_ji
+        sol.v_curr[pij_idx] = YffR[l] * wij0 + YftR[l] * wR0  #p_ij 
+        sol.v_curr[pij_idx+1] = -YffI[l] * wij0 - YftI[l] * wR0 #q_ij
+        sol.v_curr[pij_idx+2] = YttR[l] * wji0 + YtfR[l] * wR0 #p_ji
+        sol.v_curr[pij_idx+3] = -YttI[l] * wji0 - YtfI[l] * wR0 #q_ji
+        # sol.v_curr[pij_idx] = wR0  #wR_ij 
+        # sol.v_curr[pij_idx+1] = 0  #wI_ij
+        # sol.v_curr[pij_idx+2] = wR0 #wR_ji
+        # sol.v_curr[pij_idx+3] = 0 #wI_ji
         sol.v_curr[pij_idx+4] = wij0 #w_i
         sol.v_curr[pij_idx+5] = wji0 #w_j
         sol.v_curr[pij_idx+6] = 0.0 #theta_i
