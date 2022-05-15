@@ -1,12 +1,20 @@
+"""
+    acopf_admm_update_residual()
+
+- compute termination errors and other info
+- update info.primres, info.dualres, info.norm_z_curr, info.mismatch, info. objval
+- update sol.rp, sol.rd, sol.Ax_plus_By
+"""
+
 function admm_update_residual(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
     sol, info, data, par, grid_data = mod.solution, mod.info, env.data, env.params, mod.grid_data
 
-    sol.rp .= sol.u_curr .- sol.v_curr .+ sol.z_curr
+    sol.rp .= sol.u_curr .- sol.v_curr .+ sol.z_curr #x-xbar+z_curr
     sol.rd .= sol.z_curr .- sol.z_prev
-    sol.Ax_plus_By .= sol.rp .- sol.z_curr
+    sol.Ax_plus_By .= sol.rp .- sol.z_curr #x-xbar
 
     info.primres = norm(sol.rp)
     info.dualres = norm(sol.rd)

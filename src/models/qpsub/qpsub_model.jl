@@ -1,24 +1,25 @@
 """
-    Model{T,TD,TI}
+    Model{T,TD,TI,TM}
 
 This contains the parameters specific to ACOPF model instance.
 """
 
+
 """
     Solution Structure 
+- solution.u contain variables for generator and branch kernel
+- solution.v contains variables for bus kernel
+- Summary Table:
 
-solution.u contain variables for generator and branch kernel
-solution.v contains variables for bus kernel
+|  dimension     |   ngen  |  ngen  |  nline    |  nline  | nline     | nline    |  nline  |  nline   | nline      | nline       | 
+|:--------------:|:-------:| :----: |:----:     |:----:   |:----:     |:----:    |:----:   |:----:    |:----:      |:----:       |
+|structure for u |   pg    |  qg    |  p_ij     |  q_ij   |   p_ji    |  q_ji    | wi(ij)  |  wj(ji)  | thetai(ij) |  thetaj(ji) |
+|structure for v |   pg(i) |  qg(i) |  p_ij(i)  |  q_ij(i)|   p_ji(j) |  q_ji(j) | wi      |  wj      | thetai     | thetaj      |
 
-                       all gen    |           all line                            |       all  line 
-structure for u :   pg      qg    |  p_ij            q_ij      p_ji     q_ji      | wi(ij)  wj(ji) thetai(ij) thetaj(ji)
-structure for v :   pg(i)   qg(i) |  p_ij(i)         q_ij(i)   p_ji(j)  q_ji(j)   | wi      wj     thetai     thetaj
+- structure for l and ρ is wrt all element of [x - xbar + z]  with same dimension   
 
-structure for l and ρ is wrt all element of [x - xbar + z]  with same dimension   
-
-Note: line has shared nodes => xbar contain duplications. 
+- Note: line has shared nodes => xbar contain duplications. 
 For example line(1,2) and line(2,3): w2 and theta2 exist twice in v.
-
 
 """
 mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
@@ -71,7 +72,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         end
 
         model.nvar = 2*model.grid_data.ngen + 8*model.grid_data.nline
-        model.nvar_padded = model.nvar + 8*(model.nline_padded - model.grid_data.nline)
+        model.nvar_padded = model.nvar + 8*(model.nline_padded - model.grid_data.nline) #useless
         model.gen_start = 1
         model.line_start = 2*model.grid_data.ngen + 1
         

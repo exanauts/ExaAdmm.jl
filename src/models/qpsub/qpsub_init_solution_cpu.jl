@@ -1,3 +1,10 @@
+"""
+    init_solution()
+
+- initialize sol.v_curr and sol.rho for all coupling
+- Note: initialize sol.l, par.beta, sol.lz in SolutionOneLevel{T,TD}() 
+"""
+
 function init_solution!(
     model::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     sol::SolutionOneLevel{Float64,Array{Float64,1}},

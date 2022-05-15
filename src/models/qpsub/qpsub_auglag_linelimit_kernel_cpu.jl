@@ -1,10 +1,20 @@
 """
+    auglag_linelimit_two_level_alternative_qpsub()
+
+- update sol.x[pij_idx]
+- TronSQsol() 
+"""
+
+
+"""
    Internal Solution Structure for branch
 
-branch structure from u        :   p_ij            q_ij             p_ji    q_ji    | wi(ij)  wj(ji) thetai(ij) thetaj(ji)
-branch structure for Tron(x)   :   t_ij(linelimit) t_ji(linelimit)  w_ijR   w_ijI   | wi(ij)  wj(ji) thetai(ij) thetaj(ji)
-
-Original Hessian from SQP      :   w_ijR   w_ijI   wi(ij)  wj(ji)  thetai(ij)  thetaj(ji)  
+- branch structure from u 8*nline:   
+    - |p_ij   | q_ij  | p_ji   | q_ji    | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji) |
+- branch structure for Exatron (8*nline):  
+    - | t_ij(linelimit) | t_ji(linelimit) | w_ijR  |  w_ijI   | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji)
+- Hessian inherited from SQP (6*nline):   
+    - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|   
 """
 
 function auglag_linelimit_two_level_alternative_qpsub(

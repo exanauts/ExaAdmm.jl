@@ -1,3 +1,10 @@
+"""
+    acopf_admm_update_x_gen()
+    
+- update xgen: call generator_kernel_two_level_qpsub() = update sol.x[pg_idx], sol.x[qp_idx]
+- record run time info.user.time_generators, info.time_x_update
+"""
+
 function acopf_admm_update_x_gen(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
@@ -9,6 +16,13 @@ function acopf_admm_update_x_gen(
     info.time_x_update += time_gen.time
     return
 end
+
+"""
+    acopf_admm_update_x_line()
+    
+- update xline: call auglag_linelimit_two_level_alternative_qpsub() = update sol.x[pij_idx]
+- record run time info.user.time_branches, info.time_x_update
+"""
 
 function acopf_admm_update_x_line(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
@@ -40,6 +54,12 @@ function acopf_admm_update_x_line(
     info.time_x_update += time_br.time
     return
 end
+
+"""
+    acopf_admm_update_x()
+    
+update xgen and xline
+"""
 
 function admm_update_x(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
