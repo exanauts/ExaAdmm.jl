@@ -1,3 +1,10 @@
+"""
+    solve_qpsub()
+    
+main function solve qpsub problem
+"""
+
+
 function solve_qpsub(case::String;
     case_format="matpower",
     outer_iterlim=20, inner_iterlim=1000, rho_pq=400.0, rho_va=40000.0,
