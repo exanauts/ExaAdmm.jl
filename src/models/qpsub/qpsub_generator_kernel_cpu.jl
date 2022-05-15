@@ -1,3 +1,9 @@
+"""
+    generator_kernel_two_level_qpsub()
+
+update sol.u[pg_idx] and sol.u[qp_idx]
+"""
+
 function generator_kernel_two_level_qpsub(
     baseMVA::Float64, ngen::Int, gen_start::Int,
     u, x, z, l, rho,
@@ -19,6 +25,12 @@ function generator_kernel_two_level_qpsub(
     return
 end
 
+
+"""
+    generator_kernel_two_level_qpsub()
+
+record cpu time: return tcpu 
+"""
 
 function generator_kernel_two_level_qpsub(
     model::ModelQpsub{Float64,Array{Float64,1},Array{Int,1}},

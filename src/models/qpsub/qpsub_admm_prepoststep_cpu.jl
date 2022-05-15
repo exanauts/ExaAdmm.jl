@@ -1,3 +1,9 @@
+"""
+    admm_outer_prestep()
+    
+at start of each outer loop, preset info.norm_z_prev
+"""
+
 function admm_outer_prestep(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
@@ -7,6 +13,16 @@ function admm_outer_prestep(
     return
 end
 
+
+
+
+
+"""
+    admm_inner_prestep()
+    
+at start of each inner loop, preset sol.z_prev
+"""
+
 function admm_inner_prestep(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
@@ -15,6 +31,17 @@ function admm_inner_prestep(
     sol.z_prev .= sol.z_curr
     return
 end
+
+
+
+
+
+"""
+    admm_poststep()
+    
+- after admm termination, fix solution pf_projection() and record time mod.info.time_projection
+- update info.objval with projected solution
+"""
 
 function admm_poststep(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},

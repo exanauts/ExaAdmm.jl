@@ -1,3 +1,11 @@
+"""
+    admm_update_z()
+
+- update sol.z_curr for all coupling
+- record run time info.time_z_update 
+"""
+
+
 function admm_update_z(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}

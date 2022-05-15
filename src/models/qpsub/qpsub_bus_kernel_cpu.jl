@@ -1,3 +1,12 @@
+"""
+    bus_kernel_two_level_qpsub()
+
+- update sol.v[pij_idx], sol.v[pg_idx], sol.v[qp_idx] (full update) 
+- duplicate update for shard nodes
+- record generator and line index set 
+"""
+
+
 function bus_kernel_two_level_alternative_qpsub(
     baseMVA::Float64, nbus::Int, gen_start::Int, line_start::Int,
     FrStart::Array{Int,1}, FrIdx::Array{Int,1},
