@@ -5,6 +5,9 @@ using Printf
 
 using ExaAdmm
 using LazyArtifacts
+using Random
+using JuMP
+using Ipopt
 
 # Data
 const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
@@ -31,6 +34,7 @@ init_time = time()
     end
     @testset "Testing QPsub algorithms on CPUs" begin
         include("algorithms/qpsub_update_cpu.jl")
+        include("algorithms/qpsub_branch_cpu.jl")
     end
 end
 
