@@ -1,14 +1,16 @@
 """
     auglag_linelimit_two_level_alternative_qpsub()
- 
-update sol.u[pij_idx]
+
+- for all line (i,j), update sol.u[pij_idx]
+- use auglag_linelimit_two_level_alternative_qpsub_ij()
+- TODO: implement for all lines and reuse Youngdae's format (e.g. reuse mu)
 """
 
 
 """
    Internal Solution Structure for branch
 
-- branch structure from u 8*nline:   
+- branch structure from u (8*nline):   
     - |p_ij   | q_ij  | p_ji   | q_ji    | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji) |
 - branch structure for Exatron (8*nline):  
     - | t_ij(linelimit) | t_ji(linelimit) | w_ijR  |  w_ijI   | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji)
@@ -16,7 +18,7 @@ update sol.u[pij_idx]
     - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|   
 """
 
-function auglag_linelimit_two_level_alternative_qpsub(
+function auglag_Ab_linelimit_two_level_alternative_qpsub(
     n::Int, nline::Int, line_start::Int,
     major_iter::Int, max_auglag::Int, mu_max::Float64, scale::Float64,
     u::Array{Float64,1}, xbar::Array{Float64,1}, z::Array{Float64,1},
@@ -65,8 +67,7 @@ function auglag_linelimit_two_level_alternative_qpsub(
         x[4] = min(xu[4], max(xl[4], u[pij_idx+7]))
         x[5] = min(xu[5], max(xl[5], -(u[pij_idx]^2 + u[pij_idx+1]^2)))
         x[6] = min(xu[6], max(xl[6], -(u[pij_idx+2]^2 + u[pij_idx+3]^2)))
-        
-        #membuf using param to store useful values
+
         param[1,I] = l[pij_idx]
         param[2,I] = l[pij_idx+1]
         param[3,I] = l[pij_idx+2]
@@ -96,9 +97,10 @@ function auglag_linelimit_two_level_alternative_qpsub(
             param[27,I] = 10.0 #initial ρ_sij = ρ_sji (let ρ the same for all AL terms)
             mu = 10.0
         else
-            mu = param[27,I] #inherit mu = ρ of the last inner iteration
+            mu = param[27,I] #using the existing ρ from last inner iteration (admm iteration)
         end
 
+        #eval new Hessian and gradient Ab
         function eval_f_cb(x)
             f = eval_f_polar_linelimit_kernel_cpu_qpsub(I, x, param, scale, YffR, YffI, YftR, YftI, YttR, YttI, YtfR, YtfI)
             return f
@@ -114,7 +116,8 @@ function auglag_linelimit_two_level_alternative_qpsub(
                               scale, YffR, YffI, YftR, YftI, YttR, YttI, YtfR, YtfI)
             return
         end
-
+        
+        #internal parameters eta omega mu to guide ALM convergence
         eta = 1 / mu^0.1
         omega = 1 / mu
         max_feval = 500
@@ -155,8 +158,8 @@ function auglag_linelimit_two_level_alternative_qpsub(
                 if cnorm <= 1e-6
                     terminate = true
                 else
-                    param[25,I] += mu*cviol1 #λ_sij
-                    param[26,I] += mu*cviol2 #λ_sji
+                    param[25,I] += mu*cviol1
+                    param[26,I] += mu*cviol2
 
                     eta = eta / mu^0.9
                     omega  = omega / mu
