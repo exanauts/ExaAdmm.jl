@@ -42,9 +42,9 @@
         0.0, -0.088880, 0.0, -0.088880, 1.01, 1.01, 0.0, 0.0
     ]
     # println(convert(Vector{Float32}, sol.u_curr))
-    # println(round.(sol.u_curr,digits = 7))
-    # println()
-    # println()
+    println(round.(sol.u_curr,digits = 7))
+    println()
+    println()
     # @test norm(sol.u_curr[1:2]   .- U_GEN[1:2],  Inf) <= atol # Gen 1
     # @test norm(sol.u_curr[3:4]   .- U_GEN[3:4],  Inf) <= atol # Gen 2
     # @test norm(sol.u_curr[5:6]   .- U_GEN[5:6],  Inf) <= atol # Gen 3
@@ -90,9 +90,9 @@
     # @test norm(sol.v_curr[63:70] .- V_BR[57:64], Inf) <= atol # Line 8
     # @test norm(sol.v_curr[71:78] .- V_BR[65:72], Inf) <= atol # Line 9
 
-    # println(round.(sol.v_curr,digits = 7))
-    # println()
-    # println()
+    println(round.(sol.v_curr,digits = 7))
+    println()
+    println()
 
     # z update
     ExaAdmm.admm_update_z(env, mod)
@@ -126,9 +126,9 @@
     # @test norm(sol.z_curr[63:70] .- Z_BR[57:64], Inf) <= atol # Line 8
     # @test norm(sol.z_curr[71:78] .- Z_BR[65:72], Inf) <= atol # Line 9
 
-    # println(round.(sol.z_curr,digits = 7))
-    # println()
-    # println()
+    println(round.(sol.z_curr,digits = 7))
+    println()
+    println()
 
     # l update
     ExaAdmm.admm_update_l(env, mod)
@@ -161,9 +161,9 @@
     # @test norm(sol.l_curr[55:62] .- L_BR[49:56], Inf) <= atol # Line 7
     # @test norm(sol.l_curr[63:70] .- L_BR[57:64], Inf) <= atol # Line 8
     # @test norm(sol.l_curr[71:78] .- L_BR[65:72], Inf) <= atol # Line 9
-    # println(round.(sol.l_curr,digits = 7))
-    # println()
-    # println()
+    println(round.(sol.l_curr,digits = 7))
+    println()
+    println()
     # residual update
     # ExaAdmm.admm_update_residual(env, mod)
 
