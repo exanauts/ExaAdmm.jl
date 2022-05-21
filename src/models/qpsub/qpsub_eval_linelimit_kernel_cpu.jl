@@ -33,6 +33,7 @@ function eval_f_polar_linelimit_kernel_cpu_qpsub(
         pji = YttR*x[2]^2 + YtfR*vi_vj_cos - YtfI*vi_vj_sin
         qji = -YttI*x[2]^2 - YtfI*vi_vj_cos - YtfR*vi_vj_sin
 
+        # from ADMM 
         f += param[1,I]*pij
         f += param[2,I]*qij
         f += param[3,I]*pji
@@ -41,7 +42,7 @@ function eval_f_polar_linelimit_kernel_cpu_qpsub(
         f += param[6,I]*x[2]^2
         f += param[7,I]*x[3]
         f += param[8,I]*x[4]
-
+       
         f += 0.5*(param[9,I]*(pij - param[17,I])^2)
         f += 0.5*(param[10,I]*(qij - param[18,I])^2)
         f += 0.5*(param[11,I]*(pji - param[19,I])^2)
@@ -52,10 +53,10 @@ function eval_f_polar_linelimit_kernel_cpu_qpsub(
         f += 0.5*(param[16,I]*(x[4] - param[24,I])^2)
 
         # Line limit terms
-        f += param[25,I]*(pij^2 + qij^2 + x[5])
-        f += param[26,I]*(pji^2 + qji^2 + x[6])
-        f += 0.5*(param[27,I]*(pij^2 + qij^2 + x[5])^2)
-        f += 0.5*(param[27,I]*(pji^2 + qji^2 + x[6])^2)
+        f += param[25,I]*(pij^2 + qij^2 + x[5]) #λ_sij
+        f += param[26,I]*(pji^2 + qji^2 + x[6]) #λ_sji
+        f += 0.5*(param[27,I]*(pij^2 + qij^2 + x[5])^2) #ρ_sij
+        f += 0.5*(param[27,I]*(pji^2 + qji^2 + x[6])^2) #ρ_sji = ̢ρ_sji (same)
     end
 
     f *= scale

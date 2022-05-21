@@ -6,7 +6,7 @@ This contains the parameters specific to ACOPF model instance.
 
 
 """
-    Solution Structure 
+    Solution Structure: 
 - solution.u contain variables for generator and branch kernel
 - solution.v contains variables for bus kernel
 - Summary Table:
@@ -20,6 +20,11 @@ This contains the parameters specific to ACOPF model instance.
 
 - Note: line has shared nodes => xbar contain duplications. 
 For example line(1,2) and line(2,3): w2 and theta2 exist twice in v.
+
+- qpsub_membuf structure (dim = 5, used in auglag):
+    - |λ_1h | λ_1i | λ_1j| λ_1k | ρ_{1h,1i,1j,1k}| 
+    - For c(x) = 0, ALM = λ*c(x) + (ρ/2)c(x)^2
+    - For 1j and 1k, introduce slack t_ij and t_ji (see internal branch structure for Exatron) 
 
 """
 mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
@@ -42,6 +47,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
     membuf::TM      # memory buffer for line kernel
     gen_membuf::TM  # memory buffer for generator kernel
+    qpsub_membuf::TM #memory buffer for qpsub
 
     # Two-Level ADMM
     nvar_u::Int
@@ -112,6 +118,10 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.membuf = TM(undef, (31, model.grid_data.nline))
         fill!(model.membuf, 0.0)
         model.membuf[29,:] .= model.grid_data.rateA
+
+        #memory buffer used in the new auglag_Ab with Tron
+        model.qpsub_membuf = TM(undef, (5,model.grid_data.nline))
+        fill!(model.qpsub_membuf, 0.0)
 
         model.info = IterationInformation{ComponentInformation}()
 
