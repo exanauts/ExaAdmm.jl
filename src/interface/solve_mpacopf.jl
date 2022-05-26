@@ -22,8 +22,6 @@ function solve_mpacopf(case::String, load_prefix::String;
     env.params.outer_eps = outer_eps
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
-    env.params.shmem_size = sizeof(Float64)*(14*n+3*n^2) + sizeof(Int)*(4*n)
-    env.params.gen_shmem_size = sizeof(Float64)*(14*3+3*3^2) + sizeof(Int)*(4*3)
 
     # For warm start, solve each time period without ramp constraints.
     if warm_start

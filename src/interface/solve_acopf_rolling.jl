@@ -23,7 +23,6 @@ function solve_acopf_rolling(case::String, load_prefix::String;
     env.params.outer_eps = outer_eps
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
-    env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
 
     admm_restart_rolling(env, mod; start_period=start_period, end_period=end_period, result_file=result_file)
     return env, mod

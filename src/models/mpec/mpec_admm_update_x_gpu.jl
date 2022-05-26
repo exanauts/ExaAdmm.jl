@@ -214,7 +214,7 @@ function acopf_admm_update_x_line(
     mod::ComplementarityModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
     par, grid, sol, info = env.params, mod.grid, mod.solution, mod.info
-    shmem_size = env.params.shmem_size
+    shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
 
     if env.use_linelimit
         time_br = CUDA.@timed @cuda threads=32 blocks=grid.nline shmem=shmem_size auglag_linelimit_two_level_alternative(

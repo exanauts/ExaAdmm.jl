@@ -14,7 +14,6 @@
     env.params.obj_scale = 1.0
     env.params.initial_beta = 1e3
     env.params.beta = 1e3
-    env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
 
     # We'll perform just one ADMM iteration. Do some pre-steps first.
     ExaAdmm.admm_increment_outer(env, mod)
