@@ -4,7 +4,7 @@ This describes the steps to implement new model that can be solved by the algori
 
 ## Algorithm overview
 
-Two-level ADMM algorithm can be implemented by defining the functioins called in the while loop of `admm_two_level()` function in `algorithms/admm_two_level.jl` file.
+Two-level ADMM algorithm can be implemented by defining the functions called in the while loop of `admm_two_level()` function in `algorithms/admm_two_level.jl` file.
 These functions take two arguments of type `AdmmEnv` and `AbstractOPFModel`. You need to define your model structure that inherits `AbstractOPFModel` so that those functions can be called using multiple dispatching.
 
 ### Mathematical description
@@ -54,6 +54,14 @@ The steps required to implement the two-level ADMM algorithm for the model `myop
    Examples are available in `models/acopf/acopf_model.jl` and `models/mpacopf_model.jl`.
 3. Implement all necessary functions: [A list of functions required to implement](@ref)
 
+!!! note
+    `ExaAdmm.jl` provides a default implementation for each function,
+    dispatching on `AbstractOPFModel`. This default implementation
+    matches the behavior of `ModelAcopf`, and allow the user to avoid
+    overloading if the behavior of the new model `ModelMyopf`
+    matches those of `ModelAcopf` for a particular function.
+
+
 ## A list of functions required to implement
 
 Define the following functions that will take your new model structure:
@@ -63,15 +71,15 @@ Define the following functions that will take your new model structure:
 ```@docs
 ExaAdmm.admm_increment_outer(
     env::ExaAdmm.AdmmEnv,
-    mod::ExaAdmm.ModelAcopf
+    mod::ExaAdmm.AbstractOPFModel
 )
 ExaAdmm.admm_increment_reset_inner(
     env::ExaAdmm.AdmmEnv,
-    mod::ExaAdmm.ModelAcopf
+    mod::ExaAdmm.AbstractOPFModel
 )
 ExaAdmm.admm_increment_inner(
     env::ExaAdmm.AdmmEnv,
-    mod::ExaAdmm.ModelAcopf
+    mod::ExaAdmm.AbstractOPFModel
 )
 ```
 
@@ -79,16 +87,16 @@ ExaAdmm.admm_increment_inner(
 
 ```@docs
 ExaAdmm.admm_outer_prestep(
-   env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}, 
-   mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+   env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+   mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ExaAdmm.admm_inner_prestep(
-   env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}, 
-   mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+   env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+   mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ExaAdmm.admm_poststep(
-   env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}, 
-   mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+   env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+   mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ```
 
@@ -97,7 +105,7 @@ ExaAdmm.admm_poststep(
 ```@docs
 ExaAdmm.admm_update_x(
     env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ```
 
@@ -106,7 +114,7 @@ ExaAdmm.admm_update_x(
 ```@docs
 ExaAdmm.admm_update_xbar(
     env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ```
 
@@ -115,7 +123,7 @@ ExaAdmm.admm_update_xbar(
 ```@docs
 ExaAdmm.admm_update_z(
     env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ```
 
@@ -124,7 +132,7 @@ ExaAdmm.admm_update_z(
 ```@docs
 ExaAdmm.admm_update_l(
     env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ```
 
@@ -133,7 +141,7 @@ ExaAdmm.admm_update_l(
 ```@docs
 ExaAdmm.admm_update_lz(
     env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ```
 
@@ -142,7 +150,7 @@ ExaAdmm.admm_update_lz(
 ```@docs
 ExaAdmm.admm_update_residual(
     env::ExaAdmm.AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ExaAdmm.ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ExaAdmm.AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 ```
 

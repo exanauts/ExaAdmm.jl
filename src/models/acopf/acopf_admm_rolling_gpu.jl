@@ -15,7 +15,7 @@ end
 
 function admm_restart_rolling(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}};
+    mod::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}};
     start_period=1, end_period=6, result_file="warm-start")
 
     @assert env.load_specified == true

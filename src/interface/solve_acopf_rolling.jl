@@ -1,3 +1,4 @@
+
 function solve_acopf_rolling(case::String, load_prefix::String;
     case_format="matpower",
     outer_iterlim=20, inner_iterlim=1000, rho_pq=400.0, rho_va=40000.0,
@@ -16,7 +17,7 @@ function solve_acopf_rolling(case::String, load_prefix::String;
             use_gpu=use_gpu, use_linelimit=use_linelimit, use_twolevel=false,
             use_projection=use_projection, load_prefix=load_prefix,
             tight_factor=tight_factor, gpu_no=gpu_no, verbose=verbose)
-    mod = Model{T,TD,TI,TM}(env; ramp_ratio=ramp_ratio)
+    mod = ModelAcopf{T,TD,TI,TM}(env; ramp_ratio=ramp_ratio)
 
     env.params.scale = scale
     env.params.obj_scale = obj_scale

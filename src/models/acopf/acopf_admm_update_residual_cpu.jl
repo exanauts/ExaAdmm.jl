@@ -12,7 +12,7 @@ The primal and dual residuals are stored in `mod.solution.rp` and `mod.solution.
 """
 function admm_update_residual(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
     sol, info, data, par, grid_data = mod.solution, mod.info, env.data, env.params, mod.grid_data
 
