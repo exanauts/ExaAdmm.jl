@@ -56,7 +56,7 @@ mutable struct ModelAcopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.nvar_padded = model.nvar + 8*(model.nline_padded - model.grid_data.nline)
         model.gen_start = 1
         model.line_start = 2*model.grid_data.ngen + 1
-        
+
 
         model.pgmin_curr = TD(undef, model.grid_data.ngen)
         model.pgmax_curr = TD(undef, model.grid_data.ngen)
@@ -77,15 +77,10 @@ mutable struct ModelAcopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.nvar_u_padded = model.nvar_u + 8*(model.nline_padded - model.grid_data.nline)
         model.nvar_v = 2*model.grid_data.ngen + 4*model.grid_data.nline + 2*model.grid_data.nbus
         model.bus_start = 2*model.grid_data.ngen + 4*model.grid_data.nline + 1
-        if env.use_twolevel
-            model.nvar = model.nvar_u + model.nvar_v
-            model.nvar_padded = model.nvar_u_padded + model.nvar_v
-        end
 
         # Memory space is allocated based on the padded size.
-        model.solution = ifelse(env.use_twolevel,
-            SolutionTwoLevel{T,TD}(model.nvar_padded, model.nvar_v, model.nline_padded),
-            SolutionOneLevel{T,TD}(model.nvar_padded))
+        model.solution =
+            Solution{T,TD}(model.nvar_padded)
         init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va)
         model.gen_solution = EmptyGeneratorSolution{T,TD}()
 

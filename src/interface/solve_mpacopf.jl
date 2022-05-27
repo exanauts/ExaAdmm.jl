@@ -12,7 +12,7 @@ function solve_mpacopf(case::String, load_prefix::String;
     end
 
     env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; case_format=case_format,
-            use_gpu=use_gpu, use_linelimit=use_linelimit, use_twolevel=false,
+            use_gpu=use_gpu, use_linelimit=use_linelimit,
             load_prefix=load_prefix, tight_factor=tight_factor, gpu_no=gpu_no, verbose=verbose)
     mod = ModelMpacopf{T,TD,TI,TM}(env; start_period=start_period, end_period=end_period, ramp_ratio=ramp_ratio)
 

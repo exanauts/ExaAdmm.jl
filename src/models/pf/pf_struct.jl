@@ -18,9 +18,9 @@ mutable struct PowerFlow{T,TD}
     F::Vector{Float64}
     Jac::SparseMatrixCSC{Float64,Int}
 
-    function PowerFlow{T,TD}(case::String; case_format="matpower", start_method="warm", use_scaling=false, use_twolevel=false, verbose=1) where {T,TD<:AbstractArray{T}}
+    function PowerFlow{T,TD}(case::String; case_format="matpower", start_method="warm", use_scaling=false, verbose=1) where {T,TD<:AbstractArray{T}}
         nw = parse_matpower(case; case_format=case_format)
-        return PowerFlow{T,TD}(nw; start_method=start_method, use_scaling=use_scaling, use_twolevel=use_twolevel, verbose=verbose)
+        return PowerFlow{T,TD}(nw; start_method=start_method, use_scaling=use_scaling, verbose=verbose)
     end
 
     function PowerFlow{T,TD}(nw::Dict{String,Any}; start_method="warm", verbose=1) where {T,TD<:AbstractArray{T}}
