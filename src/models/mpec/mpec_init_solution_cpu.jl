@@ -1,6 +1,6 @@
 function init_solution!(
     model::ComplementarityModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    sol::SolutionOneLevel{Float64,Array{Float64,1}},
+    sol::Solution{Float64,Array{Float64,1}},
     rho_pq::Float64, rho_va::Float64
 )
 

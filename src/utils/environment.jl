@@ -92,7 +92,6 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     horizon_length::Int
     use_gpu::Bool
     use_linelimit::Bool
-    use_twolevel::Bool
     use_mpi::Bool
     use_projection::Bool
     load_specified::Bool
@@ -106,7 +105,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     function AdmmEnv{T,TD,TI,TM}(
         case::String, rho_pq::Float64, rho_va::Float64;
         case_format="matpower",
-        use_gpu=false, use_linelimit=true, use_twolevel=false, use_mpi=false, use_projection=false,
+        use_gpu=false, use_linelimit=true, use_mpi=false, use_projection=false,
         gpu_no::Int=0, verbose::Int=1, tight_factor=1.0, droop=0.04, storage_ratio=0.0, storage_charge_max=1.0,
         horizon_length=1, load_prefix::String="", comm::MPI.Comm=MPI.COMM_WORLD
     ) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
@@ -126,7 +125,6 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
         env.use_mpi = use_mpi
         env.use_projection = use_projection
         env.gpu_no = gpu_no
-        env.use_twolevel = use_twolevel
         env.load_specified = false
         env.comm = comm
 
@@ -158,11 +156,11 @@ function Base.copy(ref::EmptyGeneratorSolution{T,TD}) where {T,TD<:AbstractArray
 end
 
 """
-    SolutionOneLevel{T,TD}
+    Solution{T,TD}
 
 This contains the solutions of ACOPF model instance, including the ADMM parameter rho.
 """
-mutable struct SolutionOneLevel{T,TD} <: AbstractSolution{T,TD}
+mutable struct Solution{T,TD} <: AbstractSolution{T,TD}
     u_curr::TD
     v_curr::TD
     l_curr::TD
@@ -184,7 +182,7 @@ mutable struct SolutionOneLevel{T,TD} <: AbstractSolution{T,TD}
     cumul_iters::Int
     status::Symbol
 
-    function SolutionOneLevel{T,TD}(nvar::Int) where {T, TD<:AbstractArray{T}}
+    function Solution{T,TD}(nvar::Int) where {T, TD<:AbstractArray{T}}
         sol = new{T,TD}(
             TD(undef, nvar), # u_curr
             TD(undef, nvar), # v_curr
@@ -214,7 +212,7 @@ mutable struct SolutionOneLevel{T,TD} <: AbstractSolution{T,TD}
 end
 
 
-function Base.fill!(sol::SolutionOneLevel, val)
+function Base.fill!(sol::Solution, val)
     fill!(sol.u_curr, val)
     fill!(sol.v_curr, val)
     fill!(sol.l_curr, val)
@@ -232,9 +230,9 @@ function Base.fill!(sol::SolutionOneLevel, val)
     fill!(sol.Ax_plus_By, val)
 end
 
-function Base.copy(ref::SolutionOneLevel{T,TD}) where {T,TD<:AbstractArray{T}}
+function Base.copy(ref::Solution{T,TD}) where {T,TD<:AbstractArray{T}}
     nvar = length(ref.u_curr)
-    sol = SolutionOneLevel{T,TD}(nvar)
+    sol = Solution{T,TD}(nvar)
 
     copyto!(sol.u_curr, ref.u_curr)
     copyto!(sol.v_curr, ref.v_curr)
@@ -259,101 +257,6 @@ function Base.copy(ref::SolutionOneLevel{T,TD}) where {T,TD<:AbstractArray{T}}
     return sol
 end
 
-"""
-    SolutionTwoLevel{T,TD}
-
-This contains the solutions of ACOPF model instance for two-level ADMM algorithm,
-    including the ADMM parameter rho.
-"""
-mutable struct SolutionTwoLevel{T,TD} <: AbstractSolution{T,TD}
-    x_curr::TD
-    xbar_curr::TD
-    z_outer::TD
-    z_curr::TD
-    z_prev::TD
-    l_curr::TD
-    lz::TD
-    rho::TD
-    rp::TD
-    rd::TD
-    rp_old::TD
-    Ax_plus_By::TD
-    wRIij::TD
-
-    function SolutionTwoLevel{T,TD}() where {T, TD<:AbstractArray{T}}
-        return new{T,TD}()
-    end
-
-    function SolutionTwoLevel{T,TD}(nvar::Int, nvar_v::Int, nline::Int) where {T, TD<:AbstractArray{T}}
-        sol = new{T,TD}(
-            TD(undef, nvar),      # x_curr
-            TD(undef, nvar_v),    # xbar_curr
-            TD(undef, nvar),      # z_outer
-            TD(undef, nvar),      # z_curr
-            TD(undef, nvar),      # z_prev
-            TD(undef, nvar),      # l_curr
-            TD(undef, nvar),      # lz
-            TD(undef, nvar),      # rho
-            TD(undef, nvar),      # rp
-            TD(undef, nvar),      # rd
-            TD(undef, nvar),      # rp_old
-            TD(undef, nvar),      # Ax_plus_By
-            TD(undef, 2*nline)    # wRIij
-        )
-
-        fill!(sol, 0.0)
-
-        return sol
-    end
-end
-
-function Base.fill!(sol::SolutionTwoLevel, val)
-    fill!(sol.x_curr, val)
-    fill!(sol.xbar_curr, val)
-    fill!(sol.z_outer, val)
-    fill!(sol.z_curr, val)
-    fill!(sol.z_prev, val)
-    fill!(sol.l_curr, val)
-    fill!(sol.lz, val)
-    fill!(sol.rho, val)
-    fill!(sol.rp, val)
-    fill!(sol.rd, val)
-    fill!(sol.rp_old, val)
-    fill!(sol.Ax_plus_By, val)
-    fill!(sol.wRIij, val)
-end
-
-function Base.copy(ref::SolutionTwoLevel{T,TD}) where {T, TD<:AbstractArray{T}}
-    sol = SolutionTwoLevel{T,TD}()
-    sol.x_curr = TD(undef, length(ref.x_curr))
-    sol.xbar_curr = TD(undef, length(ref.xbar_curr))
-    sol.z_outer = TD(undef, length(ref.z_outer))
-    sol.z_curr = TD(undef, length(ref.z_curr))
-    sol.z_prev = TD(undef, length(ref.z_prev))
-    sol.l_curr = TD(undef, length(ref.l_curr))
-    sol.lz = TD(undef, length(ref.lz))
-    sol.rho = TD(undef, length(ref.rho))
-    sol.rp = TD(undef, length(ref.rp))
-    sol.rd = TD(undef, length(ref.rd))
-    sol.rp_old = TD(undef, length(ref.rp_old))
-    sol.Ax_plus_By = TD(undef, length(ref.Ax_plus_By))
-    sol.wRIij = TD(undef, length(ref.wRIij))
-
-    copyto!(sol.x_curr, ref.x_curr)
-    copyto!(sol.xbar_curr, ref.xbar_curr)
-    copyto!(sol.z_outer, ref.z_outer)
-    copyto!(sol.z_curr, ref.z_curr)
-    copyto!(sol.z_prev, ref.z_prev)
-    copyto!(sol.l_curr, ref.l_curr)
-    copyto!(sol.lz, ref.lz)
-    copyto!(sol.rho, ref.rho)
-    copyto!(sol.rp, ref.rp)
-    copyto!(sol.rd, ref.rd)
-    copyto!(sol.rp_old, ref.rp_old)
-    copyto!(sol.Ax_plus_By, ref.Ax_plus_By)
-    copyto!(sol.wRIij, ref.wRIij)
-    return sol
-end
 
 abstract type AbstractUserIterationInformation end
 
