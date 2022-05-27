@@ -103,7 +103,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 #    membuf::TM # was param
 
     function AdmmEnv{T,TD,TI,TM}(
-        case::String, rho_pq::Float64, rho_va::Float64;
+        data::OPFData, case::String, rho_pq::Float64, rho_va::Float64;
         case_format="matpower",
         use_gpu=false, use_linelimit=true, use_mpi=false, use_projection=false,
         gpu_no::Int=0, verbose::Int=1, tight_factor=1.0, droop=0.04, storage_ratio=0.0, storage_charge_max=1.0,
@@ -113,8 +113,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 
         env = new{T,TD,TI,TM}()
         env.case = case
-        env.data = opf_loaddata(env.case; storage_ratio=storage_ratio, storage_charge_max=storage_charge_max,
-                                          VI=TI, VD=TD, case_format=case_format, verbose=verbose)
+        env.data = data
         env.storage_ratio = storage_ratio
         env.droop = droop
         env.initial_rho_pq = rho_pq
@@ -141,6 +140,14 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 
         return env
     end
+end
+
+function AdmmEnv{T,TD,TI,TM}(
+    case::String, rho_pq::Float64, rho_va::Float64; options...
+) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+    data = opf_loaddata(case; options...)
+                             # VI=TI, VD=TD, case_format=case_format, verbose=verbose)
+    return AdmmEnv{T, TD, TI, TM}(data, case, rho_pq, rho_va; options...)
 end
 
 abstract type AbstractSolution{T,TD} end
