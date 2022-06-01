@@ -405,7 +405,7 @@ function opf_loaddata_dlm(case_name, lineOff=Line(); storage_ratio=0.0, storage_
   return OPFData(Dict{String,Any}(), buses, lines, generators, storages, bus_ref, baseMVA, busIdx, FromLines, ToLines, BusGeners, BusStorages)
 end
 
-function opf_loaddata(case_name; storage_ratio=0.0, storage_charge_max=1.0, VI=Array{Int}, VD=Array{Float64}, case_format="MATPOWER", verbose::Int=1)
+function opf_loaddata(case_name; storage_ratio=0.0, storage_charge_max=1.0, VI=Array{Int}, VD=Array{Float64}, case_format="matpower", verbose::Int=1)
   format = lowercase(case_format)
   if format in ["matpower", "pglib"]
     return opf_loaddata_matpower(case_name; storage_ratio=storage_ratio, storage_charge_max=storage_charge_max, VI=VI, VD=VD, case_format=format, verbose=verbose)
