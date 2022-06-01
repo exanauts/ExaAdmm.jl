@@ -1,6 +1,6 @@
 name = "ExaAdmm"
 uuid = "4d6a948c-1075-4240-a564-361a5d4e22a2"
-authors = ["Youngdae Kim <youngdae@anl.gov>"]
+authors = ["Youngdae Kim <youngdae@anl.gov>", "Kibaek Kim <kimk@anl.gov>", "Weiqi Zhang <wzhang483@wisc.edu>", "François Pacaud <fpacaud@anl.gov>", "Michel Schanen <mschanen@anl.gov>"]
 version = "0.1.0"
 
 [deps]
