@@ -3,7 +3,7 @@ name: Run tests
 on:
   push:
     branches:
-      - youngdae/abstraction
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
   schedule:
