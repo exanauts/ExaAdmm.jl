@@ -18,3 +18,13 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+CUDA = "3.4"
+ExaTron = "1"
+FileIO = "1.14"
+Ipopt = "1"
+JLD2 = "0.4"
+julia = "1.7"
+JuMP = "1"
+MPI = "0.19"
