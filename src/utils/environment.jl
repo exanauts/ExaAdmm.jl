@@ -143,11 +143,10 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 end
 
 function AdmmEnv{T,TD,TI,TM}(
-    case::String, rho_pq::Float64, rho_va::Float64; options...
+    case::String, rho_pq::Float64, rho_va::Float64; case_format="matpower", verbose::Int=1, options...
 ) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
-    data = opf_loaddata(case; options...)
-                             # VI=TI, VD=TD, case_format=case_format, verbose=verbose)
-    return AdmmEnv{T, TD, TI, TM}(data, case, rho_pq, rho_va; options...)
+    data = opf_loaddata(case; VI=TI, VD=TD, case_format=case_format, verbose=verbose)
+    return AdmmEnv{T, TD, TI, TM}(data, case, rho_pq, rho_va; case_format=case_format, verbose=verbose, options...)
 end
 
 abstract type AbstractSolution{T,TD} end
