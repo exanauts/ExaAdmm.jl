@@ -1,5 +1,5 @@
 # ExaAdmm.jl
-[![][build-stable-img]][build-url] [![][docs-stable-img]][docs-stable-url]
+[![][build-stable-img]][build-url] [![][docs-stable-img]][docs-stable-url] [![DOI](https://zenodo.org/badge/412625681.svg)](https://zenodo.org/badge/latestdoi/412625681)
 
 ExaAdmm.jl implements the two-level alternating direction method of multipliers for solving the component-based decomposition of alternating current optimal power flow problems on GPUs.
 
