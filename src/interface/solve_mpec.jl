@@ -24,11 +24,11 @@ function solve_acopf_mpec(case::String;
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
 
-    admm_restart(env, mod)
+    admm_two_level(env, mod)
 
 
     vm_dev = 0.0
-    for i=1:mod.grid.ngen
+    for i=1:mod.grid_data.ngen
         pg_idx = mod.gen_start + 2*(i-1)
         qg_idx = mod.gen_start + 2*(i-1) + 1
         vg_idx = mod.gen_start + 2*mod.grid.ngen + (i-1)

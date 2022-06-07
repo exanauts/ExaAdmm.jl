@@ -24,15 +24,15 @@ function admm_restart_rolling(
     sol = mod.solution
 
     if update_start_period_bounds == true
-        update_real_power_current_bounds(mod.ngen, mod.gen_start,
-            mod.pgmin_curr, mod.pgmax_curr, mod.pgmin, mod.pgmax,
-            mod.ramp_rate, mod.solution.x_curr)
+        update_real_power_current_bounds(mod.grid_data.ngen, mod.gen_start,
+            mod.pgmin_curr, mod.pgmax_curr, mod.grid_data.pgmin, mod.grid_data.pgmax,
+            mod.grid_data.ramp_rate, mod.solution.x_curr)
     end
 
     for t=start_period:end_period
-        mod.Pd .= env.load.pd[:,t]
-        mod.Qd .= env.load.qd[:,t]
-        admm_restart(env, mod)
+        mod.grid_data.Pd .= env.load.pd[:,t]
+        mod.grid_data.Qd .= env.load.qd[:,t]
+        admm_two_level(env, mod)
         @printf(" ** Statistics of time period %d\n", t)
         @printf("Status  . . . . . . . . . . . . . . . . . %s\n", mod.info.status)
         @printf("Objective value . . . . . . . . . . . . . %.6e\n", mod.info.objval)
@@ -40,8 +40,8 @@ function admm_restart_rolling(
         #@printf("Constraint violations (except line) . . . %.6e\n", mod.solution.max_viol_except_line)
         #@printf("Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
         @printf("Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.info.time_overall)
-        update_real_power_current_bounds(mod.ngen, mod.gen_start,
-            mod.pgmin_curr, mod.pgmax_curr, mod.pgmin, mod.pgmax,
-            mod.ramp_rate, mod.solution.u_curr)
+        update_real_power_current_bounds(mod.grid_data.ngen, mod.gen_start,
+            mod.pgmin_curr, mod.pgmax_curr, mod.grid_data.pgmin, mod.grid_data.pgmax,
+            mod.grid_data.ramp_rate, mod.solution.u_curr)
     end
 end
