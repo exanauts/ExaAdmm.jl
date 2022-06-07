@@ -7,7 +7,9 @@ using CUDA
 using ExaAdmm
 
 # Data
-const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
+artifact_toml = joinpath("..", "Artifacts.toml")
+exadata_hash = artifact_hash("ExaData", artifact_toml)
+const INSTANCES_DIR = joinpath(artifact_path(exadata_hash), "ExaData")
 const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "mp_demand")
 
 init_time = time()
