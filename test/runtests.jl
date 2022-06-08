@@ -1,10 +1,10 @@
 using Test
-using LazyArtifacts
 using LinearAlgebra
 using Printf
 using CUDA
 
 using ExaAdmm
+using LazyArtifacts
 
 # Data
 const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
