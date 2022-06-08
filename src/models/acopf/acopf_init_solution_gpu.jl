@@ -37,7 +37,10 @@ function init_branch_bus_kernel_one_level(n::Int, line_start::Int, rho_va::Float
         v[pij_idx+6] = 0.0
         v[pij_idx+7] = 0.0
 
-        rho[pij_idx+4:pij_idx+7] .= rho_va
+        rho[pij_idx+4] = rho_va
+        rho[pij_idx+5] = rho_va
+        rho[pij_idx+6] = rho_va
+        rho[pij_idx+7] = rho_va
     end
 
     return
