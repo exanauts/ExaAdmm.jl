@@ -1,5 +1,5 @@
 using Test
-using Artifacts
+using LazyArtifacts
 using LinearAlgebra
 using Printf
 using CUDA
@@ -7,9 +7,7 @@ using CUDA
 using ExaAdmm
 
 # Data
-artifact_toml = joinpath("..", "Artifacts.toml")
-exadata_hash = artifact_hash("ExaData", artifact_toml)
-const INSTANCES_DIR = joinpath(artifact_path(exadata_hash), "ExaData")
+const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
 const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "mp_demand")
 
 init_time = time()
