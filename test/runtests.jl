@@ -1,5 +1,5 @@
 using Test
-using LazyArtifacts
+using Artifacts
 using LinearAlgebra
 using Printf
 using CUDA
