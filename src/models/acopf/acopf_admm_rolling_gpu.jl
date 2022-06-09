@@ -21,7 +21,7 @@ function admm_restart_rolling(
     @assert env.load_specified == true
     @assert start_period >= 1 && end_period <= size(env.load.pd,2)
 
-    nblk_gen = div(mod.ngen-1, 64) + 1
+    nblk_gen = div(mod.grid_data.ngen-1, 64) + 1
 
     io = open(result_file*"_tight-factor"*string(env.tight_factor)*".txt", "w")
     @printf(io, " ** Parameters\n")
@@ -38,9 +38,9 @@ function admm_restart_rolling(
     u_curr = zeros(length(mod.solution.u_curr))
     v_curr = zeros(length(mod.solution.v_curr))
     for t=start_period:end_period
-        mod.Pd = env.load.pd[:,t]
-        mod.Qd = env.load.qd[:,t]
-        admm_restart(env, mod)
+        mod.grid_data.Pd = env.load.pd[:,t]
+        mod.grid_data.Qd = env.load.qd[:,t]
+        admm_two_level(env, mod)
 
         # Uncomment the following three lines if you want to save the solution.
         #copyto!(u_curr, mod.solution.u_curr)
@@ -65,9 +65,9 @@ function admm_restart_rolling(
         #@printf(io, "Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
         @printf(io, "Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.info.time_overall + mod.info.time_projection)
 
-        CUDA.@sync @cuda threads=64 blocks=nblk_gen update_real_power_current_bounds(mod.ngen, mod.gen_start,
-            mod.pgmin_curr, mod.pgmax_curr, mod.pgmin, mod.pgmax,
-            mod.ramp_rate, mod.solution.u_curr)
+        CUDA.@sync @cuda threads=64 blocks=nblk_gen update_real_power_current_bounds(mod.grid_data.ngen, mod.gen_start,
+            mod.pgmin_curr, mod.pgmax_curr, mod.grid_data.pgmin, mod.grid_data.pgmax,
+            mod.grid_data.ramp_rate, mod.solution.u_curr)
 
         flush(io)
     end
