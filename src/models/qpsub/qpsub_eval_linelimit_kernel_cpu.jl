@@ -1,7 +1,8 @@
 """
     eval_f*(), eval_g*(), eval_h*()
 
-prepare call backs for ExaTron 
+- prepare call backs for ExaTron
+- ONLY for benchmark  
 """
 
 

@@ -18,8 +18,8 @@ function bus_kernel_two_level_alternative_qpsub(
     YshR::Array{Float64,1}, YshI::Array{Float64,1}
 )
     for I=1:nbus
-        common_wi = 0.0
-        common_ti = 0.0
+        common_wi = 0.0 #sum over j \in B_i 
+        common_ti = 0.0 #sum over j \in B_i 
         inv_rhosum_pij_ji = 0.0
         inv_rhosum_qij_ji = 0.0
         rhosum_wi_ij_ji = 0.0
@@ -28,7 +28,7 @@ function bus_kernel_two_level_alternative_qpsub(
         @inbounds begin
             if FrStart[I] < FrStart[I+1] #exist line goes from bus I
                 for k=FrStart[I]:FrStart[I+1]-1 #how many
-                    pij_idx = line_start + 8*(FrIdx[k]-1)
+                    pij_idx = line_start + 8*(FrIdx[k]-1) #start index 
                     common_wi += l[pij_idx+4] + rho[pij_idx+4]*(u[pij_idx+4] + z[pij_idx+4])
                     common_ti += l[pij_idx+6] + rho[pij_idx+6]*(u[pij_idx+6] + z[pij_idx+6])
                     inv_rhosum_pij_ji += 1.0 / rho[pij_idx]
@@ -40,7 +40,7 @@ function bus_kernel_two_level_alternative_qpsub(
 
             if ToStart[I] < ToStart[I+1] #exist line goes to bus I
                 for k=ToStart[I]:ToStart[I+1]-1 #how many
-                    pij_idx = line_start + 8*(ToIdx[k]-1)
+                    pij_idx = line_start + 8*(ToIdx[k]-1) #start index 
                     common_wi += l[pij_idx+5] + rho[pij_idx+5]*(u[pij_idx+5] + z[pij_idx+5])
                     common_ti += l[pij_idx+7] + rho[pij_idx+7]*(u[pij_idx+7] + z[pij_idx+7])
                     inv_rhosum_pij_ji += 1.0 / rho[pij_idx+2]
@@ -61,7 +61,7 @@ function bus_kernel_two_level_alternative_qpsub(
         @inbounds begin
             if GenStart[I] < GenStart[I+1] #exist generator on bus I
                 for g=GenStart[I]:GenStart[I+1]-1 #how many 
-                    pg_idx = gen_start + 2*(GenIdx[g]-1)
+                    pg_idx = gen_start + 2*(GenIdx[g]-1) #start index 
                     rhs1 += (u[pg_idx] + z[pg_idx]) + (l[pg_idx]/rho[pg_idx])
                     rhs2 += (u[pg_idx+1] + z[pg_idx+1]) + (l[pg_idx+1]/rho[pg_idx+1])
                     inv_rhosum_pg += 1.0 / rho[pg_idx]

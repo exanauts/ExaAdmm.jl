@@ -1,7 +1,8 @@
 """
     auglag_linelimit_two_level_alternative_qpsub()
  
-update sol.u[pij_idx]
+- update sol.u[pij_idx]
+- ONLY for benchmark 
 """
 
 

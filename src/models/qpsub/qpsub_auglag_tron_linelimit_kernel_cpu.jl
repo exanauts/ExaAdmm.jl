@@ -1,3 +1,12 @@
+"""
+    build_QP_*()
+
+- build any box-constrained QP with      
+- use Exatron.createproblem()
+- TODO: clean up  
+"""
+
+
 ## testing for syntax for Tron 
 
 ## example 
@@ -55,12 +64,12 @@ function build_QP_SP(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64,
     # Random.seed!(1)
     # m = 0
 
-    @assert size(A,1)==size(A,2)==length(b)==length(l)==length(u)
-    @assert l<=u
-    @assert issymmetric(A) #symmetric
+    # @assert size(A,1)==size(A,2)==length(b)==length(l)==length(u)
+    # @assert l<=u
+    # @assert issymmetric(A) #symmetric #! symmetric check might fail due to numerical residual
     
     n=length(b)
-    P = sparse(A) #make A sparse 
+    P = sparse(A) #make A sparse to use nnz() and findnz()
     q = b
     # u =   1. * rand(n)
     # l = - 100. * rand(n)
@@ -73,7 +82,8 @@ function build_QP_SP(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64,
         mul!(g, P, x)
         g .+= q
     end
-
+    
+    #eval_h store all n*n entries
     function eval_h(x, mode, rows, cols, obj_factor, lambda, values)
         if mode == :Structure
             for i in 1:nnz(P) #does not symmetric
@@ -108,14 +118,10 @@ function build_QP_DS(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64,
 
     # @assert size(A,1)==size(A,2)==length(b)==length(l)==length(u)
     # @assert l<=u
-    # @assert issymmetric(A) #symmetric
+    # @assert issymmetric(A) #! symmetric check might fail due to numerical residual
     
     n=length(b)
-    # P = sparse(A) #make A sparse 
-    # q = b
-    # u =   1. * rand(n)
-    # l = - 100. * rand(n)
-    # Iz, Jz, vals = findnz(P)
+
 
     eval_f(x) = 0.5 * dot(x, A, x) + dot(b, x) #obj watch out for 1/2 
 
@@ -163,9 +169,9 @@ end
 #tr.options["matrix_type"]
 
 function solve_QP_Ipopt(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64, 1}, u::Array{Float64, 1})
-    @assert size(A,1)==size(A,2)==length(b)==length(l)==length(u)
-    @assert l<=u
-    @assert issymmetric(A) #symmetric
+    # @assert size(A,1)==size(A,2)==length(b)==length(l)==length(u)
+    # @assert l<=u
+    # @assert issymmetric(A) #symmetric #! symmetric check might fail due to numerical residual
     
     n=length(b)
 
