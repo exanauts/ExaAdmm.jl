@@ -9,34 +9,36 @@ mutable struct Parameters
     ABSTOL::Float64
     RELTOL::Float64
 
-    rho_max::Float64    # TODO: not used
-    rho_min_pq::Float64 # TODO: not used
-    rho_min_w::Float64  # TODO: not used
-    eps_rp::Float64     # TODO: not used
-    eps_rp_min::Float64 # TODO: not used
-    rt_inc::Float64     # TODO: not used
-    rt_dec::Float64     # TODO: not used
-    eta::Float64        # TODO: not used
+    rho_max::Float64    #? not used
+    rho_min_pq::Float64 #? not used
+    rho_min_w::Float64  #? not used
+    eps_rp::Float64     #? not used
+    eps_rp_min::Float64 #? not used
+    rt_inc::Float64     #? not used
+    rt_dec::Float64     #? not used
+    eta::Float64        #? not used
     verbose::Int
 
     # MPI implementation
     shift_lines::Int
 
     # Two-Level ADMM
-    initial_beta::Float64
-    beta::Float64
-    inc_c::Float64
-    theta::Float64
+    initial_beta::Float64 #initial penalty for z when outer_iter = 1
+    beta::Float64 #updated penalty for z
+    inc_c::Float64 #increase rate on beta
+    theta::Float64 #dynamic tolerance rate for norm_z_curr
     outer_eps::Float64
-    Kf::Int             # TODO: not used
-    Kf_mean::Int        # TODO: not used
+    shmem_size::Int
+    gen_shmem_size::Int
+    Kf::Int             #? not used
+    Kf_mean::Int        #? not used
     MAX_MULTIPLIER::Float64
     DUAL_TOL::Float64
 
     outer_iterlim::Int
     inner_iterlim::Int
-    scale::Float64
-    obj_scale::Float64
+    scale::Float64 #scale Exatron eval_f, eval_g, eval_h
+    obj_scale::Float64 #scale obj c2, c1, c0
 
     function Parameters()
         par = new()
