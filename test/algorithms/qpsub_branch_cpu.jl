@@ -43,10 +43,11 @@ res = zeros(mod.grid_data.nline)
         Hs = rand(6,6) 
         Hs = Hs * transpose(Hs) #make symmetric, inherit structure Hessian
 
-        #inherit structure Linear Constraint: ignore 1h and 1i for testing 
+        #inherit structure of Linear Constraint (overleaf): ignore 1h and 1i with zero assignment for testing 
         LH_1h = zeros(4) #LH * x = RH
         RH_1h = 0.0 
-        Cf_1i = zeros(6) #Cf * x = 0
+        LH_1i = zeros(4) #Lf * x = RH
+        RH_1i = 0.0
         
         #inherit structure line limit 
         LH_1j = rand(2)
@@ -111,13 +112,13 @@ res = zeros(mod.grid_data.nline)
         # mod.grid_data.YttR[i], mod.grid_data.YttI[i],
         # mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],LH_1h,RH_1h,Cf_1i,LH_1j,RH_1j,LH_1k,RH_1k)
 
-        tronx, tronf = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij(par.max_auglag, par.mu_max, A_ipopt, b_ipopt, ls, us, sol.l_curr[shift_idx + 1: shift_idx + 8], 
+        tronx, tronf = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij(1, par.max_auglag, par.mu_max, 1.0, A_ipopt, b_ipopt, ls, us, sol.l_curr[shift_idx + 1: shift_idx + 8], 
         sol.rho[shift_idx + 1: shift_idx + 8], sol.v_curr[shift_idx + 1: shift_idx + 8], 
         sol.z_curr[shift_idx + 1: shift_idx + 8], mod.qpsub_membuf[:,i],
         mod.grid_data.YffR[i], mod.grid_data.YffI[i],
         mod.grid_data.YftR[i], mod.grid_data.YftI[i],
         mod.grid_data.YttR[i], mod.grid_data.YttI[i],
-        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],LH_1h,RH_1h,Cf_1i,LH_1j,RH_1j,LH_1k,RH_1k)
+        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],LH_1h,RH_1h,LH_1i,RH_1i,LH_1j,RH_1j,LH_1k,RH_1k)
         
         res[i] = norm(tronx[3:8] - value.(x))
 
