@@ -36,92 +36,98 @@ ExaAdmm.admm_increment_reset_inner(env, mod)
 ExaAdmm.admm_increment_inner(env, mod)
 ExaAdmm.admm_inner_prestep(env, mod)
 
-Random.seed!(10);
+#save res for testing 
 res = zeros(mod.grid_data.nline)
 
 @inbounds begin 
+    #fix random seed and generate SQP param for mod
+    Random.seed!(20);
     for i = 1: mod.grid_data.nline
-        
-        shift_idx = 6 + 8*(i-1)
         Hs = rand(6,6) 
         Hs = Hs * transpose(Hs) #make symmetric, inherit structure Hessian
+        mod.Hs[6*(i-1)+1:6*i,1:6] .= Hs
 
-        #inherit structure Linear Constraint: ignore 1h and 1i for testing 
+        #inherit structure of Linear Constraint (overleaf): ignore 1h and 1i with zero assignment for testing 
         LH_1h = zeros(4) #LH * x = RH
+        mod.LH_1h[i,:] .= LH_1h
         RH_1h = 0.0 
-        Cf_1i = zeros(6) #Cf * x = 0
-        
+        mod.RH_1h[i] = RH_1h
+
+        LH_1i = zeros(4) #Lf * x = RH
+        mod.LH_1i[i,:] .= LH_1h
+        RH_1i = 0.0
+        mod.RH_1i[i] = RH_1i
+
         #inherit structure line limit 
         LH_1j = rand(2)
-        RH_1j = sum(rand(1)) + 100 #reduce dim
-        LH_1k = rand(2)
-        RH_1k = sum(rand(1)) + 100 #reduce dim
+        mod.LH_1j[i,:] .= LH_1j
+        RH_1j = sum(rand(1)) + 100 #reduce dim to scalar
+        mod.RH_1j[i] = RH_1j
 
+        LH_1k = rand(2)
+        mod.LH_1k[i,:] .= LH_1k
+        RH_1k = sum(rand(1)) + 100 #reduce dim to scalar 
+        mod.RH_1k[i] = RH_1k
         #inherit structure bound
         ls = rand(6)
+        mod.ls[i,:] .= ls
         us = ls .+ 10 
+        mod.us[i,:] .= us
+    end
+end #inbounds
+
+@inbounds begin
+    for i = 1: mod.grid_data.nline
+        
+        shift_idx = mod.line_start + 8*(i-1)
 
         supY = [mod.grid_data.YftR[i]  mod.grid_data.YftI[i]  mod.grid_data.YffR[i] 0 0 0;
         -mod.grid_data.YftI[i]  mod.grid_data.YftR[i]  -mod.grid_data.YffI[i] 0 0 0;
         mod.grid_data.YtfR[i]  -mod.grid_data.YtfI[i]  0  mod.grid_data.YttR[i] 0 0;
         -mod.grid_data.YtfI[i]  -mod.grid_data.YtfR[i] 0  -mod.grid_data.YttI[i] 0 0]
 
-        A_ipopt = ExaAdmm.eval_A_branch_kernel_cpu_qpsub(Hs, sol.l_curr[shift_idx + 1: shift_idx + 8], 
-        sol.rho[shift_idx + 1: shift_idx + 8], sol.v_curr[shift_idx + 1: shift_idx + 8], 
-        sol.z_curr[shift_idx + 1: shift_idx + 8], 
+        A_ipopt = ExaAdmm.eval_A_branch_kernel_cpu_qpsub(mod.Hs[6*(i-1)+1:6*i,1:6], sol.l_curr[shift_idx : shift_idx + 7], 
+        sol.rho[shift_idx : shift_idx + 7], sol.v_curr[shift_idx : shift_idx + 7], 
+        sol.z_curr[shift_idx : shift_idx + 7], 
         mod.grid_data.YffR[i], mod.grid_data.YffI[i],
         mod.grid_data.YftR[i], mod.grid_data.YftI[i],
         mod.grid_data.YttR[i], mod.grid_data.YttI[i],
         mod.grid_data.YtfR[i], mod.grid_data.YtfI[i])
 
-        b_ipopt = ExaAdmm.eval_b_branch_kernel_cpu_qpsub(sol.l_curr[shift_idx + 1: shift_idx + 8], 
-        sol.rho[shift_idx + 1: shift_idx + 8], sol.v_curr[shift_idx + 1: shift_idx + 8], 
-        sol.z_curr[shift_idx + 1: shift_idx + 8], 
+        b_ipopt = ExaAdmm.eval_b_branch_kernel_cpu_qpsub(sol.l_curr[shift_idx : shift_idx + 7], 
+        sol.rho[shift_idx : shift_idx + 7], sol.v_curr[shift_idx : shift_idx + 7], 
+        sol.z_curr[shift_idx : shift_idx + 7], 
         mod.grid_data.YffR[i], mod.grid_data.YffI[i],
         mod.grid_data.YftR[i], mod.grid_data.YftI[i],
         mod.grid_data.YttR[i], mod.grid_data.YttI[i],
         mod.grid_data.YtfR[i], mod.grid_data.YtfI[i])
 
-        l_ipopt = ls
-        u_ipopt = us
+        l_ipopt = mod.ls[i,:]
+        u_ipopt = mod.us[i,:]
         
         # call Ipopt
         model = JuMP.Model(Ipopt.Optimizer)
         # set_silent(model)
-        @variable(model, l_ipopt[i]<= x[i=1:6] <=u_ipopt[i])
+        @variable(model, l_ipopt[k]<= x[k=1:6] <=u_ipopt[k])
         @objective(model, Min, 0.5 * dot(x, A_ipopt, x) + dot(b_ipopt, x))
         # @constraint(model, eq1h, dot(LH_1h, x[1:4]) == RH_1h )
-        @constraint(model, sij, LH_1j[1] * dot(supY[1,:],x) + LH_1j[2] * dot(supY[2,:],x) <= RH_1j)
-        @constraint(model, sji,  LH_1k[1] * dot(supY[3,:],x) + LH_1k[2] * dot(supY[4,:],x) <= RH_1k)
+        @constraint(model, sij, mod.LH_1j[i,1] * dot(supY[1,:],x) + mod.LH_1j[i,2] * dot(supY[2,:],x) <= mod.RH_1j[i])
+        @constraint(model, sji, mod.LH_1k[i,1] * dot(supY[3,:],x) + mod.LH_1k[i,2] * dot(supY[4,:],x) <= mod.RH_1k[i])
         optimize!(model)
         # x_ipopt = value.(x)
         println("objective = ", objective_value(model), " with solution = ",value.(x))
 
-        #test eval for auglag (tested)
-        # A_auglag = ExaAdmm.eval_A_auglag_branch_kernel_cpu_qpsub(Hs, sol.l_curr[shift_idx + 1: shift_idx + 8], 
-        # sol.rho[shift_idx + 1: shift_idx + 8], sol.v_curr[shift_idx + 1: shift_idx + 8], 
-        # sol.z_curr[shift_idx + 1: shift_idx + 8], mod.qpsub_membuf[:,i],
-        # mod.grid_data.YffR[i], mod.grid_data.YffI[i],
-        # mod.grid_data.YftR[i], mod.grid_data.YftI[i],
-        # mod.grid_data.YttR[i], mod.grid_data.YttI[i],
-        # mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],LH_1h,RH_1h,Cf_1i,LH_1j,RH_1j,LH_1k,RH_1k)
-
-        # b_auglag = ExaAdmm.eval_b_auglag_branch_kernel_cpu_qpsub(sol.l_curr[shift_idx + 1: shift_idx + 8], 
-        # sol.rho[shift_idx + 1: shift_idx + 8], sol.v_curr[shift_idx + 1: shift_idx + 8], 
-        # sol.z_curr[shift_idx + 1: shift_idx + 8], mod.qpsub_membuf[:,i],
-        # mod.grid_data.YffR[i], mod.grid_data.YffI[i],
-        # mod.grid_data.YftR[i], mod.grid_data.YftI[i],
-        # mod.grid_data.YttR[i], mod.grid_data.YttI[i],
-        # mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],LH_1h,RH_1h,Cf_1i,LH_1j,RH_1j,LH_1k,RH_1k)
-
-        tronx, tronf = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij(par.max_auglag, par.mu_max, A_ipopt, b_ipopt, ls, us, sol.l_curr[shift_idx + 1: shift_idx + 8], 
-        sol.rho[shift_idx + 1: shift_idx + 8], sol.v_curr[shift_idx + 1: shift_idx + 8], 
-        sol.z_curr[shift_idx + 1: shift_idx + 8], mod.qpsub_membuf[:,i],
+        println(sol.u_curr[shift_idx : shift_idx + 7]) #output u_prev[pij]
+        tronx, tronf = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij(1, par.max_auglag, par.mu_max, 1.0, A_ipopt, b_ipopt, mod.ls[i,:], mod.us[i,:], sol.l_curr[shift_idx : shift_idx + 7], 
+        sol.rho[shift_idx : shift_idx + 7], sol.u_curr, shift_idx, sol.v_curr[shift_idx : shift_idx + 7], 
+        sol.z_curr[shift_idx : shift_idx + 7], mod.qpsub_membuf[:,i],
         mod.grid_data.YffR[i], mod.grid_data.YffI[i],
         mod.grid_data.YftR[i], mod.grid_data.YftI[i],
         mod.grid_data.YttR[i], mod.grid_data.YttI[i],
-        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],LH_1h,RH_1h,Cf_1i,LH_1j,RH_1j,LH_1k,RH_1k)
-        
+        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],
+        mod.LH_1h[i,:], mod.RH_1h[i], mod.LH_1i[i,:], mod.RH_1i[i], mod.LH_1j[i,:], mod.RH_1j[i], mod.LH_1k[i,:], mod.RH_1k[i])
+        println(sol.u_curr[shift_idx : shift_idx + 7]) #output u_curr[pij]
+
         res[i] = norm(tronx[3:8] - value.(x))
 
     end
@@ -137,4 +143,5 @@ end #inbounds
     @test res[8] <= atol # Line 8
     @test res[9] <= atol # Line 9
    
+    println(sol.u_curr)
 end #testset
