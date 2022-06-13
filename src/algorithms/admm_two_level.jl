@@ -41,6 +41,7 @@ function admm_two_level(
             admm_update_l(env, mod, device)
             admm_update_residual(env, mod, device)
 
+            # an adjusting termination criteria for inner loop (i.e., inner loop is not solved to exact)
             info.eps_pri = sqrt_d / (2500*info.outer)
 
             if par.verbose > 0
@@ -55,11 +56,13 @@ function admm_two_level(
                         info.dualres, info.norm_z_curr, info.mismatch, OUTER_TOL, par.beta)
             end
 
+            # primres: x-xbar+z_curr
             if info.primres <= info.eps_pri #|| info.dualres <= par.DUAL_TOL
                 break
             end
         end # while inner
 
+        # mismatch: x-xbar
         if info.mismatch <= OUTER_TOL
             info.status = :Solved
             break
@@ -67,6 +70,7 @@ function admm_two_level(
 
         admm_update_lz(env, mod, device)
 
+        # if z_curr too large vs z_prev, increase penalty
         if info.norm_z_curr > par.theta*info.norm_z_prev
             par.beta = min(par.inc_c*par.beta, 1e24)
         end
