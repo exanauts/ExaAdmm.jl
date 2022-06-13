@@ -1,7 +1,9 @@
 """
     solve_qpsub()
     
-main function solve qpsub problem
+- main function solve qpsub problem 
+- TODO: integrate with SQP (check coefficient validity, use_projection)
+- TODO: clear lower level TODOs
 """
 
 
