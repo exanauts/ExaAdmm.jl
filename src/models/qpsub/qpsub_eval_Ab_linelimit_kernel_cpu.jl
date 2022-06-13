@@ -18,6 +18,20 @@
     - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|   
 """
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function eval_A_branch_kernel_cpu_qpsub(
     H::Array{Float64,2},l::Array{Float64,1}, rho::Array{Float64,1}, v::Array{Float64,1}, z_curr::Array{Float64,1},
     YffR::Float64, YffI::Float64,
@@ -48,6 +62,14 @@ function eval_A_branch_kernel_cpu_qpsub(
     return H #6*6
 end
 
+
+
+
+
+
+
+
+
 function eval_A_auglag_branch_kernel_cpu_qpsub(
     Hbr::Array{Float64,2},l::Array{Float64,1}, rho::Array{Float64,1}, 
     v::Array{Float64,1}, z_curr::Array{Float64,1}, membuf::Array{Float64,1},
@@ -56,7 +78,7 @@ function eval_A_auglag_branch_kernel_cpu_qpsub(
     YttR::Float64, YttI::Float64,
     YtfR::Float64, YtfI::Float64, 
     LH_1h::Array{Float64,1}, RH_1h::Float64,
-    Cf_1i::Array{Float64,1}, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64)
+    LH_1i::Array{Float64,1}, RH_1i::Float64, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64,scale::Float64)
 
     A = zeros(8,8)
     A[3:8,3:8] = Hbr
@@ -70,7 +92,7 @@ function eval_A_auglag_branch_kernel_cpu_qpsub(
 
     #ALM on equality constraint wrt branch structure ExaTron
     vec_1h = [0, 0, LH_1h[1], LH_1h[2], LH_1h[3], LH_1h[4], 0, 0 ] #1h
-    vec_1i = [0, 0, Cf_1i[1], Cf_1i[2], 0, 0, Cf_1i[3], Cf_1i[4]]  #1i
+    vec_1i = [0, 0, LH_1i[1], LH_1i[2], 0, 0, LH_1i[3], LH_1i[4]]  #1i
     vec_1j = [1, 0, 0, 0, 0, 0, 0, 0] + LH_1j[1]* supY[1,:] + LH_1j[2]* supY[2,:] #1j with t_ij
     vec_1k = [0, 1, 0, 0, 0, 0, 0, 0] + LH_1k[1]* supY[3,:] + LH_1k[2]* supY[4,:] #1k with t_ji
 
@@ -85,8 +107,16 @@ function eval_A_auglag_branch_kernel_cpu_qpsub(
     end
     
     #! A may not be perfectly symmetric 
-    return A #8*8 
+    return A*scale #dim = 8*8 
 end
+
+
+
+
+
+
+
+
 
 
 function eval_b_branch_kernel_cpu_qpsub(
@@ -119,6 +149,18 @@ function eval_b_branch_kernel_cpu_qpsub(
 end
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 function eval_b_auglag_branch_kernel_cpu_qpsub(
     bbr::Array{Float64,1}, l::Array{Float64,1}, rho::Array{Float64,1}, 
     v::Array{Float64,1}, z_curr::Array{Float64,1}, membuf::Array{Float64,1},
@@ -126,7 +168,7 @@ function eval_b_auglag_branch_kernel_cpu_qpsub(
     YftR::Float64, YftI::Float64,
     YttR::Float64, YttI::Float64,
     YtfR::Float64, YtfI::Float64, LH_1h::Array{Float64,1}, RH_1h::Float64,
-    Cf_1i::Array{Float64,1}, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64)
+    LH_1i::Array{Float64,1}, RH_1i::Float64, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64, scale::Float64)
 
     b = zeros(8)
     b[3:8] = bbr
@@ -140,16 +182,16 @@ function eval_b_auglag_branch_kernel_cpu_qpsub(
 
     #ALM on equality constraint wrt branch structure ExaTron
     vec_1h = [0, 0, LH_1h[1], LH_1h[2], LH_1h[3], LH_1h[4], 0, 0 ] #1h
-    vec_1i = [0, 0, Cf_1i[1], Cf_1i[2], 0, 0, Cf_1i[3], Cf_1i[4]] #1i
+    vec_1i = [0, 0, LH_1i[1], LH_1i[2], 0, 0, LH_1i[3], LH_1i[4]] #1i
     vec_1j = [1, 0, 0, 0, 0, 0, 0, 0] + LH_1j[1]* supY[1,:] + LH_1j[2]* supY[2,:] #1j with t_ij
     vec_1k = [0, 1, 0, 0, 0, 0, 0, 0] + LH_1k[1]* supY[3,:] + LH_1k[2]* supY[4,:] #1k with t_ji
 
     @inbounds begin 
             b .+= (membuf[1] - membuf[5]*RH_1h)*vec_1h #1h
-            b .+= (membuf[2])*vec_1i   #1i
-            b .+= (membuf[3] - membuf[5]*RH_1j)*vec_1j   #1j
-            b .+= (membuf[4] - membuf[5]*RH_1k)*vec_1k   #1k
+            b .+= (membuf[2] - membuf[5]*RH_1i)*vec_1i #1i
+            b .+= (membuf[3] - membuf[5]*RH_1j)*vec_1j #1j
+            b .+= (membuf[4] - membuf[5]*RH_1k)*vec_1k #1k
     end
 
-    return b #8
+    return b*scale #dim = 8
 end

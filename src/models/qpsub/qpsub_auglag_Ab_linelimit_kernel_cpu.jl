@@ -18,12 +18,42 @@
     - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|   
 """
 
+
+
+"""
+
+    Youngdae Auglag Argument vs My Auglag
+
+- n::Int, nline::Int, line_start::Int,
+    major_iter::Int, max_auglag::Int, mu_max::Float64, scale::Float64,
+
+- u::Array{Float64,1}, xbar::Array{Float64,1}, z::Array{Float64,1},
+    l::Array{Float64,1}, rho::Array{Float64,1}, shift_lines::Int,
+    param::Array{Float64,2},
+
+- _YffR::Array{Float64,1}, _YffI::Array{Float64,1},
+    _YftR::Array{Float64,1}, _YftI::Array{Float64,1},
+    _YttR::Array{Float64,1}, _YttI::Array{Float64,1},
+    _YtfR::Array{Float64,1}, _YtfI::Array{Float64,1},
+
+- frVmBound::Array{Float64,1}, toVmBound::Array{Float64,1},
+    frVaBound::Array{Float64,1}, toVaBound::Array{Float64,1}
+
+- TODO: check frVaBound and toVaBound for slack are 0 in integration
+
+- #! change list:
+    - remove n (env.linelimit = true always)
+    - shift_lines (=0 unused)
+    - (old) param = (new) membuf
+    - avoid OPF data format, using SQP data format
+"""
+
 function auglag_Ab_linelimit_two_level_alternative_qpsub(
-    n::Int, nline::Int, line_start::Int,
+    nline::Int, line_start::Int,
     major_iter::Int, max_auglag::Int, mu_max::Float64, scale::Float64,
     u::Array{Float64,1}, xbar::Array{Float64,1}, z::Array{Float64,1},
     l::Array{Float64,1}, rho::Array{Float64,1}, shift_lines::Int,
-    param::Array{Float64,2},
+    membuf::Array{Float64,2},
     _YffR::Array{Float64,1}, _YffI::Array{Float64,1},
     _YftR::Array{Float64,1}, _YftI::Array{Float64,1},
     _YttR::Array{Float64,1}, _YttI::Array{Float64,1},
@@ -40,7 +70,7 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub(
     xl = zeros(n)
     xu = zeros(n)
 
-    @inbounds for I=shift_lines+1:shift_lines+nline
+    @inbounds for I=shift_lines+1:shift_lines+nline #shift_lines = 0 (unuse)
         YffR = _YffR[I]; YffI = _YffI[I]
         YftR = _YftR[I]; YftI = _YftI[I]
         YttR = _YttR[I]; YttI = _YttI[I]

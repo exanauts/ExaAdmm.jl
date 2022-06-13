@@ -17,6 +17,17 @@ function acopf_admm_update_x_gen(
     return
 end
 
+
+
+
+
+
+
+
+
+
+
+
 """
     acopf_admm_update_x_line()
     
@@ -31,10 +42,12 @@ function acopf_admm_update_x_line(
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
 
 #=
-    tmp = mod.nline
-    mod.nline = 1
-    par.shift_lines = 3990
-=#
+    # tmp = mod.nline
+    # mod.nline = 1
+    # par.shift_lines = 3990
+
+    
+    # auglag_it, tron_it not stored 
     if env.use_linelimit
         time_br = @timed auglag_it, tron_it = auglag_linelimit_two_level_alternative_qpsub(mod.n, data.nline, mod.line_start,
                                                 info.inner, par.max_auglag, par.mu_max, par.scale,
@@ -48,12 +61,57 @@ function acopf_admm_update_x_line(
                                                 par.shift_lines, mod.membuf, data.YffR, data.YffI, data.YftR, data.YftI,
                                                 data.YttR, data.YttI, data.YtfR, data.YtfI, data.FrVmBound, data.ToVmBound)
     end
-#    mod.nline = tmp
+    
+    info.user.time_branches += time_br.time
+    info.time_x_update += time_br.time
+
+    # mod.nline = tmp
+=#
+ 
+@inbounds begin
+    for i = 1 : mod.grid_data.nline 
+        shift_idx = mod.line_start + 8*(i-1)
+        A_ipopt = eval_A_branch_kernel_cpu_qpsub(mod.Hs[6*(i-1)+1:6*i,1:6], sol.l_curr[shift_idx : shift_idx + 7], 
+        sol.rho[shift_idx : shift_idx + 7], sol.v_curr[shift_idx : shift_idx + 7], 
+        sol.z_curr[shift_idx : shift_idx + 7], 
+        mod.grid_data.YffR[i], mod.grid_data.YffI[i],
+        mod.grid_data.YftR[i], mod.grid_data.YftI[i],
+        mod.grid_data.YttR[i], mod.grid_data.YttI[i],
+        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i])
+
+        b_ipopt = eval_b_branch_kernel_cpu_qpsub(sol.l_curr[shift_idx : shift_idx + 7], 
+        sol.rho[shift_idx : shift_idx + 7], sol.v_curr[shift_idx : shift_idx + 7], 
+        sol.z_curr[shift_idx : shift_idx + 7], 
+        mod.grid_data.YffR[i], mod.grid_data.YffI[i],
+        mod.grid_data.YftR[i], mod.grid_data.YftI[i],
+        mod.grid_data.YttR[i], mod.grid_data.YttI[i],
+        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i])
+
+        time_br = @timed tronx, tronf = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij(1, par.max_auglag, par.mu_max, 1.0, A_ipopt, b_ipopt, mod.ls[i,:], mod.us[i,:], sol.l_curr[shift_idx : shift_idx + 7], 
+        sol.rho[shift_idx : shift_idx + 7], sol.u_curr, shift_idx, sol.v_curr[shift_idx : shift_idx + 7], 
+        sol.z_curr[shift_idx : shift_idx + 7], mod.qpsub_membuf[:,i],
+        mod.grid_data.YffR[i], mod.grid_data.YffI[i],
+        mod.grid_data.YftR[i], mod.grid_data.YftI[i],
+        mod.grid_data.YttR[i], mod.grid_data.YttI[i],
+        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],
+        mod.LH_1h[i,:], mod.RH_1h[i], mod.LH_1i[i,:], mod.RH_1i[i], mod.LH_1j[i,:], mod.RH_1j[i], mod.LH_1k[i,:], mod.RH_1k[i])
 
     info.user.time_branches += time_br.time
     info.time_x_update += time_br.time
-    return
+    end
+end #@inbounds
+    
+return
 end
+
+
+
+
+
+
+
+
+
 
 """
     acopf_admm_update_x()
