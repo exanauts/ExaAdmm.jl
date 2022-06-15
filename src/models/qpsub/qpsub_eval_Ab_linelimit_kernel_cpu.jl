@@ -47,15 +47,18 @@ function eval_A_branch_kernel_cpu_qpsub(
     YtfR -YtfI 0 YttR 0 0;
     -YtfI -YtfR 0 -YttI 0 0]
 
+    H_new = H
     @inbounds begin 
-            H .+= rho[1]*supY[1,:]*transpose(supY[1,:]) #pij
-            H .+= rho[2]*supY[2,:]*transpose(supY[2,:]) #qij
-            H .+= rho[3]*supY[3,:]*transpose(supY[3,:]) #pji
-            H .+= rho[4]*supY[4,:]*transpose(supY[4,:]) #qji
-            H[3,3] += rho[5] #wi(ij) 
-            H[4,4] += rho[6] #wj(ji) 
-            H[5,5] += rho[7] #thetai(ij)
-            H[6,6] += rho[8] #thetaj(ji)
+            # println(H)
+            H_new .+= rho[1]*supY[1,:]*transpose(supY[1,:]) #pij
+            H_new .+= rho[2]*supY[2,:]*transpose(supY[2,:]) #qij
+            H_new .+= rho[3]*supY[3,:]*transpose(supY[3,:]) #pji
+            H_new .+= rho[4]*supY[4,:]*transpose(supY[4,:]) #qji
+            # println(H)
+            H_new[3,3] += rho[5] #wi(ij) 
+            H_new[4,4] += rho[6] #wj(ji) 
+            H_new[5,5] += rho[7] #thetai(ij)
+            H_new[6,6] += rho[8] #thetaj(ji)
     end
     
     #! H may not be perfectly symmetric 
@@ -136,13 +139,13 @@ function eval_b_branch_kernel_cpu_qpsub(
 
     @inbounds begin
         b .+= (l[1] - rho[1]*(v[1]-z[1])) * supY[1,:] #pij
-        b .+  (l[2] - rho[2]*(v[2]-z[2])) * supY[2,:] #qij
+        b .+=  (l[2] - rho[2]*(v[2]-z[2])) * supY[2,:] #qij
         b .+= (l[3] - rho[3]*(v[3]-z[3])) * supY[3,:] #pji
-        b .+  (l[4] - rho[4]*(v[4]-z[4])) * supY[4,:] #qji
+        b .+=  (l[4] - rho[4]*(v[4]-z[4])) * supY[4,:] #qji
         b[3] += (l[5] - rho[5]*(v[5]-z[5])) #wi(ij)
         b[4] += (l[6] - rho[6]*(v[6]-z[6])) #wj(ji)
-        b[5] += (l[7] - rho[7]*(v[7]-z[7])) #wi(ij)
-        b[6] += (l[8] - rho[8]*(v[8]-z[8])) #wj(ji)
+        b[5] += (l[7] - rho[7]*(v[7]-z[7])) #thetai(ij)
+        b[6] += (l[8] - rho[8]*(v[8]-z[8])) #thetaj(ji)
     end
 
     return b #size 6

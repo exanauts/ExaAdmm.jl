@@ -16,10 +16,13 @@ This contains the parameters specific to ACOPF model instance.
 |structure for u |   pg    |  qg    |  p_ij     |  q_ij   |   p_ji    |  q_ji    | wi(ij)  |  wj(ji)  | thetai(ij) |  thetaj(ji) |
 |structure for v |   pg(i) |  qg(i) |  p_ij(i)  |  q_ij(i)|   p_ji(j) |  q_ji(j) | wi      |  wj      | thetai     | thetaj      |
 
-- structure for l and ρ is wrt all element of [x - xbar + z]  with same dimension   
+- structure for l and ρ is wrt all element of [x - xbar + z]  with same dimension  
+
+- structure for sqp_line: 6*nline
+    |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
 
 - Note: line has shared nodes => xbar contain duplications. 
-For example line(1,2) and line(2,3): w2 and theta2 exist twice in v.
+    For example line(1,2) and line(2,3): w2 and theta2 exist twice in v.
 
 - qpsub_membuf structure (dim = 5, used in auglag):
     - |λ_1h | λ_1i | λ_1j| λ_1k | ρ_{1h,1i,1j,1k}| 
@@ -49,8 +52,8 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     gen_membuf::TM  # memory buffer for generator kernel
     
     
-    qpsub_membuf::TM #memory buffer for qpsub
-    
+    qpsub_membuf::TM #memory buffer for qpsub 5*nline
+    sqp_line ::TM #6 * nline 
     
     
     #from SQP
@@ -67,6 +70,8 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
     ls::TM # nline * 6
     us::TM # nline * 6 
+
+    v_prev::TD
 
 
 
@@ -113,10 +118,12 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.grid_data.ramp_rate = TD(undef, model.grid_data.ngen)
         model.grid_data.ramp_rate .= ramp_ratio.*model.grid_data.pgmax
 
+        #scale the obj params with obj_scale
         if env.params.obj_scale != 1.0
             model.grid_data.c2 .*= env.params.obj_scale
             model.grid_data.c1 .*= env.params.obj_scale
             model.grid_data.c0 .*= env.params.obj_scale
+            model.Hs .*=env.params.obj_scale
         end
 
         # These are only for two-level ADMM.
@@ -133,7 +140,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.solution = ifelse(env.use_twolevel,
             SolutionTwoLevel{T,TD}(model.nvar_padded, model.nvar_v, model.nline_padded),
             SolutionOneLevel{T,TD}(model.nvar_padded))
-        init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va)
+        
         model.gen_solution = EmptyGeneratorSolution{T,TD}()
         
         #old memory buffer used in the auglag_linelimit with Tron 
@@ -144,6 +151,13 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         model.info = IterationInformation{ComponentInformation}()
 
+        #new solution structure for tron (Hessian inherited from SQP: 6*nline)
+        model.sqp_line = TM(undef, (6,model.grid_data.nline))
+        fill!(model.sqp_line, 0.0)  
+
+        #new v_prev for dual reshape
+        model.v_prev = TD(undef, model.nvar)
+        fill!(model.v_prev, 0.0) 
 
         #new memory buffer used in the new auglag_Ab with Tron
         model.qpsub_membuf = TM(undef, (5,model.grid_data.nline))
@@ -223,6 +237,24 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
     model.nline_padded = ref.nline_padded
     model.nvar_padded = ref.nvar_padded
     model.nvar_u_padded = ref.nvar_u_padded
+
+    model.Hs = ref.Hs
+    model.LH_1h = ref.LH_1h
+    model.RH_1h = ref.RH_1h
+
+    model.LH_1i = ref.LH_1i
+    model.RH_1i = ref.RH_1i
+
+    model.LH_1j = ref.LH_1j
+    model.RH_1j = ref.RH_1j
+
+    model.LH_1k = ref.LH_1k
+    model.RH_1k = ref.RH_1k
+
+    model.ls = ref.ls
+    model.us = ref.us
+
+    model.sqp_line = ref.sqp_line
 
     return model
 end

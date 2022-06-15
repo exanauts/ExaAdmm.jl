@@ -28,7 +28,7 @@ function bus_kernel_two_level_alternative_qpsub(
         @inbounds begin
             if FrStart[I] < FrStart[I+1] #exist line goes from bus I
                 for k=FrStart[I]:FrStart[I+1]-1 #how many
-                    pij_idx = line_start + 8*(FrIdx[k]-1) #start index 
+                    pij_idx = line_start + 8*(FrIdx[k]-1) #start index: which line 
                     common_wi += l[pij_idx+4] + rho[pij_idx+4]*(u[pij_idx+4] + z[pij_idx+4])
                     common_ti += l[pij_idx+6] + rho[pij_idx+6]*(u[pij_idx+6] + z[pij_idx+6])
                     inv_rhosum_pij_ji += 1.0 / rho[pij_idx]
@@ -40,7 +40,7 @@ function bus_kernel_two_level_alternative_qpsub(
 
             if ToStart[I] < ToStart[I+1] #exist line goes to bus I
                 for k=ToStart[I]:ToStart[I+1]-1 #how many
-                    pij_idx = line_start + 8*(ToIdx[k]-1) #start index 
+                    pij_idx = line_start + 8*(ToIdx[k]-1) #start index: which line 
                     common_wi += l[pij_idx+5] + rho[pij_idx+5]*(u[pij_idx+5] + z[pij_idx+5])
                     common_ti += l[pij_idx+7] + rho[pij_idx+7]*(u[pij_idx+7] + z[pij_idx+7])
                     inv_rhosum_pij_ji += 1.0 / rho[pij_idx+2]
