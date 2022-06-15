@@ -31,6 +31,7 @@ include("utils/utilities_gpu.jl")
 include("utils/utilities_ka.jl")
 
 include("algorithms/admm_two_level.jl")
+include("algorithms/admm_one_level.jl")
 
 # ----------------------------------------
 # A single period ACOPF implementation
@@ -180,6 +181,7 @@ include("models/qpsub/qpsub_admm_update_x_cpu.jl")
 include("models/qpsub/qpsub_admm_update_xbar_cpu.jl")
 include("models/qpsub/qpsub_admm_update_z_cpu.jl")
 include("models/qpsub/qpsub_admm_update_l_cpu.jl")
+include("models/qpsub/qpsub_admm_update_l_cpu_single.jl")
 include("models/qpsub/qpsub_admm_update_residual_cpu.jl")
 include("models/qpsub/qpsub_admm_update_lz_cpu.jl")
 include("models/qpsub/qpsub_admm_prepoststep_cpu.jl")
