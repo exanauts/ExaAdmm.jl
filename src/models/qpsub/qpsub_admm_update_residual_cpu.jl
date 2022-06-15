@@ -13,21 +13,31 @@ function admm_update_residual(
     sol, info, data, par, grid_data = mod.solution, mod.info, env.data, env.params, mod.grid_data
 
     sol.rp .= sol.u_curr .- sol.v_curr .+ sol.z_curr #x-xbar+z_curr
-    sol.rd .= sol.z_curr .- sol.z_prev #? NOT USED
+    # sol.rd .= sol.z_curr .- sol.z_prev #? NOT USED
+    sol.rd .= sol.rho .* (sol.v_curr - mod.v_prev)#single level admm from Boyd
     sol.Ax_plus_By .= sol.rp .- sol.z_curr #x-xbar
 
     info.primres = norm(sol.rp)
-    info.dualres = norm(sol.rd) #? NOT USED
+    info.dualres = norm(sol.rd)
     info.norm_z_curr = norm(sol.z_curr) #? NOT USED
     info.mismatch = norm(sol.Ax_plus_By)
-    info.objval = sum(data.generators[g].coeff[data.generators[g].n-2]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
-                      data.generators[g].coeff[data.generators[g].n-1]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)]) +
-                      data.generators[g].coeff[data.generators[g].n]
-                      for g in 1:grid_data.ngen)::Float64
-    info.auglag = info.objval + sum(sol.lz[i]*sol.z_curr[i] for i=1:length(mod.nvar)) +
-                  0.5*par.beta*sum(sol.z_curr[i]^2 for i=1:length(mod.nvar)) +
-                  sum(sol.l_curr[i]*sol.rp[i] for i=1:length(mod.nvar)) +
-                  0.5*sum(sol.rho[i]*(sol.rp[i])^2 for i=1:length(mod.nvar))
+    # info.objval = sum(data.generators[g].coeff[data.generators[g].n-2]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
+    #                   data.generators[g].coeff[data.generators[g].n-1]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)]) +
+    #                   data.generators[g].coeff[data.generators[g].n]
+    #                   for g in 1:grid_data.ngen)::Float64
+
+    info.objval = sum(grid_data.c2[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
+                        grid_data.c1[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)]) +
+                        grid_data.c0[g]
+                        for g in 1:grid_data.ngen) + 
+                            sum(0.5*dot(mod.sqp_line[:,l],mod.Hs[6*(l-1)+1:6*l,1:6],mod.sqp_line[:,l]) for l=1:grid_data.nline) 
+    
+    info.auglag = info.objval + sum(sol.lz[i]*sol.z_curr[i] for i=1:mod.nvar) +
+                  0.5*par.beta*sum(sol.z_curr[i]^2 for i=1:mod.nvar) +
+                  sum(sol.l_curr[i]*sol.rp[i] for i=1:mod.nvar) +
+                  0.5*sum(sol.rho[i]*(sol.rp[i])^2 for i=1:mod.nvar)
+    
+
 
     return
 end

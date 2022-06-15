@@ -12,6 +12,7 @@ function admm_update_xbar(
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
 sol, info, data = mod.solution, mod.info, mod.grid_data
+mod.v_prev .= sol.v_curr
 bus_time = @timed bus_kernel_two_level_alternative_qpsub(data.baseMVA, data.nbus, mod.gen_start, mod.line_start,
                                     data.FrStart, data.FrIdx, data.ToStart, data.ToIdx, data.GenStart,
                                     data.GenIdx, data.Pd, data.Qd, sol.u_curr, sol.v_curr, sol.z_curr,
