@@ -17,7 +17,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 CUDA = "3.4"
-ExaTron = "1"
+ExaTron = "2"
 FileIO = "1.14"
 julia = "1.7"
 MPI = "0.19"
