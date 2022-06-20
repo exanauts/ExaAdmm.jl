@@ -14,8 +14,6 @@ if CUDA.has_cuda_gpu() || AMDGPU.has_rocm_gpu()
         push!(devices, ROCDevice())
     end
 end
-@show devices
-device = CUDADevice()
 @testset "Testing [x,xbar,z,l,lz] updates and a solve for ACOPF using KA" for _device in devices
     # Testing case9.m
     case = joinpath(INSTANCES_DIR, "case9.m")
