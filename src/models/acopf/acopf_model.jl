@@ -81,7 +81,7 @@ mutable struct ModelAcopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         # Memory space is allocated based on the padded size.
         model.solution =
             Solution{T,TD}(model.nvar_padded)
-        init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va)
+        init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va, env.ka_device)
         model.gen_solution = EmptyGeneratorSolution{T,TD}()
 
         model.membuf = TM(undef, (31, model.grid_data.nline))

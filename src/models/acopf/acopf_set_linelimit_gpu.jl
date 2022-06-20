@@ -11,7 +11,9 @@ end
 function acopf_set_linelimit(
   env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
   mod::AbstractOPFModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-  info::IterationInformation
+  info::IterationInformation,
+  device::Nothing=nothing
+
 )
   CUDA.@sync @cuda threads=64 blocks=(div(mod.nline-1, 64)+1) set_rateA_kernel(mod.nline, mod.membuf, mod.rateA)
 end

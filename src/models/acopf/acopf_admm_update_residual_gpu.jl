@@ -10,7 +10,8 @@ end
 
 function admm_update_residual(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::AbstractOPFModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::AbstractOPFModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    device::Nothing=nothing
 )
     sol, info = mod.solution, mod.info
 

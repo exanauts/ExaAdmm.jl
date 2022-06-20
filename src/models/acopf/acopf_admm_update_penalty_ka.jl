@@ -1,20 +1,21 @@
-function update_penalty(nvar::Int, theta::Float64, gamma::Float64,
-    rp_curr::CuDeviceArray{Float64,1}, rp_prev::CuDeviceArray{Float64,1},
-    rho::CuDeviceArray{Float64,1}
+@kernel function update_penalty_ka(nvar::Int, theta::Float64, gamma::Float64,
+    rp_curr, rp_prev,
+    rho
 )
-    tx = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
+    I = @index(Group, Linear)
+    J = @index(Local, Linear)
+    tx = J + (@groupsize()[1] * (I - 1))
     if tx <= nvar
         if rp_curr[tx] > theta*rp_prev[tx]
             rho[tx] *= gamma
         end
     end
-    return
 end
 
 function acopf_admm_update_penalty(
-    env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    device::Nothing=nothing
+    env::AdmmEnv,
+    mod::Model,
+    device::KA.GPU
 )
 #=
     par, sol = env.params, mod.solution

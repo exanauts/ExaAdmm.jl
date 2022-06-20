@@ -91,6 +91,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     tight_factor::T
     horizon_length::Int
     use_gpu::Bool
+    ka_device::Union{Nothing,KA.GPU}
     use_linelimit::Bool
     use_mpi::Bool
     use_projection::Bool
@@ -105,7 +106,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     function AdmmEnv{T,TD,TI,TM}(
         data::OPFData, case::String, rho_pq::Float64, rho_va::Float64;
         case_format="matpower",
-        use_gpu=false, use_linelimit=true, use_mpi=false, use_projection=false,
+        use_gpu=false, ka_device=nothing, use_linelimit=true, use_mpi=false, use_projection=false,
         gpu_no::Int=0, verbose::Int=1, tight_factor=1.0, droop=0.04, storage_ratio=0.0, storage_charge_max=1.0,
         horizon_length=1, load_prefix::String="", comm::MPI.Comm=MPI.COMM_WORLD
     ) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
@@ -120,6 +121,11 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
         env.initial_rho_va = rho_va
         env.tight_factor = tight_factor
         env.use_gpu = use_gpu
+        if isa(ka_device, KA.CPU)
+            env.ka_device = nothing
+        else
+            env.ka_device = ka_device
+        end
         env.use_linelimit = use_linelimit
         env.use_mpi = use_mpi
         env.use_projection = use_projection

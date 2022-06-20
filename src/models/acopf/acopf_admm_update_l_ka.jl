@@ -1,0 +1,28 @@
+@kernel function update_l_kernel_ka(
+    n::Int, l, z,
+    lz, beta::Float64
+)
+    I = @index(Group, Linear)
+    J = @index(Local, Linear)
+    tx = J + (@groupsize()[1] * (I - 1))
+
+    if tx <= n
+        @inbounds begin
+            l[tx] = -(lz[tx] + beta*z[tx])
+        end
+    end
+end
+
+function admm_update_l(
+    env::AdmmEnv,
+    mod::AbstractOPFModel,
+    device::KA.GPU
+)
+    par, sol, info = env.params, mod.solution, mod.info
+    wait(update_l_kernel_ka(device,64,mod.nvar)(
+            mod.nvar, sol.l_curr, sol.z_curr, sol.lz, par.beta
+        )
+    )
+    info.time_l_update += 0.0
+    return
+end

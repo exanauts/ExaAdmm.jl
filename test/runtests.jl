@@ -12,17 +12,22 @@ const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "mp_demand")
 
 init_time = time()
 
+@testset "Testing ExaAdmm" begin
+    @testset "Testing ADMM algorithms on CPUs" begin
+        include("algorithms/acopf_update_cpu.jl")
+        include("algorithms/mpacopf_update_cpu.jl")
+    end
 
-@testset "Testing ADMM algorithms on CPUs" begin
-    include("algorithms/acopf_update_cpu.jl")
-    include("algorithms/mpacopf_update_cpu.jl")
-end
+    using CUDA
+    if CUDA.functional()
+        @testset "Testing ADMM algorithms using CUDA.jl" begin
+            include("algorithms/acopf_update_gpu.jl")
+            include("algorithms/mpacopf_update_gpu.jl")
+        end
+    end
 
-using CUDA
-if CUDA.functional()
-    @testset "Testing ADMM algorithms on GPUs" begin
-        include("algorithms/acopf_update_gpu.jl")
-        include("algorithms/mpacopf_update_gpu.jl")
+    @testset "Testing ADMM algorithms using KA" begin
+        include("algorithms/acopf_update_ka.jl")
     end
 end
 

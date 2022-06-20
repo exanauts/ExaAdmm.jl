@@ -2,7 +2,8 @@
 
 function admm_outer_prestep(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    device::Nothing=nothing
 )
     sol_ramp, info = mod.solution, mod.info
 
@@ -22,7 +23,8 @@ end
 
 function admm_inner_prestep(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    device::Nothing=nothing
 )
     for i=1:mod.len_horizon
         admm_inner_prestep(env, mod.models[i])
@@ -39,7 +41,8 @@ end
 
 function admm_poststep(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    device::Nothing=nothing
 )
     for i=1:mod.len_horizon
         admm_poststep(env, mod.models[i])

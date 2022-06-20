@@ -35,7 +35,8 @@ end
 
 function admm_update_x(
   env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-  mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+  mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+  device::Nothing=nothing
 )
     mpacopf_admm_update_x_gen(env, mod)
     for i=1:mod.len_horizon

@@ -24,11 +24,12 @@ end
 function generator_kernel_two_level(
     model::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1}},
     baseMVA::Float64, u::CuArray{Float64,1}, xbar::CuArray{Float64,1},
-    zu::CuArray{Float64,1}, lu::CuArray{Float64,1}, rho_u::CuArray{Float64,1}
+    zu::CuArray{Float64,1}, lu::CuArray{Float64,1}, rho_u::CuArray{Float64,1},
+    device::Nothing=nothing
 )
     nblk = div(model.grid_data.ngen, 32, RoundUp)
     tgpu = CUDA.@timed @cuda threads=32 blocks=nblk generator_kernel_two_level(baseMVA, model.grid_data.ngen, model.gen_start,
-                u, xbar, zu, lu, rho_u, model.pgmin_curr, model.pgmax_curr, model.grid_data.qgmin, model.grid_data.qgmax, 
+                u, xbar, zu, lu, rho_u, model.pgmin_curr, model.pgmax_curr, model.grid_data.qgmin, model.grid_data.qgmax,
                 model.grid_data.c2, model.grid_data.c1)
     return tgpu
 end

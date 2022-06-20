@@ -31,7 +31,8 @@ end
 
 function admm_update_x(
   env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-  mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+  mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+  device::Nothing=nothing
 )
     mpacopf_admm_update_x_gen(env, mod)
 
@@ -101,7 +102,8 @@ end
 
 function admm_update_x(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelMpacopfLoose{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ModelMpacopfLoose{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+    device::Nothing=nothing
 )
     for i=1:mod.len_horizon
         admm_two_level(env, mod.models[i])
