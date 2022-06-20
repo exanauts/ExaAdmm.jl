@@ -217,7 +217,7 @@ end
     copyto!(lz, sol.lz)
 
     @test norm(lz .- (lz_prev .+ (env.params.beta .* z_curr)), Inf) <= atol
-    use_gpu = isa(device, KA.CPU) ? false : true
+    use_gpu = isa(_device, KA.CPU) ? false : true
     env, mod = ExaAdmm.solve_acopf(case; outer_iterlim=25, use_gpu=use_gpu, ka_device=_device, rho_pq=rho_pq, rho_va=rho_va, outer_eps=2*1e-5, verbose=verbose)
     @test mod.info.status == :Solved
     @test mod.info.outer == 20

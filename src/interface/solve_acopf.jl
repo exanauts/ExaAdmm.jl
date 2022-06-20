@@ -8,6 +8,7 @@ function solve_acopf(case::String;
     T = Float64
     if !use_gpu && (isa(ka_device, Nothing) || isa(ka_device, KA.CPU))
         TD = Array{Float64,1}; TI = Array{Int,1}; TM = Array{Float64,2}
+        ka_device = nothing
     elseif use_gpu && isa(ka_device, Nothing)
         CUDA.device!(gpu_no)
         TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
