@@ -138,7 +138,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 
         env.horizon_length = horizon_length
         if !isempty(load_prefix)
-            env.load = get_load(load_prefix; use_gpu=use_gpu)
+            env.load = get_load(load_prefix, env.ka_device; use_gpu=use_gpu)
             @assert size(env.load.pd) == size(env.load.qd)
             @assert size(env.load.pd,2) >= horizon_length && size(env.load.qd,2) >= horizon_length
             env.load_specified = true

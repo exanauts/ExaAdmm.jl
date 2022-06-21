@@ -1,6 +1,6 @@
-using KernelAbstractions
 using CUDA
 using AMDGPU
+using KernelAbstractions
 KA = KernelAbstractions
 devices = Vector{KA.Device}()
 push!(devices, KA.CPU())
@@ -27,9 +27,9 @@ end
         TD = Array{Float64,1}; TI = Array{Int,1}; TM = Array{Float64,2}
         env = ExaAdmm.AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; use_gpu=false, ka_device=device, verbose=verbose)
     else isa(device, KA.GPU)
-        if isa(device, CUDADevice)
+        if CUDA.has_cuda_gpu()
             TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
-        elseif isa(device, ROCDevice)
+        elseif AMDGPU.has_rocm_gpu()
             TD = ROCArray{Float64,1}; TI = ROCArray{Int,1}; TM = ROCArray{Float64,2}
         else
             error("Unsupported device $device")

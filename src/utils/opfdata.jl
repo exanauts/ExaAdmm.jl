@@ -118,7 +118,7 @@ mutable struct Load{TM}
   end
 end
 
-function get_load(name::String; load_scale=1.0, use_gpu=false)
+function get_load(name::String, device::Nothing=nothing; load_scale=1.0, use_gpu=false)
   pd_mat = readdlm(name*".Pd")
   qd_mat = readdlm(name*".Qd")
   if use_gpu
@@ -539,7 +539,7 @@ function mapStoragesToBuses(buses, storages, busDict)
   return sto2bus
 end
 
-function get_generator_data(data::OPFData; use_gpu=false)
+function get_generator_data(data::OPFData, device::Nothing=nothing; use_gpu=false)
   ngen = length(data.generators)
 
   if use_gpu
@@ -578,7 +578,36 @@ function get_generator_data(data::OPFData; use_gpu=false)
   return pgmin,pgmax,qgmin,qgmax,c2,c1,c0
 end
 
-function get_bus_data(data::OPFData; use_gpu=false)
+function get_generator_data(data::OPFData, device::KA.GPU; use_gpu=false)
+  ngen = length(data.generators)
+
+    pgmin = KAArray{Float64}(ngen, device)
+    pgmax = KAArray{Float64}(ngen, device)
+    qgmin = KAArray{Float64}(ngen, device)
+    qgmax = KAArray{Float64}(ngen, device)
+    c2 = KAArray{Float64}(ngen, device)
+    c1 = KAArray{Float64}(ngen, device)
+    c0 = KAArray{Float64}(ngen, device)
+
+  Pmin = Float64[data.generators[g].Pmin for g in 1:ngen]
+  Pmax = Float64[data.generators[g].Pmax for g in 1:ngen]
+  Qmin = Float64[data.generators[g].Qmin for g in 1:ngen]
+  Qmax = Float64[data.generators[g].Qmax for g in 1:ngen]
+  coeff0 = Float64[data.generators[g].coeff[3] for g in 1:ngen]
+  coeff1 = Float64[data.generators[g].coeff[2] for g in 1:ngen]
+  coeff2 = Float64[data.generators[g].coeff[1] for g in 1:ngen]
+  copyto!(pgmin, Pmin)
+  copyto!(pgmax, Pmax)
+  copyto!(qgmin, Qmin)
+  copyto!(qgmax, Qmax)
+  copyto!(c0, coeff0)
+  copyto!(c1, coeff1)
+  copyto!(c2, coeff2)
+
+  return pgmin,pgmax,qgmin,qgmax,c2,c1,c0
+end
+
+function get_bus_data(data::OPFData, device::Nothing=nothing; use_gpu=false)
   nbus = length(data.buses)
 
   FrIdx = Int[l for b=1:nbus for l in data.FromLines[b]]
@@ -622,7 +651,47 @@ function get_bus_data(data::OPFData; use_gpu=false)
   end
 end
 
-function get_branch_data(data::OPFData; use_gpu::Bool=false, tight_factor::Float64=1.0)
+function get_bus_data(data::OPFData, device::KA.GPU; use_gpu=false)
+  nbus = length(data.buses)
+
+  FrIdx = Int[l for b=1:nbus for l in data.FromLines[b]]
+  ToIdx = Int[l for b=1:nbus for l in data.ToLines[b]]
+  GenIdx = Int[g for b=1:nbus for g in data.BusGenerators[b]]
+  FrStart = accumulate(+, vcat([1], [length(data.FromLines[b]) for b=1:nbus]))
+  ToStart = accumulate(+, vcat([1], [length(data.ToLines[b]) for b=1:nbus]))
+  GenStart = accumulate(+, vcat([1], [length(data.BusGenerators[b]) for b=1:nbus]))
+
+  Pd = Float64[data.buses[i].Pd for i=1:nbus]
+  Qd = Float64[data.buses[i].Qd for i=1:nbus]
+  Vmin = Float64[data.buses[i].Vmin for i=1:nbus]
+  Vmax = Float64[data.buses[i].Vmax for i=1:nbus]
+
+  cuFrIdx = KAArray{Int}(length(FrIdx), device)
+  cuToIdx = KAArray{Int}(length(ToIdx), device)
+  cuGenIdx = KAArray{Int}(length(GenIdx), device)
+  cuFrStart = KAArray{Int}(length(FrStart), device)
+  cuToStart = KAArray{Int}(length(ToStart), device)
+  cuGenStart = KAArray{Int}(length(GenStart), device)
+  cuPd = KAArray{Float64}(nbus, device)
+  cuQd = KAArray{Float64}(nbus, device)
+  cuVmax = KAArray{Float64}(nbus, device)
+  cuVmin = KAArray{Float64}(nbus, device)
+
+  copyto!(cuFrIdx, FrIdx)
+  copyto!(cuToIdx, ToIdx)
+  copyto!(cuGenIdx, GenIdx)
+  copyto!(cuFrStart, FrStart)
+  copyto!(cuToStart, ToStart)
+  copyto!(cuGenStart, GenStart)
+  copyto!(cuPd, Pd)
+  copyto!(cuQd, Qd)
+  copyto!(cuVmax, Vmax)
+  copyto!(cuVmin, Vmin)
+
+  return cuFrStart,cuFrIdx,cuToStart,cuToIdx,cuGenStart,cuGenIdx,cuPd,cuQd,cuVmin,cuVmax
+end
+
+function get_branch_data(data::OPFData, device::Nothing=nothing; use_gpu::Bool=false, tight_factor::Float64=1.0)
   buses = data.buses
   lines = data.lines
   BusIdx = data.BusIdx
@@ -686,7 +755,65 @@ function get_branch_data(data::OPFData; use_gpu::Bool=false, tight_factor::Float
   end
 end
 
-function get_branch_bus_index(data::OPFData; use_gpu=false)
+function get_branch_data(data::OPFData, device::KA.GPU; use_gpu::Bool=false, tight_factor::Float64=1.0)
+  buses = data.buses
+  lines = data.lines
+  BusIdx = data.BusIdx
+  nline = length(data.lines)
+  ybus = Ybus{Array{Float64}}(computeAdmitances(data.lines, data.buses, data.baseMVA; VI=Array{Int}, VD=Array{Float64})...)
+  frVmBound = Float64[ x for l=1:nline for x in (buses[BusIdx[lines[l].from]].Vmin, buses[BusIdx[lines[l].from]].Vmax) ]
+  toVmBound = Float64[ x for l=1:nline for x in (buses[BusIdx[lines[l].to]].Vmin, buses[BusIdx[lines[l].to]].Vmax) ]
+  frVaBound = Float64[ x for l=1:nline for x in (-2*pi,2*pi) ]
+  toVaBound = Float64[ x for l=1:nline for x in (-2*pi,2*pi) ]
+  for l=1:nline
+      if BusIdx[lines[l].from] == data.bus_ref
+          frVaBound[2*l-1] = 0.0
+          frVaBound[2*l] = 0.0
+      end
+      if BusIdx[lines[l].to] == data.bus_ref
+          toVaBound[2*l-1] = 0.0
+          toVaBound[2*l] = 0.0
+      end
+  end
+  rateA = [ data.lines[l].rateA == 0.0 ? 1e3 : tight_factor*(data.lines[l].rateA / data.baseMVA)^2 for l=1:nline ]
+
+  cuYshR = KAArray{Float64}(length(ybus.YshR), device)
+  cuYshI = KAArray{Float64}(length(ybus.YshI), device)
+  cuYffR = KAArray{Float64}(nline, device)
+  cuYffI = KAArray{Float64}(nline, device)
+  cuYftR = KAArray{Float64}(nline, device)
+  cuYftI = KAArray{Float64}(nline, device)
+  cuYttR = KAArray{Float64}(nline, device)
+  cuYttI = KAArray{Float64}(nline, device)
+  cuYtfR = KAArray{Float64}(nline, device)
+  cuYtfI = KAArray{Float64}(nline, device)
+  cuFrVmBound = KAArray{Float64}(2*nline, device)
+  cuToVmBound = KAArray{Float64}(2*nline, device)
+  cuFrVaBound = KAArray{Float64}(2*nline, device)
+  cuToVaBound = KAArray{Float64}(2*nline, device)
+  cuRateA = KAArray{Float64}(nline, device)
+  copyto!(cuYshR, ybus.YshR)
+  copyto!(cuYshI, ybus.YshI)
+  copyto!(cuYffR, ybus.YffR)
+  copyto!(cuYffI, ybus.YffI)
+  copyto!(cuYftR, ybus.YftR)
+  copyto!(cuYftI, ybus.YftI)
+  copyto!(cuYttR, ybus.YttR)
+  copyto!(cuYttI, ybus.YttI)
+  copyto!(cuYtfR, ybus.YtfR)
+  copyto!(cuYtfI, ybus.YtfI)
+  copyto!(cuFrVmBound, frVmBound)
+  copyto!(cuToVmBound, toVmBound)
+  copyto!(cuFrVaBound, frVaBound)
+  copyto!(cuToVaBound, toVaBound)
+  copyto!(cuRateA, rateA)
+
+  return cuYshR, cuYshI, cuYffR, cuYffI, cuYftR, cuYftI,
+          cuYttR, cuYttI, cuYtfR, cuYtfI, cuFrVmBound, cuToVmBound,
+          cuFrVaBound, cuToVaBound, cuRateA
+end
+
+function get_branch_bus_index(data::OPFData, device::Nothing=nothing; use_gpu=false)
   lines = data.lines
   BusIdx = data.BusIdx
   nline = length(lines)
@@ -702,7 +829,19 @@ function get_branch_bus_index(data::OPFData; use_gpu=false)
   end
 end
 
-function get_generator_bus_data(data::OPFData; use_gpu=false)
+function get_branch_bus_index(data::OPFData, device::KA.GPU; use_gpu=false)
+  lines = data.lines
+  BusIdx = data.BusIdx
+  nline = length(lines)
+
+  brBusIdx = Int[ x for l=1:nline for x in (BusIdx[lines[l].from], BusIdx[lines[l].to]) ]
+
+  cu_brBusIdx = KAArray{Int}(2*nline, device)
+  copyto!(cu_brBusIdx, brBusIdx)
+  return cu_brBusIdx
+end
+
+function get_generator_bus_data(data::OPFData, device::Nothing=nothing; use_gpu=false)
   ngen = length(data.generators)
 
   if use_gpu
@@ -727,8 +866,27 @@ function get_generator_bus_data(data::OPFData; use_gpu=false)
   return vgmin, vgmax, vm_setpoint
 end
 
+function get_generator_bus_data(data::OPFData, device::KA.GPU; use_gpu=false)
+  ngen = length(data.generators)
 
-function get_generator_primary_control(data::OPFData; droop::Float64=0.04, use_gpu=false)
+  vgmin = KAArray{Float64}(ngen, device)
+  vgmax = KAArray{Float64}(ngen, device)
+  vm_setpoint = KAArray{Float64}(ngen, device)
+
+  Vgmin = Float64[data.buses[data.BusIdx[data.generators[g].bus]].Vmin for g in 1:ngen]
+  Vgmax = Float64[data.buses[data.BusIdx[data.generators[g].bus]].Vmax for g in 1:ngen]
+  Vm_setpoint = zeros(ngen)
+  Vm_setpoint .= (Vgmin .+ Vgmax) ./ 2
+
+  copyto!(vgmin, Vgmin)
+  copyto!(vgmax, Vgmax)
+  copyto!(vm_setpoint, Vm_setpoint)
+
+  return vgmin, vgmax, vm_setpoint
+end
+
+
+function get_generator_primary_control(data::OPFData, device::Nothing=nothing; droop::Float64=0.04, use_gpu=false)
   ngen = length(data.generators)
 
   if use_gpu
@@ -748,7 +906,22 @@ function get_generator_primary_control(data::OPFData; droop::Float64=0.04, use_g
   return alpha_g, pg_setpoint
 end
 
-function get_storage_data(data::OPFData; use_gpu=false)
+function get_generator_primary_control(data::OPFData, device::KA.GPU; droop::Float64=0.04, use_gpu=false)
+  ngen = length(data.generators)
+
+  alpha_g = KAArray{Float64}(ngen, device)
+  pg_setpoint = KAArray{Float64}(ngen, device)
+
+  Alpha_g = Float64[-((1/droop)*data.generators[g].Pmax) for g in 1:ngen]
+  Pg_setpoint = Float64[(data.generators[g].Pmin + data.generators[g].Pmax)/2 for g in 1:ngen]
+
+  copyto!(alpha_g, Alpha_g)
+  copyto!(pg_setpoint, Pg_setpoint)
+
+  return alpha_g, pg_setpoint
+end
+
+function get_storage_data(data::OPFData, device::Nothing=nothing; use_gpu=false)
   nstorage = length(data.storages)
 
   chg_min = Float64[data.storages[s].chg_min for s=1:nstorage]
@@ -782,7 +955,37 @@ function get_storage_data(data::OPFData; use_gpu=false)
   end
 end
 
-function get_bus_storage_index(data::OPFData; use_gpu=false)
+function get_storage_data(data::OPFData, device::KA.GPU; use_gpu=false)
+  nstorage = length(data.storages)
+
+  chg_min = Float64[data.storages[s].chg_min for s=1:nstorage]
+  chg_max = Float64[data.storages[s].chg_max for s=1:nstorage]
+  energy_min = Float64[data.storages[s].energy_min for s=1:nstorage]
+  energy_max = Float64[data.storages[s].energy_max for s=1:nstorage]
+  eta_chg = Float64[data.storages[s].eta_chg for s=1:nstorage]
+  eta_dis = Float64[data.storages[s].eta_dischg for s=1:nstorage]
+  energy_setpoint = Float64[data.storages[s].energy_setpoint for s=1:nstorage]
+
+  cuChg_min = KAArray{Float64}(nstorage, device)
+  cuChg_max = KAArray{Float64}(nstorage, device)
+  cuEnergy_min = KAArray{Float64}(nstorage, device)
+  cuEnergy_max = KAArray{Float64}(nstorage, device)
+  cuEta_chg = KAArray{Float64}(nstorage, device)
+  cuEta_dis = KAArray{Float64}(nstorage, device)
+  cuEnergy_setpoint = KAArray{Float64}(nstorage, device)
+
+  copyto!(cuChg_min, chg_min)
+  copyto!(cuChg_max, chg_max)
+  copyto!(cuEnergy_min, energy_min)
+  copyto!(cuEnergy_max, energy_max)
+  copyto!(cuEta_chg, eta_chg)
+  copyto!(cuEta_dis, eta_dis)
+  copyto!(cuEnergy_setpoint, energy_setpoint)
+
+  return cuChg_min, cuChg_max, cuEnergy_min, cuEnergy_max, cuEnergy_setpoint, cuEta_chg, cuEta_dis
+end
+
+function get_bus_storage_index(data::OPFData, device::Nothing=nothing; use_gpu=false)
   nbus = length(data.buses)
 
   StorageIdx = Int[s for b=1:nbus for s in data.BusStorages[b]]
@@ -799,4 +1002,19 @@ function get_bus_storage_index(data::OPFData; use_gpu=false)
   else
     return StorageIdx, StorageStart
   end
+end
+
+function get_bus_storage_index(data::OPFData, device::KA.GPU; use_gpu=false)
+  nbus = length(data.buses)
+
+  StorageIdx = Int[s for b=1:nbus for s in data.BusStorages[b]]
+  StorageStart = accumulate(+, vcat([1], [length(data.BusStorages[b]) for b=1:nbus]))
+
+  cuStorageIdx = KAArray{Int}(length(StorageIdx), device)
+  cuStorageStart = KAArray{Int}(length(StorageStart), device)
+
+  copyto!(cuStorageIdx, StorageIdx)
+  copyto!(cuStorageStart, StorageStart)
+
+  return cuStorageIdx, cuStorageStart
 end

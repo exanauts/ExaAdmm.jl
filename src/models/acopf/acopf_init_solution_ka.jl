@@ -47,8 +47,8 @@ end
 end
 
 function init_solution!(
-    model::AbstractOPFModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    sol::Solution{Float64,CuArray{Float64,1}},
+    model::AbstractOPFModel,
+    sol::Solution,
     rho_pq::Float64, rho_va::Float64, device::KA.GPU
 )
     fill!(sol, 0.0)

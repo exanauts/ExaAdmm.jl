@@ -61,18 +61,18 @@ mutable struct GridData{T,TD,TI,TM} <: AbstractGridData{T,TD,TI,TM}
     function GridData{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
         grid = new{T,TD,TI,TM}()
         grid.baseMVA = env.data.baseMVA
-        grid.pgmin, grid.pgmax, grid.qgmin, grid.qgmax, grid.c2, grid.c1, grid.c0 = get_generator_data(env.data; use_gpu=env.use_gpu)
+        grid.pgmin, grid.pgmax, grid.qgmin, grid.qgmax, grid.c2, grid.c1, grid.c0 = get_generator_data(env.data, env.ka_device; use_gpu=env.use_gpu)
         grid.YshR, grid.YshI, grid.YffR, grid.YffI, grid.YftR, grid.YftI,
             grid.YttR, grid.YttI, grid.YtfR, grid.YtfI,
             grid.FrVmBound, grid.ToVmBound,
-            grid.FrVaBound, grid.ToVaBound, grid.rateA = get_branch_data(env.data; use_gpu=env.use_gpu, tight_factor=env.tight_factor)
-        grid.FrStart, grid.FrIdx, grid.ToStart, grid.ToIdx, grid.GenStart, grid.GenIdx, grid.Pd, grid.Qd, grid.Vmin, grid.Vmax = get_bus_data(env.data; use_gpu=env.use_gpu)
-        grid.brBusIdx = get_branch_bus_index(env.data; use_gpu=env.use_gpu)
-        grid.vgmin, grid.vgmax, grid.vm_setpoint = get_generator_bus_data(env.data; use_gpu=env.use_gpu)
+            grid.FrVaBound, grid.ToVaBound, grid.rateA = get_branch_data(env.data, env.ka_device; use_gpu=env.use_gpu, tight_factor=env.tight_factor)
+        grid.FrStart, grid.FrIdx, grid.ToStart, grid.ToIdx, grid.GenStart, grid.GenIdx, grid.Pd, grid.Qd, grid.Vmin, grid.Vmax = get_bus_data(env.data, env.ka_device; use_gpu=env.use_gpu)
+        grid.brBusIdx = get_branch_bus_index(env.data, env.ka_device; use_gpu=env.use_gpu)
+        grid.vgmin, grid.vgmax, grid.vm_setpoint = get_generator_bus_data(env.data, env.ka_device; use_gpu=env.use_gpu)
         grid.droop = env.droop
-        grid.alpha, grid.pg_setpoint = get_generator_primary_control(env.data; droop=env.droop, use_gpu=env.use_gpu)
-        grid.chg_min, grid.chg_max, grid.energy_min, grid.energy_max, grid.energy_setpoint, grid.eta_chg, grid.eta_dis = get_storage_data(env.data; use_gpu=env.use_gpu)
-        grid.StoIdx, grid.StoStart = get_bus_storage_index(env.data; use_gpu=env.use_gpu)
+        grid.alpha, grid.pg_setpoint = get_generator_primary_control(env.data, env.ka_device; droop=env.droop, use_gpu=env.use_gpu)
+        grid.chg_min, grid.chg_max, grid.energy_min, grid.energy_max, grid.energy_setpoint, grid.eta_chg, grid.eta_dis = get_storage_data(env.data, env.ka_device; use_gpu=env.use_gpu)
+        grid.StoIdx, grid.StoStart = get_bus_storage_index(env.data, env.ka_device; use_gpu=env.use_gpu)
 
         grid.ngen = length(env.data.generators)
         grid.nline = length(env.data.lines)
