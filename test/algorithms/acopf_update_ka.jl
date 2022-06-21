@@ -7,10 +7,16 @@ push!(devices, KA.CPU())
 if CUDA.has_cuda_gpu() || AMDGPU.has_rocm_gpu()
     if CUDA.has_cuda_gpu()
         using CUDAKernels
+        function ExaAdmm.KAArray{T}(n::Int, device::CUDADevice) where {T}
+            return CuArray{T}(undef, n)
+        end
         push!(devices, CUDADevice())
     end
     if AMDGPU.has_rocm_gpu()
         using ROCKernels
+        function ExaAdmm.KAArray{T}(n::Int, device::ROCDevice) where {T}
+            return ROCArray{T}(undef, n)
+        end
         push!(devices, ROCDevice())
     end
 end

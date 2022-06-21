@@ -10,16 +10,10 @@ using CUDA
 using KernelAbstractions
 using ExaTron
 using Random
-using Requires
 
 const KA = KernelAbstractions
 
 struct KAArray{T} end
-
-function __init__()
-    @require CUDAKernels="72cfdca4-0801-4ab0-bf6a-d52aa10adc57" include("utils/utilities_cudakernels.jl")
-    @require ROCKernels="7eb9e9f0-4bd3-4c4c-8bef-26bd9629d9b9" include("utils/utilities_rockernels.jl")
-end
 
 include("utils/parse_matpower.jl")
 include("utils/opfdata.jl")
