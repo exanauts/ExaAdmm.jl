@@ -40,7 +40,7 @@
 # end
 
 function solve_qpsub(case::String, Hs, LH_1h, RH_1h,
-    LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, ls, us, initial_beta;
+    LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, ls, us, pgmax, pgmin, qgmax, qgmin, c1, Pd, Qd, initial_beta;
     case_format="matpower",
     outer_iterlim=20, inner_iterlim=1000, rho_pq=400.0, rho_va=40000.0,
     obj_scale=1.0, scale=1e-4, storage_ratio=0.0, storage_charge_max=1.0,
@@ -60,6 +60,8 @@ function solve_qpsub(case::String, Hs, LH_1h, RH_1h,
             verbose=verbose)
     mod = ModelQpsub{T,TD,TI,TM}(env)
 
+    data = mod.grid_data
+
     mod.Hs .= Hs
     mod.LH_1h .= LH_1h
     mod.RH_1h .= RH_1h
@@ -72,7 +74,7 @@ function solve_qpsub(case::String, Hs, LH_1h, RH_1h,
     mod.ls .= ls
     mod.us .= us
 
-    init_solution!(mod, mod.solution, env.initial_rho_pq, env.initial_rho_va)
+    
 
     env.params.scale = scale
     env.params.obj_scale = obj_scale
@@ -83,6 +85,20 @@ function solve_qpsub(case::String, Hs, LH_1h, RH_1h,
 
     env.params.initial_beta = initial_beta #use my initial beta 
 
+    data.pgmax .= pgmax
+    data.pgmin .= pgmin
+    data.qgmax .= qgmax
+    data.qgmin .= qgmin
+    mod.pgmax_curr .= pgmax
+    mod.pgmin_curr .= pgmin 
+
+    data.c1 .= c1
+    data.Pd .= Pd
+    data.Qd .= Qd
+
+    init_solution!(mod, mod.solution, env.initial_rho_pq, env.initial_rho_va)
+
+    
     #debug check all values before using admm
     
     #onelevel or two level admm 
