@@ -12,7 +12,7 @@ function admm_one_level(
     info.mismatch = Inf
 
     #eliminate second level
-    info.norm_z_prev = info.norm_z_curr = Inf
+    info.norm_z_prev = info.norm_z_curr = 0
     par.initial_beta = 0 
     par.beta = 0
     sol.lz .= 0
