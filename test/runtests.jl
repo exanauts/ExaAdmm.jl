@@ -11,7 +11,7 @@ using Ipopt
 
 # Data
 const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
-const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "mp_demand")
+const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "matpower")
 
 init_time = time()
 
@@ -34,7 +34,6 @@ init_time = time()
     end
     @testset "Testing QPsub algorithms on CPUs" begin
         include("algorithms/qpsub_update_cpu.jl")
-        include("algorithms/qpsub_branch_cpu.jl")
     end
 end
 
