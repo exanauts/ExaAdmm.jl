@@ -12,14 +12,19 @@
 
 - branch structure from u (8*nline):   
     - |p_ij   | q_ij  | p_ji   | q_ji    | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji) |
+
 - branch structure for Exatron (8*nline):  
     - | t_ij(linelimit) | t_ji(linelimit) | w_ijR  |  w_ijI   | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji)
-- Hessian inherited from SQP (6*nline):   
+
+- branch structure for Exatron (6*nline): eliminate w_ijR, wij_I
+    - | t_ij(linelimit) | t_ji(linelimit) | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji)
+
+- Hessian inherited from SQP ie sqp_line (6*nline):   
     - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|   
 """
 
 
-function auglag_Ab_linelimit_two_level_alternative_qpsub_ij(
+function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
     major_iter::Int, max_auglag::Int, mu_max::Float64, scale::Float64,
     Hbr::Array{Float64,2}, bbr::Array{Float64,1}, lqp::Array{Float64,1}, uqp::Array{Float64,1},sqp_line::Array{Float64,2},
     l::Array{Float64,1}, rho::Array{Float64,1}, 
@@ -34,15 +39,18 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij(
     
     # for debug only
     # max_auglag = 4
-    cnorm_all = zeros(max_auglag)
-    eta_all = zeros(max_auglag)
-    mu_all = zeros(max_auglag)
+    # cnorm_all = zeros(max_auglag)
+    # eta_all = zeros(max_auglag)
+    # mu_all = zeros(max_auglag)
 
     # variable wrt branch structure wrt Exatron
-    x = [0.0; 0.0; sqp_line[:,lineidx]] #initialization 
+    x = [0.0; 0.0; sqp_line[3:6,lineidx]] #initialization 
     f = 0.0
-    xl = [0.0; 0.0; lqp]
-    xu = [200000.0; 200000.0; uqp]
+    xl = [0.0; 0.0; lqp[3:6]]
+    xu = [200000.0; 200000.0; uqp[3:6]]
+    
+    Ctron = zeros(8,6)
+    dtron = zeros(8)
 
 
     # initialization on penalty
@@ -70,8 +78,8 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij(
         0 0 -YtfI -YtfR 0 -YttI 0 0]
 
     #ALM on equality constraint wrt branch structure ExaTron
-    vec_1h = [0, 0, LH_1h[1], LH_1h[2], LH_1h[3], LH_1h[4], 0, 0 ] #1h
-    vec_1i = [0, 0, LH_1i[1], LH_1i[2], 0, 0, LH_1i[3], LH_1i[4]] #1i
+    # vec_1h = [0, 0, LH_1h[1], LH_1h[2], LH_1h[3], LH_1h[4], 0, 0 ] #1h #? notused
+    # vec_1i = [0, 0, LH_1i[1], LH_1i[2], 0, 0, LH_1i[3], LH_1i[4]] #1i #? notused 
     vec_1j = [1, 0, 0, 0, 0, 0, 0, 0] + LH_1j[1]* supY[1,:] + LH_1j[2]* supY[2,:] #1j with t_ij
     vec_1k = [0, 1, 0, 0, 0, 0, 0, 0] + LH_1k[1]* supY[3,:] + LH_1k[2]* supY[4,:] #1k with t_ji
 
@@ -79,10 +87,10 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij(
             it += 1
             
             #create QP parameters SCALED
-            Atron = eval_A_auglag_branch_kernel_cpu_qpsub(Hbr,l, rho, v, z_curr, membuf[:,lineidx],
+            Atron, Atron_red = eval_A_auglag_branch_kernel_cpu_qpsub_red(Hbr,l, rho, v, z_curr, membuf[:,lineidx],
             YffR, YffI, YftR, YftI, YttR, YttI, YtfR, YtfI, 
             LH_1h, RH_1h, LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, scale)
-            btron =  eval_b_auglag_branch_kernel_cpu_qpsub(bbr,l, rho, v, z_curr, membuf[:,lineidx],
+            Ctron, dtron, btron_red =  eval_b_auglag_branch_kernel_cpu_qpsub_red(Atron, bbr,l, rho, v, z_curr, membuf[:,lineidx],
             YffR, YffI, YftR, YftI, YttR, YttI, YtfR, YtfI, 
             LH_1h, RH_1h, LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, scale)
 
@@ -93,50 +101,49 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij(
             # print(xu)
             # print(membuf)
 
-            tron = build_QP_DS(Atron,btron,xl,xu)                                     
+            tron = build_QP_DS(Atron_red,btron_red,xl,xu)                                     
             tron.x .= x #initialization on tron 
 
             # Solve the branch problem.
             status = ExaTron.solveProblem(tron)
             x .= tron.x
-            sqp_line[:,lineidx] .= x[3:8] #write to sqp_line
+            sqp_line[:,lineidx] .= (Ctron * x + dtron)[3:8] #write to sqp_line
             f = tron.f #! wont match with IPOPT since constant terms are ignored
-            fdot = 0.5*dot(x,Atron,x) + dot(btron,x)
+            # fdot = 0.5*dot(x,Atron,x) + dot(btron,x) #? not used 
 
             
             # violation on 1h,1i,1j,1k
-            cviol1 = dot(vec_1h, x) - RH_1h 
-            cviol2 = dot(vec_1i, x) - RH_1i
-            cviol3 = dot(vec_1j, x) - RH_1j
-            cviol4 = dot(vec_1k, x) - RH_1k
+            # cviol1 = dot(vec_1h, x) - RH_1h #?not used
+            # cviol2 = dot(vec_1i, x) - RH_1i #?not_used
+            cviol3 = dot(vec_1j, Ctron * x + dtron) - RH_1j
+            cviol4 = dot(vec_1k, Ctron * x + dtron) - RH_1k
 
-            cnorm = max(abs(cviol1), abs(cviol2), abs(cviol3), abs(cviol4)) #worst violation
+            cnorm = max(abs(cviol3), abs(cviol4)) #worst violation
             
             # print current tron result of current iteration of ALM  
             # println("it = ",it, " with cnorm = ",[cviol1,cviol2,cviol3,cviol4], " and solx = ",x, "param =",[norm(Atron),norm(btron),xl,xu])
             # println("it = ",it, ", cnorm = ",cnorm, ", eta = ",eta, ", mu = ", mu )
             # println("obj from tron =", f," obj from dot = ",fdot)
             #debug only 
-            cnorm_all[it] = cnorm
-            eta_all[it] = eta
-            mu_all[it] = mu
+            # cnorm_all[it] = cnorm
+            # eta_all[it] = eta
+            # mu_all[it] = mu
 
             if cnorm <= eta
-                if cnorm <= 1e-5 #1e-6
+                if cnorm <= 1e-6
                     terminate = true
                 else
-                    membuf[1,lineidx] += mu*cviol1 #λ_1h
-                    membuf[2,lineidx] += mu*cviol2 #λ_1i
+                    # membuf[1,lineidx] += mu*cviol1 #λ_1h #?not used 
+                    # membuf[2,lineidx] += mu*cviol2 #λ_1i #?not used 
                     membuf[3,lineidx] += mu*cviol3 #λ_1j
                     membuf[4,lineidx] += mu*cviol4 #λ_1k
 
-                    # eta = eta / mu^0.9
-                    eta = eta / mu^0.3
+                    eta = eta / mu^0.9
                     # omega  = omega / mu #? not used 
                 end
             else
-                # mu = min(mu_max, mu*10) #increase penalty
-                mu = min(mu_max, mu*(1/minimum([0.1,1/sqrt(mu)]))) #increase penalty from slides Gould, only increasing  
+                mu = min(mu_max, mu*10) #increase penalty
+                # mu = min(mu_max, mu*(1/minimum([0.1,1/sqrt(mu)]))) #increase penalty from slides Gould, only increasing  
                 eta = 1 / mu^0.1
                 # omega = 1 / mu #? not used 
                 membuf[5,lineidx] = mu #save penalty for current inner iteration 
@@ -146,27 +153,27 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij(
                 println()
                 println("max_auglag reached for line with cnorm = ", cnorm, " for line = ", lineidx, " with mu ", mu)
                 
-                println(cnorm_all)
-                println()
-                println(eta_all)
-                println()
-                println(mu_all)
+                # println(cnorm_all)
+                # println()
+                # println(eta_all)
+                # println()
+                # println(mu_all)
 
                 terminate = true
             end
         end #end ALM
 
     #save variables TODO: check if sol.u is actually updated 
-    u[shift_idx] = dot(supY[1,:],x) #pij
-    u[shift_idx + 1] = dot(supY[2,:],x) #qij
-    u[shift_idx + 2] = dot(supY[3,:],x) #pji
-    u[shift_idx + 3] = dot(supY[4,:],x) #qji
-    u[shift_idx + 4] = x[5] #wi
-    u[shift_idx + 5] = x[6] #wj
-    u[shift_idx + 6] = x[7] #thetai
-    u[shift_idx + 7] = x[8] #thetaj
+    u[shift_idx] = dot(supY[1,:],Ctron * x + dtron) #pij
+    u[shift_idx + 1] = dot(supY[2,:],Ctron * x + dtron) #qij
+    u[shift_idx + 2] = dot(supY[3,:],Ctron * x + dtron) #pji
+    u[shift_idx + 3] = dot(supY[4,:],Ctron * x + dtron) #qji
+    u[shift_idx + 4] = x[3] #wi
+    u[shift_idx + 5] = x[4] #wj
+    u[shift_idx + 6] = x[5] #thetai
+    u[shift_idx + 7] = x[6] #thetaj
 
     
     # return solution and objective for branch testing     
-    return x, f 
+    return Ctron * x + dtron, f 
 end
