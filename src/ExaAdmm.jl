@@ -168,6 +168,7 @@ include("models/qpsub/qpsub_admm_prepoststep_cpu.jl")
 include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_cpu.jl") #eval A,b for Ipopt and Tron
 include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_cpu.jl") #all line
 include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_cpu_ij.jl")  #line by line
+include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_cpu_ij_red.jl")  #line by line
 include("models/qpsub/qpsub_auglag_tron_linelimit_kernel_cpu.jl") #Exatron build
 
 # Others for individual use 
