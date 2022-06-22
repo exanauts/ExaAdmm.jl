@@ -91,8 +91,9 @@ function acopf_admm_update_x_line(
 
         # println(A_ipopt)
         # println(b_ipopt)
-
-        time_br = @timed tronx, tronf = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij(info.inner, par.max_auglag, par.mu_max, par.scale, A_ipopt, b_ipopt, mod.ls[i,:], mod.us[i,:], mod.sqp_line, sol.l_curr[shift_idx : shift_idx + 7], 
+        
+        #ij or ij_red
+        time_br = @timed tronx, tronf = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(info.inner, par.max_auglag, par.mu_max, par.scale, A_ipopt, b_ipopt, mod.ls[i,:], mod.us[i,:], mod.sqp_line, sol.l_curr[shift_idx : shift_idx + 7], 
         sol.rho[shift_idx : shift_idx + 7], sol.u_curr, shift_idx, sol.v_curr[shift_idx : shift_idx + 7], 
         sol.z_curr[shift_idx : shift_idx + 7], mod.qpsub_membuf,i,
         mod.grid_data.YffR[i], mod.grid_data.YffI[i],
