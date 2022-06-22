@@ -227,7 +227,7 @@ end #inbounds
 
 env2, mod2 = ExaAdmm.solve_qpsub(case, mod1.Hs, mod1.LH_1h, mod1.RH_1h,
 mod1.LH_1i, mod1.RH_1i, mod1.LH_1j, mod1.RH_1j, mod1.LH_1k, mod1.RH_1k, mod1.ls, mod1.us, initial_beta; 
-outer_iterlim=3000, inner_iterlim=1, scale = 1.0, obj_scale = 1, rho_pq=20.0, rho_va=20.0, verbose=1, outer_eps=2*1e-5, onelevel = true);
+outer_iterlim=3000, inner_iterlim=1, scale = 1.0, obj_scale = 1, rho_pq=20.0, rho_va=20.0, verbose=1, outer_eps=2*1e-5, onelevel = true)
 
 # # println(mod.info.status)
 
