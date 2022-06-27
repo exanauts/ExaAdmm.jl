@@ -16,7 +16,7 @@ Running the algorithms on the GPU requires NVIDIA GPUs with `CUDA.jl` or `Kernel
 ## How to run
 
 Currently, `ExaAdmm.jl` supports electrical grid files in the MATLAB format. You can download them from [here](https://github.com/MATPOWER/matpower).
-Below shows an example of solving `case1354pegase.m` using `ExaAdmm.jl` on GPUs.
+Below shows an example of solving `case1354pegase.m` using `ExaAdmm.jl` on an NVIDIA GPU
 
 ```julia
 using ExaAdmm
@@ -33,7 +33,27 @@ env, mod = solve_acopf(
     verbose=1
 );
 ```
+and the same example on an AMD GPU:
+```julia
+using ExaAdmm
+using AMDGPU
+using ROCKernels
 
+ExaAdmm.KAArray{T}(n::Int, ::ROCDevice) where {T} = ROCArray{T}(undef, n)
+
+env, mod = solve_acopf(
+    "case1354pegase.m";
+    rho_pq=1e1,
+    rho_va=1e3,
+    outer_iterlim=20,
+    inner_iterlim=20,
+    scale=1e-4,
+    tight_factor=0.99,
+    use_gpu=true,
+    ka_device = ROCDevice(),
+    verbose=1
+)
+```
 The following table shows parameter values we used for solving pegase and ACTIVSg data.
 
 Data        | rho_pq | rho_va | scale | obj_scale
