@@ -30,7 +30,7 @@ jobs:
       - run: julia --project deps/deps.jl
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
-      # - run: julia --project=docs/ docs/make.jl
+      - run: julia --project=docs/ docs/make.jl
 
   test-moonshot:
     env:
@@ -49,6 +49,5 @@ jobs:
       - uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.julia-version }}
-      - run: julia --project deps/deps.jl
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest

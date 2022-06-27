@@ -4,7 +4,9 @@
     tx = J + (@groupsize()[1] * (I - 1))
 
     if tx <= nline
-        param[29,tx] = (rateA[tx] == 0.0) ? 1e3 : rateA[tx]
+        @inbounds begin
+            param[29,tx] = (rateA[tx] == 0.0) ? 1e3 : rateA[tx]
+        end
     end
 end
 
@@ -14,5 +16,6 @@ function acopf_set_linelimit(
     info::IterationInformation,
     device::KA.GPU
 )
-    wait(set_rateA_kernel_ka(device,64,mod.nline)(mod.nline, mod.membuf, mod.rateA))
+    ev = set_rateA_kernel_ka(device,64,mod.nline)(mod.nline, mod.membuf, mod.rateA)
+    wait(ev)
 end

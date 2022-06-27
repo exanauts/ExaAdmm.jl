@@ -4,7 +4,9 @@
     tx = J + (@groupsize()[1] * (I - 1))
 
     if tx <= n
-        rp[tx] = u[tx] - v[tx] + z[tx]
+        @inbounds begin
+            rp[tx] = u[tx] - v[tx] + z[tx]
+        end
     end
 end
 
@@ -15,21 +17,21 @@ function admm_update_residual(
 )
     sol, info = mod.solution, mod.info
 
-    wait(compute_primal_residual_kernel_ka(device,64,mod.nvar)(
-            mod.nvar, sol.rp, sol.u_curr, sol.v_curr, sol.z_curr,
-            dependencies=Event(device)
-        )
+    ev = compute_primal_residual_kernel_ka(device,64,mod.nvar)(
+        mod.nvar, sol.rp, sol.u_curr, sol.v_curr, sol.z_curr,
+        dependencies=Event(device)
     )
-    wait(vector_difference_ka(device,64,mod.nvar)(
-            mod.nvar, sol.rd, sol.z_curr, sol.z_prev,
-            dependencies=Event(device)
-        )
+    wait(ev)
+    ev = vector_difference_ka(device,64,mod.nvar)(
+        mod.nvar, sol.rd, sol.z_curr, sol.z_prev,
+        dependencies=Event(device)
     )
-    wait(vector_difference_ka(device,64,mod.nvar)(
-            mod.nvar, sol.Ax_plus_By, sol.rp, sol.z_curr,
-            dependencies=Event(device)
-        )
+    wait(ev)
+    ev = vector_difference_ka(device,64,mod.nvar)(
+        mod.nvar, sol.Ax_plus_By, sol.rp, sol.z_curr,
+        dependencies=Event(device)
     )
+    wait(ev)
 
     info.primres = norm(sol.rp)
     info.dualres = norm(sol.rd)

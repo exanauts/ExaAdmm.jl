@@ -17,25 +17,25 @@ function acopf_admm_update_x_line(
 )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
     if env.use_linelimit
-        wait(auglag_linelimit_two_level_alternative_ka(device, 32, data.nline*32)(
-                Val(mod.n), data.nline, mod.line_start,
-                info.inner, par.max_auglag, par.mu_max, par.scale,
-                sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho,
-                par.shift_lines, mod.membuf, data.YffR, data.YffI, data.YftR, data.YftI,
-                data.YttR, data.YttI, data.YtfR, data.YtfI,
-                data.FrVmBound, data.ToVmBound, data.FrVaBound, data.ToVaBound,
-                dependencies=Event(device)
-            )
+        ev = auglag_linelimit_two_level_alternative_ka(device, 32, data.nline*32)(
+            Val(mod.n), data.nline, mod.line_start,
+            info.inner, par.max_auglag, par.mu_max, par.scale,
+            sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho,
+            par.shift_lines, mod.membuf, data.YffR, data.YffI, data.YftR, data.YftI,
+            data.YttR, data.YttI, data.YtfR, data.YtfI,
+            data.FrVmBound, data.ToVmBound, data.FrVaBound, data.ToVaBound,
+            dependencies=Event(device)
         )
+        wait(ev)
     else
-        wait(polar_kernel_two_level_alternative_ka(device, 32, data.nline)(
-                mod.n, data.nline, mod.line_start, par.scale,
-                sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho,
-                par.shift_lines, mod.membuf, data.YffR, data.YffI, data.YftR, data.YftI,
-                data.YttR, data.YttI, data.YtfR, data.YtfI, data.FrVmBound, data.ToVmBound,
-                dependencies=Event(device)
-            )
+        ev = polar_kernel_two_level_alternative_ka(device, 32, data.nline)(
+            mod.n, data.nline, mod.line_start, par.scale,
+            sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho,
+            par.shift_lines, mod.membuf, data.YffR, data.YffI, data.YftR, data.YftI,
+            data.YttR, data.YttI, data.YtfR, data.YtfI, data.FrVmBound, data.ToVmBound,
+            dependencies=Event(device)
         )
+        wait(ev)
     end
     info.time_x_update += 0.0
     info.user.time_branches += 0.0

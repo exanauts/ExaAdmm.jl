@@ -19,10 +19,10 @@ function admm_update_l(
     device::KA.GPU
 )
     par, sol, info = env.params, mod.solution, mod.info
-    wait(update_l_kernel_ka(device,64,mod.nvar)(
-            mod.nvar, sol.l_curr, sol.z_curr, sol.lz, par.beta
-        )
+    ev = update_l_kernel_ka(device,64,mod.nvar)(
+        mod.nvar, sol.l_curr, sol.z_curr, sol.lz, par.beta
     )
+    wait(ev)
     info.time_l_update += 0.0
     return
 end

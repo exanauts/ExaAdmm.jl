@@ -14,11 +14,12 @@ function admm_inner_prestep(
     device::KA.GPU
 )
     sol = mod.solution
-    wait(copy_data_kernel_ka(device, 64, mod.nvar)(
-            mod.nvar, sol.z_prev, sol.z_curr,
-            dependencies=Event(device)
-        )
+    ev = copy_data_kernel_ka(device, 64, mod.nvar)(
+        mod.nvar, sol.z_prev, sol.z_curr,
+        dependencies=Event(device)
     )
+    wait(ev)
+
     return
 end
 

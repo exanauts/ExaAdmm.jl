@@ -6,13 +6,18 @@ function solve_acopf(case::String;
     outer_eps=2*1e-4, gpu_no=0, verbose=1
 )
     T = Float64
+    # 1. ka_device = nothing and use_gpu = false, CPU version of the code is used
+    # 2. ka_device = KA.CPU() and use_gpu = false, CPU version of the code is used, NOT the KA.CPU kernels
+    #    due to nested kernels limitations and no added benefit
+    # 3. ka_device = nothing and use_gpu = true, use original CUDA.jl kernels
+    # 4. ka_device is a KA.GPU and use_gpu = true, use KA kernels
     if !use_gpu && (isa(ka_device, Nothing) || isa(ka_device, KA.CPU))
         TD = Array{Float64,1}; TI = Array{Int,1}; TM = Array{Float64,2}
         ka_device = nothing
     elseif use_gpu && isa(ka_device, Nothing)
         CUDA.device!(gpu_no)
         TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
-    elseif use_gpu && isa(ka_device, KA.Device)
+    elseif use_gpu && isa(ka_device, KA.GPU)
         CUDA.device!(gpu_no)
         TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
     else
