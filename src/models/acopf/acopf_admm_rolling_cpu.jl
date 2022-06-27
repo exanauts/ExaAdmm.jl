@@ -14,7 +14,8 @@ end
 
 function admm_restart_rolling(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}};
+    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+    device::Nothing=nothing;
     start_period=1, end_period=6, update_start_period_bounds=false, result_file="warm-start.txt")
 
     @assert env.load_specified == true

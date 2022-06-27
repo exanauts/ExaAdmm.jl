@@ -1,6 +1,7 @@
 function admm_update_xbar(
   env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-  mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+  mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+    device::Nothing=nothing
 )
     for i=1:mod.len_horizon-1
         submod, subsol, sol_ramp, subdata = mod.models[i], mod.models[i].solution, mod.solution[i+1], mod.models[i].grid_data

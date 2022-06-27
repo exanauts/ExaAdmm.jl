@@ -8,29 +8,52 @@ ExaAdmm.jl implements the two-level alternating direction method of multipliers 
 The package can be installed in the Julia REPL with the command below:
 
 ```julia
-] ExaAdmm
+] add ExaAdmm
 ```
 
-Running the algorithms on GPU requires Nvidia GPUs with `CUDA.jl`. 
+Running the algorithms on the GPU requires either NVIDIA GPUs with [`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl) or [`KernelAbstractions.jl`](https://github.com/JuliaGPU/KernelAbstractions.jl) (KA) with the respective device support (e.g., [`AMDGPU.jl`](https://github.com/JuliaGPU/AMDGPU.jl) and `ROCKernels.jl`). Currently, only the ACOPF problem is supported using KA.
 
 ## How to run
 
 Currently, `ExaAdmm.jl` supports electrical grid files in the MATLAB format. You can download them from [here](https://github.com/MATPOWER/matpower).
-Below shows an example of solving `case1354pegase.m` using `ExaAdmm.jl` on GPUs.
+Below shows an example of solving `case1354pegase.m` using `ExaAdmm.jl` on an NVIDIA GPU
 
 ```julia
-env, mod = ExaAdmm.solve_acopf(
-    "case1354pegase.m"; 
-    rho_pq=1e1, 
-    rho_va=1e3, 
-    outer_iterlim=20, 
-    inner_iterlim=20, 
-    scale=1e-4, 
-    tight_factor=0.99, 
-    use_gpu=true
+using ExaAdmm
+
+env, mod = solve_acopf(
+    "case1354pegase.m";
+    rho_pq=1e1,
+    rho_va=1e3,
+    outer_iterlim=20,
+    inner_iterlim=20,
+    scale=1e-4,
+    tight_factor=0.99,
+    use_gpu=true,
+    verbose=1
 );
 ```
+and the same example on an AMD GPU:
+```julia
+using ExaAdmm
+using AMDGPU
+using ROCKernels
 
+ExaAdmm.KAArray{T}(n::Int, ::ROCDevice) where {T} = ROCArray{T}(undef, n)
+
+env, mod = solve_acopf(
+    "case1354pegase.m";
+    rho_pq=1e1,
+    rho_va=1e3,
+    outer_iterlim=20,
+    inner_iterlim=20,
+    scale=1e-4,
+    tight_factor=0.99,
+    use_gpu=true,
+    ka_device = ROCDevice(),
+    verbose=1
+)
+```
 The following table shows parameter values we used for solving pegase and ACTIVSg data.
 
 Data        | rho_pq | rho_va | scale | obj_scale
@@ -49,7 +72,7 @@ We have used the same `tight_factor=0.99`, `outer_iterlim=20`, and `inner_iterli
 - Youngdae Kim and Kibaek Kim. "Accelerated Computation and Tracking of AC Optimal Power Flow Solutions using GPUs" arXiv preprint arXiv:2110.06879, 2021
 - Youngdae Kim, François Pacaud, Kibaek Kim, and Mihai Anitescu. "Leveraging GPU batching for scalable nonlinear programming through massive lagrangian decomposition" arXiv preprint arXiv:2106.14995, 2021
 
-## Acknowledgements
+## Acknowledgments
 
 This research was supported by the Exascale ComputingProject (17-SC-20-SC),  a collaborative effort of the U.S. Department of Energy Office of Science and the National Nuclear Security Administration.
 This material is based upon work supported by the U.S. Department of Energy, Office of Science, under contract number DE-AC02-06CH11357.

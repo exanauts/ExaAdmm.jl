@@ -1,28 +1,32 @@
-function update_real_power_current_bounds(
+@kernel function update_real_power_current_bounds_ka(
     ngen::Int, gen_start::Int,
-    pgmin_curr::CuDeviceArray{Float64,1}, pgmax_curr::CuDeviceArray{Float64,1},
-    pgmin_orig::CuDeviceArray{Float64,1}, pgmax_orig::CuDeviceArray{Float64,1},
-    ramp_rate::CuDeviceArray{Float64,1}, x_curr::CuDeviceArray{Float64,1})
+    pgmin_curr, pgmax_curr,
+    pgmin_orig, pgmax_orig,
+    ramp_rate, x_curr)
 
-    g = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
+    I = @index(Group, Linear)
+    J = @index(Local, Linear)
+    g = J + (@groupsize()[1] * (I - 1))
     if g <= ngen
-        pg_idx = gen_start + 2*(g-1)
-        pgmin_curr[g] = max(pgmin_orig[g], x_curr[pg_idx] - ramp_rate[g])
-        pgmax_curr[g] = min(pgmax_orig[g], x_curr[pg_idx] + ramp_rate[g])
+        @inbounds begin
+            pg_idx = gen_start + 2*(g-1)
+            pgmin_curr[g] = max(pgmin_orig[g], x_curr[pg_idx] - ramp_rate[g])
+            pgmax_curr[g] = min(pgmax_orig[g], x_curr[pg_idx] + ramp_rate[g])
+        end
     end
-    return
 end
 
 function admm_restart_rolling(
-    env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelAcopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    device::Nothing=nothing;
+    env::AdmmEnv,
+    mod::ModelAcopf,
+    device::KA.GPU,
     start_period=1, end_period=6, result_file="warm-start")
 
     @assert env.load_specified == true
     @assert start_period >= 1 && end_period <= size(env.load.pd,2)
 
     nblk_gen = div(mod.grid_data.ngen-1, 64) + 1
+    ngen = mod.grid_data.ngen
 
     io = open(result_file*"_tight-factor"*string(env.tight_factor)*".txt", "w")
     @printf(io, " ** Parameters\n")
@@ -66,9 +70,13 @@ function admm_restart_rolling(
         #@printf(io, "Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
         @printf(io, "Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.info.time_overall + mod.info.time_projection)
 
-        CUDA.@sync @cuda threads=64 blocks=nblk_gen update_real_power_current_bounds(mod.grid_data.ngen, mod.gen_start,
+        ev = update_real_power_current_bounds_ka(device,64,ngen)(
+            mod.grid_data.ngen, mod.gen_start,
             mod.pgmin_curr, mod.pgmax_curr, mod.grid_data.pgmin, mod.grid_data.pgmax,
-            mod.grid_data.ramp_rate, mod.solution.u_curr)
+            mod.grid_data.ramp_rate, mod.solution.u_curr,
+            dependencies=Event(device)
+        )
+        wait(ev)
 
         flush(io)
     end

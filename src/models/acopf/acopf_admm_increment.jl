@@ -3,7 +3,8 @@ Increment outer iteration counter by one.
 """
 function admm_increment_outer(
     env::AdmmEnv,
-    mod::AbstractOPFModel
+    mod::AbstractOPFModel,
+    device=nothing
 )
     mod.info.outer += 1
     return
@@ -14,7 +15,8 @@ Reset inner iteration counter to zero.
 """
 function admm_increment_reset_inner(
     env::AdmmEnv,
-    mod::AbstractOPFModel
+    mod::AbstractOPFModel,
+    device=nothing
 )
     mod.info.inner = 0
     return
@@ -25,7 +27,8 @@ Increment inner iteration counter by one.
 """
 function admm_increment_inner(
     env::AdmmEnv,
-    mod::AbstractOPFModel
+    mod::AbstractOPFModel,
+    device=nothing
 )
     mod.info.inner += 1
     mod.info.cumul += 1
