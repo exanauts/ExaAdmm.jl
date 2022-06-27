@@ -11,7 +11,7 @@ The package can be installed in the Julia REPL with the command below:
 ] add ExaAdmm
 ```
 
-Running the algorithms on the GPU requires NVIDIA GPUs with `CUDA.jl` or `KernelAbstractions.jl` (KA) with the respective device support (`AMDGPU.jl` and `ROCKernels.jl`). Currently, only the ACOPF problem is supported using KA.
+Running the algorithms on the GPU requires either NVIDIA GPUs with [`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl) or [`KernelAbstractions.jl`](https://github.com/JuliaGPU/KernelAbstractions.jl) (KA) with the respective device support (e.g., [`AMDGPU.jl`](https://github.com/JuliaGPU/AMDGPU.jl) and `ROCKernels.jl`). Currently, only the ACOPF problem is supported using KA.
 
 ## How to run
 
