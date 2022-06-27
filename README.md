@@ -8,10 +8,10 @@ ExaAdmm.jl implements the two-level alternating direction method of multipliers 
 The package can be installed in the Julia REPL with the command below:
 
 ```julia
-] ExaAdmm
+] add ExaAdmm
 ```
 
-Running the algorithms on GPU requires Nvidia GPUs with `CUDA.jl`. 
+Running the algorithms on the GPU requires NVIDIA GPUs with `CUDA.jl` or `KernelAbstractions.jl` (KA) with the respective device support (`AMDGPU.jl` and `ROCKernels.jl`). Currently, only the ACOPF problem is supported using KA.
 
 ## How to run
 
@@ -19,15 +19,18 @@ Currently, `ExaAdmm.jl` supports electrical grid files in the MATLAB format. You
 Below shows an example of solving `case1354pegase.m` using `ExaAdmm.jl` on GPUs.
 
 ```julia
-env, mod = ExaAdmm.solve_acopf(
-    "case1354pegase.m"; 
-    rho_pq=1e1, 
-    rho_va=1e3, 
-    outer_iterlim=20, 
-    inner_iterlim=20, 
-    scale=1e-4, 
-    tight_factor=0.99, 
-    use_gpu=true
+using ExaAdmm
+
+env, mod = solve_acopf(
+    "case1354pegase.m";
+    rho_pq=1e1,
+    rho_va=1e3,
+    outer_iterlim=20,
+    inner_iterlim=20,
+    scale=1e-4,
+    tight_factor=0.99,
+    use_gpu=true,
+    verbose=1
 );
 ```
 
