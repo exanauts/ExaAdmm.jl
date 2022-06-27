@@ -18,6 +18,11 @@ export solve_acopf
 
 struct KAArray{T} end
 
+# We only use the CUDA variants of these
+threadIdx = CUDA.threadIdx
+blockIdx = CUDA.blockIdx
+blockDim = CUDA.blockDim
+
 include("utils/parse_matpower.jl")
 include("utils/opfdata.jl")
 include("utils/environment.jl")
