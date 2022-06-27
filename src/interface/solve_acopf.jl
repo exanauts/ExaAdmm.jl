@@ -17,9 +17,12 @@ function solve_acopf(case::String;
     elseif use_gpu && isa(ka_device, Nothing)
         CUDA.device!(gpu_no)
         TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
-    elseif use_gpu && isa(ka_device, KA.GPU)
-        CUDA.device!(gpu_no)
-        TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
+    elseif use_gpu && isa(ka_device, KA.Device)
+        if CUDA.has_cuda_gpu()
+            TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
+        elseif AMDGPU.has_rocm_gpu()
+            TD = ROCArray{Float64,1}; TI = ROCArray{Int,1}; TM = ROCArray{Float64,2}
+        end
     else
         error("Inconsistent device selection use_gpu=$use_gpu and ka_device=$(typepof(ka_device))")
     end

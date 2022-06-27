@@ -13,7 +13,7 @@ function admm_two_level(
     par.beta = par.initial_beta
 
     if par.verbose > 0
-        admm_update_residual(env, mod)
+        admm_update_residual(env, mod, device)
         @printf("%8s  %8s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
                 "Outer", "Inner", "Objval", "AugLag", "PrimRes", "EpsPrimRes",
                 "DualRes", "||z||", "||Ax+By||", "OuterTol", "Beta")

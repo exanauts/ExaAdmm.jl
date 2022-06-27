@@ -7,11 +7,14 @@ using LinearAlgebra
 using SparseArrays
 using MPI
 using CUDA
+using AMDGPU
 using KernelAbstractions
 using ExaTron
 using Random
 
 const KA = KernelAbstractions
+
+export solve_acopf
 
 struct KAArray{T} end
 
