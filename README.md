@@ -72,7 +72,7 @@ We have used the same `tight_factor=0.99`, `outer_iterlim=20`, and `inner_iterli
 - Youngdae Kim and Kibaek Kim. "Accelerated Computation and Tracking of AC Optimal Power Flow Solutions using GPUs" arXiv preprint arXiv:2110.06879, 2021
 - Youngdae Kim, François Pacaud, Kibaek Kim, and Mihai Anitescu. "Leveraging GPU batching for scalable nonlinear programming through massive lagrangian decomposition" arXiv preprint arXiv:2106.14995, 2021
 
-## Acknowledgements
+## Acknowledgments
 
 This research was supported by the Exascale ComputingProject (17-SC-20-SC),  a collaborative effort of the U.S. Department of Energy Office of Science and the National Nuclear Security Administration.
 This material is based upon work supported by the U.S. Department of Energy, Office of Science, under contract number DE-AC02-06CH11357.
