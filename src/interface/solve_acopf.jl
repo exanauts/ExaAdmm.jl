@@ -18,9 +18,9 @@ function solve_acopf(case::String;
         CUDA.device!(gpu_no)
         TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
     elseif use_gpu && isa(ka_device, KA.Device)
-        if CUDA.has_cuda_gpu()
+        if has_cuda_gpu()
             TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
-        elseif AMDGPU.has_rocm_gpu()
+        elseif has_rocm_gpu()
             TD = ROCArray{Float64,1}; TI = ROCArray{Int,1}; TM = ROCArray{Float64,2}
         end
     else

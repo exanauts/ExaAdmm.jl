@@ -7,7 +7,7 @@ using LinearAlgebra
 using SparseArrays
 using MPI
 using CUDA
-using AMDGPU
+import AMDGPU: ROCArray, has_rocm_gpu
 using KernelAbstractions
 using ExaTron
 using Random
@@ -17,11 +17,6 @@ const KA = KernelAbstractions
 export solve_acopf
 
 struct KAArray{T} end
-
-# We only use the CUDA variants of these
-threadIdx = CUDA.threadIdx
-blockIdx = CUDA.blockIdx
-blockDim = CUDA.blockDim
 
 include("utils/parse_matpower.jl")
 include("utils/opfdata.jl")
