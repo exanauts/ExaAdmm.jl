@@ -1,10 +1,10 @@
 using CUDA
-using AMDGPU
+using oneAPI
 using KernelAbstractions
 KA = KernelAbstractions
 devices = Vector{KA.Device}()
 push!(devices, KA.CPU())
-if CUDA.has_cuda_gpu() || AMDGPU.has_rocm_gpu()
+if CUDA.has_cuda_gpu() || oneAPI.functional()
     if CUDA.has_cuda_gpu()
         using CUDAKernels
         function ExaAdmm.KAArray{T}(n::Int, device::CUDADevice) where {T}
@@ -12,12 +12,12 @@ if CUDA.has_cuda_gpu() || AMDGPU.has_rocm_gpu()
         end
         push!(devices, CUDADevice())
     end
-    if AMDGPU.has_rocm_gpu()
-        using ROCKernels
-        function ExaAdmm.KAArray{T}(n::Int, device::ROCDevice) where {T}
-            return ROCArray{T}(undef, n)
+    if oneAPI.functional()
+        using oneAPIKernels
+        function ExaAdmm.KAArray{T}(n::Int, device::oneAPIDevice) where {T}
+            return oneArray{T}(undef, n)
         end
-        push!(devices, ROCDevice())
+        push!(devices, oneAPIDevice())
     end
 end
 @testset "Testing [x,xbar,z,l,lz] updates and a solve for ACOPF using KA" for _device in devices
@@ -35,8 +35,8 @@ end
     else isa(device, KA.GPU)
         if CUDA.has_cuda_gpu()
             TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
-        elseif AMDGPU.has_rocm_gpu()
-            TD = ROCArray{Float64,1}; TI = ROCArray{Int,1}; TM = ROCArray{Float64,2}
+        elseif oneAPI.functional()
+            TD = oneArray{Float64,1}; TI = oneArray{Int,1}; TM = oneArray{Float64,2}
         else
             error("Unsupported device $device")
         end

@@ -7,7 +7,7 @@ using LinearAlgebra
 using SparseArrays
 using MPI
 using CUDA
-import AMDGPU: ROCArray, has_rocm_gpu
+import oneAPI: oneArray, functional
 using KernelAbstractions
 using ExaTron
 using Random
