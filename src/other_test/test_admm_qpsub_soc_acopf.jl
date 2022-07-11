@@ -195,6 +195,13 @@ end #@inbounds
 
     #new cost coeff
     data.c1 .+= 2*data.c2.*value.(pg)
+
+    mod1.pg_sol = value.(pg)
+    mod1.qg_sol = value.(qg)
+    mod1.line_var = value.(line_var)
+    mod1.line_fl = value.(line_fl)
+    mod1.theta_sol = value.(bus_theta)
+    mod1.w_sol = value.(bus_w)
     
     #w theta bound
     for l = 1: data.nline
@@ -427,6 +434,170 @@ if use_ipopt
     println(termination_status(model2))
 
 end #if use_ipopt 
+
+
+
+# update to SOC problem
+@inbounds begin
+    for l = 1: data.nline
+        RH_1h = -dot(mod1.LH_1h[l,:],[value.(line_var[1,l]), value.(line_var[2,l]), value.(line_var[3,l]), value.(line_var[4,l])])  
+        RH_1h += -(value.(line_var)[1,l] + mod1.line_var[1,l])^2 - (value.(line_var)[2,l] + mod1.line_var[2,l])^2 + (value.(line_var)[3,l] + mod1.line_var[3,l])*(value.(line_var)[4,l] + mod1.line_var[4,l])  
+        mod1.RH_1h[l] = RH_1h
+
+        RH_1i = -dot(mod1.LH_1i[l,:], [value.(line_var[1,l]), value.(line_var[2,l]), value.(line_var[5,l]), value.(line_var[6,l])])
+        RH_1i += -(value.(line_var)[1,l] + mod1.line_var[1,l])*sin(value.(line_var)[5,l] + mod1.line_var[5,l] - value.(line_var)[6,l]-mod1.line_var[6,l])  
+        RH_1i +=  (value.(line_var)[2,l] + mod1.line_var[2,l])*cos(value.(line_var)[5,l] + mod1.line_var[5,l] - value.(line_var)[6,l]-mod1.line_var[6,l])
+        mod1.RH_1i[l] = RH_1i
+
+        RH_1j = -dot(mod1.LH_1j[l,:], [value.(line_fl)[1,l],value.(line_fl)[2,l]])
+        RH_1j += -((value.(line_fl)[1,l] + mod1.line_fl[1,l])^2 + (value.(line_fl)[2,l] + mod1.line_fl[2,l])^2 - data.rateA[l]) 
+        mod1.RH_1j[l] = RH_1j
+
+        RH_1k = -dot(mod1.LH_1k[l,:], [value.(line_fl)[3,l],value.(line_fl)[4,l]])
+        RH_1k += -((value.(line_fl)[3,l] + mod1.line_fl[3,l])^2 + (value.(line_fl)[4,l] + mod1.line_fl[4,l])^2 - data.rateA[l]) 
+        mod1.RH_1k[l] = RH_1k
+    
+    end  
+end
+
+# solve SOC with Ipopt
+if use_ipopt
+
+    # generate full qpsub with mod and solve by ipopt 
+    model3 = JuMP.Model(Ipopt.Optimizer)
+    set_silent(model3)
+    
+    
+    
+    # variables 
+    @variable(model3, pg[1:data.ngen])
+    @variable(model3, qg[1:data.ngen])
+    @variable(model3, line_var[1:6,1:data.nline]) #w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
+    
+    @variable(model3, line_fl[1:4,1:data.nline]) #p_ij, q_ij, p_ji, q_ji 
+    
+    @variable(model3, pft[1:data.nbus]) #sum pij over j in B_i (frombus)
+    @variable(model3, ptf[1:data.nbus]) #sum pij over j in B_i (tobus)
+    @variable(model3, pgb[1:data.nbus]) #sum pg over g in G_i
+    
+    @variable(model3, qft[1:data.nbus]) #sum qij over j in B_i (frombus)
+    @variable(model3, qtf[1:data.nbus]) #sum qij over j in B_i (tobus)
+    @variable(model3, qgb[1:data.nbus]) #sum qg over g in G_i
+    
+    @variable(model3, bus_w[1:data.nbus]) #for consensus
+    @variable(model3, bus_theta[1:data.nbus]) #for consensus 
+    
+    
+    
+    
+    # objective (ignore constant in generation objective)
+    @objective(model3, Min, sum(data.c2[g]*(pg[g]*data.baseMVA)^2 + data.c1[g]*pg[g]*data.baseMVA for g=1:data.ngen) +
+        sum(0.5*dot(line_var[:,l],mod1.Hs[6*(l-1)+1:6*l,1:6],line_var[:,l]) for l=1:data.nline) )
+    
+    
+    
+    
+    # generator constraint
+    @constraint(model3, [g=1:data.ngen], pg[g] <= data.pgmax[g])
+    @constraint(model3, [g=1:data.ngen], qg[g] <= data.qgmax[g])
+    @constraint(model3, [g=1:data.ngen], data.pgmin[g] <= pg[g] )
+    @constraint(model3, [g=1:data.ngen], data.qgmin[g] <= qg[g] )
+    
+    
+    
+    
+    # bus constraint: power balance
+    # pd
+    for b = 1:data.nbus
+        if data.FrStart[b] < data.FrStart[b+1]
+            @constraint(model3, pft[b] == sum( line_fl[1,data.FrIdx[k]] for k = data.FrStart[b]:data.FrStart[b+1]-1))
+        else
+            @constraint(model3, pft[b] == 0)
+        end
+    
+        if data.ToStart[b] < data.ToStart[b+1]
+            @constraint(model3, ptf[b] == sum( line_fl[3,data.ToIdx[k]] for k = data.ToStart[b]:data.ToStart[b+1]-1))
+        else
+            @constraint(model3, ptf[b] == 0)
+        end
+    
+        if data.GenStart[b] < data.GenStart[b+1]
+            @constraint(model3, pgb[b] == sum( pg[data.GenIdx[g]] for g = data.GenStart[b]:data.GenStart[b+1]-1))
+        else
+            @constraint(model3, pgb[b] == 0)
+        end
+    
+        @constraint(model3, pgb[b] - pft[b] - ptf[b] - data.YshR[b]*bus_w[b] == data.Pd[b]/data.baseMVA) 
+    end
+    
+    #qd
+    for b = 1:data.nbus
+        if data.FrStart[b] < data.FrStart[b+1]
+            @constraint(model3, qft[b] == sum( line_fl[2,data.FrIdx[k]] for k = data.FrStart[b]:data.FrStart[b+1]-1))
+        else
+            @constraint(model3, qft[b] == 0)
+        end
+    
+        if data.ToStart[b] < data.ToStart[b+1]
+            @constraint(model3, qtf[b] == sum( line_fl[4,data.ToIdx[k]] for k = data.ToStart[b]:data.ToStart[b+1]-1))
+        else
+            @constraint(model3, qtf[b] == 0)
+        end
+    
+        if data.GenStart[b] < data.GenStart[b+1]
+            @constraint(model3, qgb[b] == sum( qg[data.GenIdx[g]] for g = data.GenStart[b]:data.GenStart[b+1]-1))
+        else
+            @constraint(model3, qgb[b] == 0)
+        end
+    
+        @constraint(model3, qgb[b] - qft[b] - qtf[b] + data.YshI[b]*bus_w[b] == data.Qd[b]/data.baseMVA) 
+    end
+    
+    
+    
+    
+    # line constraint (1h 1i igonred)
+    @constraint(model3, [l=1:data.nline], mod1.ls[l,:] .<= line_var[:,l] .<= mod1.us[l,:]) #lower and upper bounds
+    @constraint(model3, [l=1:data.nline], mod1.LH_1j[l,1] * line_fl[1,l] + mod1.LH_1j[l,2] * line_fl[2,l] <= mod1.RH_1j[l])   #1j
+    @constraint(model3, [l=1:data.nline], mod1.LH_1k[l,1] * line_fl[3,l] + mod1.LH_1k[l,2] * line_fl[4,l] <= mod1.RH_1k[l])   #1k
+
+    @constraint(model3, [l=1:data.nline], sum(mod1.LH_1h[l,i] * line_var[i,l] for i=1:4) == mod1.RH_1h[l])   #1h
+    @constraint(model3, [l=1:data.nline], mod1.LH_1i[l,1] * line_var[1,l] + mod1.LH_1i[l,2] * line_var[2,l] + mod1.LH_1i[l,3] * line_var[5,l] + mod1.LH_1i[l,4] * line_var[6,l]  == mod1.RH_1i[l])   #1i
+    
+
+
+    for l = 1:data.nline #match line_fl with line_var
+        supY = [data.YftR[l] data.YftI[l] data.YffR[l] 0 0 0;
+        -data.YftI[l] data.YftR[l] -data.YffI[l] 0 0 0;
+        data.YtfR[l] -data.YtfI[l] 0 data.YttR[l] 0 0;
+        -data.YtfI[l] -data.YtfR[l] 0 -data.YttI[l] 0 0]
+        @constraint(model3, supY * line_var[:,l] .== line_fl[:,l])
+    end
+    
+    
+    
+    
+    
+    # coupling constraint for consensus 
+    for b = 1:data.nbus
+        for k = data.FrStart[b]:data.FrStart[b+1]-1
+            @constraint(model3, bus_w[b] == line_var[3, data.FrIdx[k]]) #wi(ij)
+            @constraint(model3, bus_theta[b] == line_var[5, data.FrIdx[k]]) #ti(ij)
+        end
+        for k = data.ToStart[b]:data.ToStart[b+1]-1
+            @constraint(model3, bus_w[b] == line_var[4, data.ToIdx[k]]) #wj(ji)
+            @constraint(model3, bus_theta[b] == line_var[6, data.ToIdx[k]]) #tj(ji)
+        end
+    end
+    
+    
+    optimize!(model3)
+    
+    println(termination_status(model3))
+
+end #if use_ipopt 
+
+
 
 
 # admm solve admm problem
