@@ -51,12 +51,11 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     membuf::TM      # memory buffer for line kernel
     gen_membuf::TM  # memory buffer for generator kernel
     
+    v_prev::TD
+   
     
-    qpsub_membuf::TM #memory buffer for qpsub 5*nline
-    sqp_line ::TM #6 * nline 
     
-    
-    #from SQP
+    #QPsub
     Hs::TM  # Hessian information for all lines 6*nline x 6: |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
     LH_1h::TM  # nline * 4 : w_ijR w_ijI wi(ij) wj(ji)
     RH_1h::TD  # nline   
@@ -71,11 +70,21 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     ls::TM # nline * 6
     us::TM # nline * 6 
 
-    v_prev::TD
+    qpsub_membuf::TM #memory buffer for qpsub 5*nline
+    sqp_line::TM #6 * nline 
 
+    
+    #SQP
+    pg_sol::TD #ngen
+    qg_sol::TD #ngen
 
+    line_var::TM #6*nline: w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
+    line_fl::TM #4*nline: p_ij, q_ij, p_ji, q_ji 
 
+    theta_sol::TD #nbus consensus with line_var
+    w_sol::TD #nbus consensus with line_var
 
+    
     # Two-Level ADMM
     nvar_u::Int
     nvar_v::Int
@@ -202,6 +211,25 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.us = TM(undef,(model.grid_data.nline,6))
         fill!(model.us, 0.0)
 
+        # SQP
+        model.pg_sol = TD(undef, model.grid_data.ngen)
+        fill!(model.pg_sol, 0.0)
+
+        model.qg_sol = TD(undef, model.grid_data.ngen)
+        fill!(model.qg_sol, 0.0)
+        
+        model.line_var = TM(undef,(6, model.grid_data.nline))
+        fill!(model.line_var, 0.0)
+
+        model.line_fl = TM(undef,(4, model.grid_data.nline))
+        fill!(model.line_fl, 0.0)
+
+        model.theta_sol = TD(undef, model.grid_data.nbus)
+        fill!(model.theta_sol, 0.0)
+
+        model.w_sol = TD(undef, model.grid_data.nbus)
+        fill!(model.w_sol, 0.0)
+
         return model
     end
 end
@@ -255,6 +283,13 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
     model.us = ref.us
 
     model.sqp_line = ref.sqp_line
+
+    model.pg_sol = ref.pg_sol
+    model.qg_sol = ref.qg_sol
+    model.line_var = ref.line_var
+    model.line_fl = ref.line_fl
+    model.theta_sol = ref.theta_sol
+    model.w_sol = ref.w_sol
 
     return model
 end
