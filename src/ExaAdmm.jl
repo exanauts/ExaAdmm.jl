@@ -193,6 +193,12 @@ include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_cpu_ij.jl")  #line by lin
 include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_cpu_ij_red.jl")  #line by line
 include("models/qpsub/qpsub_auglag_tron_linelimit_kernel_cpu.jl") #Exatron build
 
+#SQP_ipopt
+include("algorithms/sqp_ipopt.jl")
+include("interface/solve_sqp_ipopt.jl")
+include("models/sqp/sqp_init_solution.jl")
+include("models/sqp/sqp_lin_feas_cpu.jl")
+
 # Others for individual use 
 
 
