@@ -600,7 +600,7 @@ end #if use_ipopt
 
 
 
-# admm solve admm problem
+# admm solve soc problem
 env2, mod2 = ExaAdmm.solve_qpsub(case, mod1.Hs, mod1.LH_1h, mod1.RH_1h,
     mod1.LH_1i, mod1.RH_1i, mod1.LH_1j, mod1.RH_1j, mod1.LH_1k, mod1.RH_1k, mod1.ls, mod1.us, data.pgmax, data.pgmin, data.qgmax, data.qgmin, data.c1, data.Pd, data.Qd,
     initial_beta; 
