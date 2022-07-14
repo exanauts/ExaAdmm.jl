@@ -55,7 +55,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
    
     
     
-    #QPsub
+    #qpsub_construct
     Hs::TM  # Hessian information for all lines 6*nline x 6: |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
     LH_1h::TM  # nline * 4 : w_ijR w_ijI wi(ij) wj(ji)
     RH_1h::TD  # nline   
@@ -70,11 +70,38 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     ls::TM # nline * 6
     us::TM # nline * 6 
 
+    is_HS_sym::Array{Bool,1} #nline
+    is_HS_PSD::Array{Bool,1} #nline 
+
+    qpsub_c1::TD #ngen
+    qpsub_c2::TD #ngen
+
+    qpsub_pgmax::TD #ngen
+    qpsub_pgmin::TD #ngen
+    qpsub_qgmax::TD #ngen
+    qpsub_qgmin::TD #ngen
+
+    qpsub_Pd::TD #nbus
+    qpsub_Qd::TD #nbus
+
+
+
+    #qpsub_solve
     qpsub_membuf::TM #memory buffer for qpsub 5*nline
     sqp_line::TM #6 * nline 
+    
+    #collect qpsub solution 
+    dpg_sol::TD #ngen
+    dqg_sol::TD #ngen
+
+    dline_var::TM #6*nline: w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
+    dline_fl::TM #4*nline: p_ij, q_ij, p_ji, q_ji 
+
+    dtheta_sol::TD #nbus consensus with line_var
+    dw_sol::TD #nbus consensus with line_var
 
     
-    #SQP
+    #SQP sol and param
     pg_sol::TD #ngen
     qg_sol::TD #ngen
 
@@ -84,6 +111,13 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     theta_sol::TD #nbus consensus with line_var
     w_sol::TD #nbus consensus with line_var
 
+    eps_sqp::T
+    TR_sqp::TD #trust region radius for independent var 2*ngen + 4*nline: w_i, w_j, theta_i, theta_j
+    iter_lim_sqp::T
+    pen_merit::T #penalty for merit
+
+    bool_line::Array{Bool,2} #4* nline: 14h i j k violated violated or not for each line  
+    multi_line::TM #4*nline multiplier for 14h i j k 
     
     # Two-Level ADMM
     nvar_u::Int
@@ -99,7 +133,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         return new{T,TD,TI,TM}()
     end
 
-    function ModelQpsub{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}; ramp_ratio=0.02) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+    function ModelQpsub{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}; ramp_ratio=0.02, TR = 1.0, iter_lim = 100, eps = 1e-3) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
         model = new{T,TD,TI,TM}()
 
         model.grid_data = GridData{T,TD,TI,TM}(env)
@@ -172,7 +206,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.qpsub_membuf = TM(undef, (5,model.grid_data.nline))
         fill!(model.qpsub_membuf, 0.0)
 
-        #new SQP parameters
+        #new qpsub parameters
         model.Hs = TM(undef,(6*model.grid_data.nline,6))
         fill!(model.Hs, 0.0)
         
@@ -211,6 +245,36 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.us = TM(undef,(model.grid_data.nline,6))
         fill!(model.us, 0.0)
 
+        model.is_HS_sym = Array{Bool,1}(undef, model.grid_data.nline)
+        fill!(model.is_HS_sym, true)
+
+        model.is_HS_PSD = Array{Bool,1}(undef, model.grid_data.nline)
+        fill!(model.is_HS_PSD, true)
+
+        model.qpsub_c1 = TD(undef, model.grid_data.ngen)
+        fill!(model.qpsub_c1, 0.0)
+
+        model.qpsub_c2 = TD(undef, model.grid_data.ngen)
+        fill!(model.qpsub_c2, 0.0)
+
+        model.qpsub_pgmax = TD(undef, model.grid_data.ngen)
+        fill!(model.qpsub_pgmax, 0.0)
+
+        model.qpsub_pgmin = TD(undef, model.grid_data.ngen)
+        fill!(model.qpsub_pgmin, 0.0)
+
+        model.qpsub_qgmax = TD(undef, model.grid_data.ngen)
+        fill!(model.qpsub_qgmax, 0.0)
+
+        model.qpsub_qgmin = TD(undef, model.grid_data.ngen)
+        fill!(model.qpsub_qgmin, 0.0)
+
+        model.qpsub_Pd = TD(undef, model.grid_data.nbus) 
+        fill!(model.qpsub_Pd, 0.0)
+
+        model.qpsub_Qd = TD(undef, model.grid_data.nbus)
+        fill!(model.qpsub_Qd, 0.0)
+
         # SQP
         model.pg_sol = TD(undef, model.grid_data.ngen)
         fill!(model.pg_sol, 0.0)
@@ -229,6 +293,41 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         model.w_sol = TD(undef, model.grid_data.nbus)
         fill!(model.w_sol, 0.0)
+
+        model.TR_sqp = TD(undef, 2*model.grid_data.ngen + 4*model.grid_data.nline)
+        fill!(model.TR_sqp, TR)
+
+        model.eps_sqp = eps
+        model.iter_lim_sqp = iter_lim
+        model.pen_merit = 1.0 
+
+        model.bool_line = Array{Bool,2}(undef, (4, model.grid_data.nline))
+        fill!(model.bool_line, false)
+
+        model.multi_line = TM(undef, (4, model.grid_data.nline))
+        fill!(model.multi_line, 0.0)
+
+        
+
+        # qpsub solution
+        model.dpg_sol = TD(undef, model.grid_data.ngen)
+        fill!(model.dpg_sol, 0.0)
+
+        model.dqg_sol = TD(undef, model.grid_data.ngen)
+        fill!(model.dqg_sol, 0.0)
+        
+        model.dline_var = TM(undef,(6, model.grid_data.nline))
+        fill!(model.dline_var, 0.0)
+
+        model.dline_fl = TM(undef,(4, model.grid_data.nline))
+        fill!(model.dline_fl, 0.0)
+
+        model.dtheta_sol = TD(undef, model.grid_data.nbus)
+        fill!(model.dtheta_sol, 0.0)
+
+        model.dw_sol = TD(undef, model.grid_data.nbus)
+        fill!(model.dw_sol, 0.0)
+
 
         return model
     end
@@ -256,7 +355,7 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
 
     model.membuf = copy(ref.membuf)
     model.gen_membuf = copy(ref.gen_membuf)
-    model.qpsub_membuf = copy(ref.qpsub_membuf) #eewly added
+    model.qpsub_membuf = copy(ref.qpsub_membuf) 
 
     model.nvar_u = ref.nvar_u
     model.nvar_v = ref.nvar_v
@@ -266,30 +365,59 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
     model.nvar_padded = ref.nvar_padded
     model.nvar_u_padded = ref.nvar_u_padded
 
-    model.Hs = ref.Hs
-    model.LH_1h = ref.LH_1h
-    model.RH_1h = ref.RH_1h
+    model.Hs = copy(ref.Hs)
+    model.LH_1h = copy(ref.LH_1h)
+    model.RH_1h = copy(ref.RH_1h)
 
-    model.LH_1i = ref.LH_1i
-    model.RH_1i = ref.RH_1i
+    model.LH_1i = copy(ref.LH_1i)
+    model.RH_1i = copy(ref.RH_1i)
 
-    model.LH_1j = ref.LH_1j
-    model.RH_1j = ref.RH_1j
+    model.LH_1j = copy(ref.LH_1j)
+    model.RH_1j = copy(ref.RH_1j)
 
-    model.LH_1k = ref.LH_1k
-    model.RH_1k = ref.RH_1k
+    model.LH_1k = copy(ref.LH_1k)
+    model.RH_1k = copy(ref.RH_1k)
 
-    model.ls = ref.ls
-    model.us = ref.us
+    model.ls = copy(ref.ls)
+    model.us = copy(ref.us)
 
-    model.sqp_line = ref.sqp_line
+    model.sqp_line = copy(ref.sqp_line)
 
-    model.pg_sol = ref.pg_sol
-    model.qg_sol = ref.qg_sol
-    model.line_var = ref.line_var
-    model.line_fl = ref.line_fl
-    model.theta_sol = ref.theta_sol
-    model.w_sol = ref.w_sol
+    model.pg_sol = copy(ref.pg_sol)
+    model.qg_sol = copy(ref.qg_sol)
+    model.line_var = copy(ref.line_var)
+    model.line_fl = copy(ref.line_fl)
+    model.theta_sol = copy(ref.theta_sol)
+    model.w_sol = copy(ref.w_sol)
+
+    model.eps_sqp = copy(ref.eps_sqp)
+    model.iter_lim_sqp = copy(ref.iter_lim_sqp)
+    model.TR_sqp = copy(ref.TR_sqp)
+    model.pen_merit = ref.pen_merit
+    
+    model.bool_line = copy(ref.bool_line)
+    model.multi_line = copy(ref.multi_line) 
+
+    model.dpg_sol = copy(ref.dpg_sol)
+    model.dqg_sol = copy(ref.dqg_sol)
+    model.dline_var = copy(ref.dline_var)
+    model.dline_fl = copy(ref.dline_fl)
+    model.dtheta_sol = copy(ref.dtheta_sol)
+    model.dw_sol = copy(ref.dw_sol)
+
+    model.is_HS_sym = copy(ref.is_HS_sym)
+    model.is_HS_PSD = copy(ref.is_HS_PSD)
+
+    model.qpsub_c1 = copy(ref.qpsub_c1)
+    model.qpsub_c2 = copy(ref.qpsub_c2)
+
+    model.qpsub_pgmax = copy(ref.qpsub_pgmax)
+    model.qpsub_pgmin = copy(ref.qpsub_pgmin)
+    model.qpsub_qgmax = copy(ref.qpsub_qgmax)
+    model.qpsub_qgmin = copy(ref.qpsub_qgmin)
+
+    model.qpsub_Pd = copy(ref.qpsub_Pd)
+    model.qpsub_Qd = copy(ref.qpsub_Qd)
 
     return model
 end
