@@ -111,6 +111,14 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     theta_sol::TD #nbus consensus with line_var
     w_sol::TD #nbus consensus with line_var
 
+    pft::TD #nbus support Pd balance
+    ptf::TD #nbus support Pd balance
+    pgb::TD #nbus support Pd balance
+
+    qft::TD #nbus support Qd balance
+    qtf::TD #nbus support Qd balance
+    qgb::TD #nbus support Qd balance
+
     eps_sqp::T
     TR_sqp::TD #trust region radius for independent var 2*ngen + 4*nline: w_i, w_j, theta_i, theta_j
     iter_lim_sqp::T
@@ -297,6 +305,24 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.w_sol = TD(undef, model.grid_data.nbus)
         fill!(model.w_sol, 0.0)
 
+        model.pft = TD(undef, model.grid_data.nbus)
+        fill!(model.pft, 0.0)
+
+        model.ptf = TD(undef, model.grid_data.nbus)
+        fill!(model.ptf, 0.0)
+
+        model.pgb = TD(undef, model.grid_data.nbus)
+        fill!(model.pgb, 0.0)
+
+        model.qft = TD(undef, model.grid_data.nbus)
+        fill!(model.qft, 0.0)
+
+        model.qtf = TD(undef, model.grid_data.nbus)
+        fill!(model.qtf, 0.0)
+
+        model.qgb = TD(undef, model.grid_data.nbus)
+        fill!(model.qgb, 0.0)
+
         model.TR_sqp = TD(undef, 2*model.grid_data.ngen + 4*model.grid_data.nline)
         fill!(model.TR_sqp, TR)
 
@@ -395,6 +421,12 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
     model.line_fl = copy(ref.line_fl)
     model.theta_sol = copy(ref.theta_sol)
     model.w_sol = copy(ref.w_sol)
+    model.pft = copy(ref.pft)
+    model.ptf = copy(ref.ptf)
+    model.pgb = copy(ref.pgb)
+    model.qft = copy(ref.qft)
+    model.qtf = copy(ref.qtf)
+    model.qgb = copy(ref.qgb)
 
     model.eps_sqp = copy(ref.eps_sqp)
     model.iter_lim_sqp = copy(ref.iter_lim_sqp)
