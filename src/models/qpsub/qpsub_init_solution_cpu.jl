@@ -29,8 +29,8 @@ sol.rho .= rho_pq
 
 for g=1:ngen
     pg_idx = model.gen_start + 2*(g-1)
-    sol.v_curr[pg_idx] = 0.5*(model.grid_data.pgmin[g] + model.grid_data.pgmax[g])
-    sol.v_curr[pg_idx+1] = 0.5*(model.grid_data.qgmin[g] + model.grid_data.qgmax[g])
+    sol.v_curr[pg_idx] = 0.5*(model.grid_data.pgmin[g] + model.grid_data.pgmax[g]) #! qpsub bd
+    sol.v_curr[pg_idx+1] = 0.5*(model.grid_data.qgmin[g] + model.grid_data.qgmax[g]) #! qpsub bd
 end
 
     for l=1:nline
