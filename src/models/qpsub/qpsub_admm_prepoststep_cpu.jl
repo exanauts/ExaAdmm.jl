@@ -54,8 +54,13 @@ function admm_poststep(
         mod.info.time_projection = time_projection.time
     end
 
-    info.objval = sum(grid_data.c2[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
-                        grid_data.c1[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)]) +
-                        grid_data.c0[g] for g in 1:grid_data.ngen) + 
-                    sum(0.5*dot(mod.sqp_line[:,l],mod.Hs[6*(l-1)+1:6*l,1:6],mod.sqp_line[:,l]) for l=1:grid_data.nline) 
+    # info.objval = sum(grid_data.c2[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
+    #                     grid_data.c1[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)]) +
+    #                     grid_data.c0[g] for g in 1:grid_data.ngen) + 
+    #                 sum(0.5*dot(mod.sqp_line[:,l],mod.Hs[6*(l-1)+1:6*l,1:6],mod.sqp_line[:,l]) for l=1:grid_data.nline) 
+    
+    info.objval = sum(mod.qpsub_c2[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
+                    mod.qpsub_c1[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])
+                    for g in 1:grid_data.ngen) + 
+                        sum(0.5*dot(mod.sqp_line[:,l],mod.Hs[6*(l-1)+1:6*l,1:6],mod.sqp_line[:,l]) for l=1:grid_data.nline) 
 end

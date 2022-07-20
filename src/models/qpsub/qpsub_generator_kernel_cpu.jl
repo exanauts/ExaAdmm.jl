@@ -37,7 +37,7 @@ function generator_kernel_two_level_qpsub(
     baseMVA::Float64, u, xbar, zu, lu, rho_u
 )
 tcpu = @timed generator_kernel_two_level_qpsub(baseMVA, model.grid_data.ngen, model.gen_start,
-u, xbar, zu, lu, rho_u, model.pgmin_curr, model.pgmax_curr, model.grid_data.qgmin, model.grid_data.qgmax, 
-model.grid_data.c2, model.grid_data.c1)
+u, xbar, zu, lu, rho_u, model.qpsub_pgmin, model.qpsub_pgmax, model.qpsub_qgmin, model.qpsub_qgmax, 
+model.qpsub_c2, model.qpsub_c1)
 return tcpu
 end

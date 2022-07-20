@@ -26,8 +26,8 @@ function admm_update_residual(
     #                   data.generators[g].coeff[data.generators[g].n]
     #                   for g in 1:grid_data.ngen)::Float64
 
-    info.objval = sum(grid_data.c2[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
-                        grid_data.c1[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])
+    info.objval = sum(mod.qpsub_c2[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
+                        mod.qpsub_c1[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])
                         for g in 1:grid_data.ngen) + 
                             sum(0.5*dot(mod.sqp_line[:,l],mod.Hs[6*(l-1)+1:6*l,1:6],mod.sqp_line[:,l]) for l=1:grid_data.nline) 
     
