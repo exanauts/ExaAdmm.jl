@@ -57,8 +57,8 @@ function init_solution!(
         model.theta_sol[b] = 0.0
     end
     #reset bool and multi and (qpsub) sol
-    fill!(model.multi_line, 1.0) #? tuning
-    fill!(model.bool_line, false)
+    # fill!(model.multi_line, 1.0) #? tuning
+    # fill!(model.bool_line, false)
     fill!(sol, 0.0)
 
     #qpsub var

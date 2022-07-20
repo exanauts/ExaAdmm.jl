@@ -119,17 +119,19 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     qtf::TD #nbus support Qd balance
     qgb::TD #nbus support Qd balance
 
-    eps_sqp::T
-    TR_sqp::TD #trust region radius for independent var 2*ngen + 4*nline: w_i, w_j, theta_i, theta_j
-    iter_lim_sqp::T
-    pen_merit::T #penalty for merit
-    FR_check::Bool #do FR or not
-    LF_check::Bool #do LF or not
-    SOC_check::Bool #do SOC or not 
+    #? moved to sqp model =>
+    # eps_sqp::T
+    # TR_sqp::TD #trust region radius for independent var 2*ngen + 4*nline: w_i, w_j, theta_i, theta_j
+    # iter_lim_sqp::T
+    # pen_merit::T #penalty for merit
+    # FR_check::Bool #do FR or not
+    # LF_check::Bool #do LF or not
+    # SOC_check::Bool #do SOC or not 
 
-    bool_line::Array{Bool,2} #4* nline: 14h i j k violated violated or not for each line  
-    multi_line::TM #4*nline multiplier for 14h i j k 
-    
+    # bool_line::Array{Bool,2} #4* nline: 14h i j k violated violated or not for each line  
+    # multi_line::TM #4*nline multiplier for 14h i j k 
+    #? 
+
     # Two-Level ADMM
     nvar_u::Int
     nvar_v::Int
@@ -144,7 +146,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         return new{T,TD,TI,TM}()
     end
 
-    function ModelQpsub{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}; ramp_ratio=0.02, TR = 1.0, iter_lim = 100, eps = 1e-3) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+    function ModelQpsub{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}; ramp_ratio=0.02) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
         model = new{T,TD,TI,TM}()
 
         model.grid_data = GridData{T,TD,TI,TM}(env)
@@ -323,21 +325,21 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.qgb = TD(undef, model.grid_data.nbus)
         fill!(model.qgb, 0.0)
 
-        model.TR_sqp = TD(undef, 2*model.grid_data.ngen + 4*model.grid_data.nline)
-        fill!(model.TR_sqp, TR)
+        # model.TR_sqp = TD(undef, 2*model.grid_data.ngen + 4*model.grid_data.nline)
+        # fill!(model.TR_sqp, TR)
 
-        model.eps_sqp = eps
-        model.iter_lim_sqp = iter_lim
-        model.pen_merit = 1.0 
-        model.FR_check = false
-        model.SOC_check = false
-        model.LF_check = false
+        # model.eps_sqp = eps
+        # model.iter_lim_sqp = iter_lim
+        # model.pen_merit = 1.0 
+        # model.FR_check = false
+        # model.SOC_check = false
+        # model.LF_check = false
 
-        model.bool_line = Array{Bool,2}(undef, (4, model.grid_data.nline))
-        fill!(model.bool_line, false)
+        # model.bool_line = Array{Bool,2}(undef, (4, model.grid_data.nline))
+        # fill!(model.bool_line, false)
 
-        model.multi_line = TM(undef, (4, model.grid_data.nline))
-        fill!(model.multi_line, 0.0)
+        # model.multi_line = TM(undef, (4, model.grid_data.nline))
+        # fill!(model.multi_line, 0.0)
 
         
 
@@ -428,16 +430,16 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
     model.qtf = copy(ref.qtf)
     model.qgb = copy(ref.qgb)
 
-    model.eps_sqp = copy(ref.eps_sqp)
-    model.iter_lim_sqp = copy(ref.iter_lim_sqp)
-    model.TR_sqp = copy(ref.TR_sqp)
-    model.pen_merit = ref.pen_merit
-    model.FR_check = ref.FR_check
-    model.SOC_check = ref.SOC_check
-    model.LF_check = ref.LF_check
+    # model.eps_sqp = copy(ref.eps_sqp)
+    # model.iter_lim_sqp = copy(ref.iter_lim_sqp)
+    # model.TR_sqp = copy(ref.TR_sqp)
+    # model.pen_merit = ref.pen_merit
+    # model.FR_check = ref.FR_check
+    # model.SOC_check = ref.SOC_check
+    # model.LF_check = ref.LF_check
     
-    model.bool_line = copy(ref.bool_line)
-    model.multi_line = copy(ref.multi_line) 
+    # model.bool_line = copy(ref.bool_line)
+    # model.multi_line = copy(ref.multi_line) 
 
     model.dpg_sol = copy(ref.dpg_sol)
     model.dqg_sol = copy(ref.dqg_sol)
