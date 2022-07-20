@@ -188,14 +188,15 @@ end #@inbounds
 
 
     #gen bound
-    data.pgmax .-= value.(pg)  
-    data.pgmin .-= value.(pg)
-    data.qgmax .-= value.(qg)
-    data.qgmin .-= value.(qg)
+    mod1.qpsub_pgmax .= data.pgmax - value.(pg)  
+    mod1.qpsub_pgmin .= data.pgmin - value.(pg)
+    mod1.qpsub_qgmax .= data.qgmax - value.(qg)
+    mod1.qpsub_qgmin .= data.qgmin - value.(qg)
 
     #new cost coeff
-    data.c1 .+= 2*data.c2.*value.(pg)
-    
+    mod1.qpsub_c1 = data.c1 + 2*data.c2.*value.(pg)
+    mod1.qpsub_c2 = data.c2
+
     #w theta bound
     for l = 1: data.nline
         mod1.ls[l,1] = -2*data.FrVmBound[2*l]*data.ToVmBound[2*l] #wijR lb
@@ -215,8 +216,8 @@ end #@inbounds
     end
 
     for b = 1:data.nbus
-        data.Pd[b] = data.baseMVA * (data.Pd[b]/data.baseMVA - (value.(pgb)[b] - value.(pft)[b] - value.(ptf)[b] - data.YshR[b]*value.(bus_w)[b]))
-        data.Qd[b] = data.baseMVA * (data.Qd[b]/data.baseMVA - (value.(qgb)[b] - value.(qft)[b] - value.(qtf)[b] + data.YshI[b]*value.(bus_w)[b]))
+        mod1.qpsub_Pd[b] = data.baseMVA * (data.Pd[b]/data.baseMVA - (value.(pgb)[b] - value.(pft)[b] - value.(ptf)[b] - data.YshR[b]*value.(bus_w)[b]))
+        mod1.qpsub_Qd[b] = data.baseMVA * (data.Qd[b]/data.baseMVA - (value.(qgb)[b] - value.(qft)[b] - value.(qtf)[b] + data.YshI[b]*value.(bus_w)[b]))
     end
 
     for l = 1: data.nline
@@ -322,17 +323,17 @@ if use_ipopt
     
     
     # objective (ignore constant in generation objective)
-    @objective(model2, Min, sum(data.c2[g]*(pg[g]*data.baseMVA)^2 + data.c1[g]*pg[g]*data.baseMVA for g=1:data.ngen) +
+    @objective(model2, Min, sum(mod1.qpsub_c2[g]*(pg[g]*data.baseMVA)^2 + mod1.qpsub_c1[g]*pg[g]*data.baseMVA for g=1:data.ngen) +
         sum(0.5*dot(line_var[:,l],mod1.Hs[6*(l-1)+1:6*l,1:6],line_var[:,l]) for l=1:data.nline) )
     
     
     
     
     # generator constraint
-    @constraint(model2, [g=1:data.ngen], pg[g] <= data.pgmax[g])
-    @constraint(model2, [g=1:data.ngen], qg[g] <= data.qgmax[g])
-    @constraint(model2, [g=1:data.ngen], data.pgmin[g] <= pg[g] )
-    @constraint(model2, [g=1:data.ngen], data.qgmin[g] <= qg[g] )
+    @constraint(model2, [g=1:data.ngen], pg[g] <= mod1.qpsub_pgmax[g])
+    @constraint(model2, [g=1:data.ngen], qg[g] <= mod1.qpsub_qgmax[g])
+    @constraint(model2, [g=1:data.ngen], mod1.qpsub_pgmin[g] <= pg[g] )
+    @constraint(model2, [g=1:data.ngen], mod1.qpsub_qgmin[g] <= qg[g] )
     
     
     
@@ -358,7 +359,7 @@ if use_ipopt
             @constraint(model2, pgb[b] == 0)
         end
     
-        @constraint(model2, pgb[b] - pft[b] - ptf[b] - data.YshR[b]*bus_w[b] == data.Pd[b]/data.baseMVA) 
+        @constraint(model2, pgb[b] - pft[b] - ptf[b] - data.YshR[b]*bus_w[b] == mod1.qpsub_Pd[b]/data.baseMVA) 
     end
     
     #qd
@@ -381,7 +382,7 @@ if use_ipopt
             @constraint(model2, qgb[b] == 0)
         end
     
-        @constraint(model2, qgb[b] - qft[b] - qtf[b] + data.YshI[b]*bus_w[b] == data.Qd[b]/data.baseMVA) 
+        @constraint(model2, qgb[b] - qft[b] - qtf[b] + data.YshI[b]*bus_w[b] == mod1.qpsub_Qd[b]/data.baseMVA) 
     end
     
     
@@ -431,7 +432,7 @@ end #if use_ipopt
 
 # admm solve admm problem
 env2, mod2 = ExaAdmm.solve_qpsub(case, mod1.Hs, mod1.LH_1h, mod1.RH_1h,
-    mod1.LH_1i, mod1.RH_1i, mod1.LH_1j, mod1.RH_1j, mod1.LH_1k, mod1.RH_1k, mod1.ls, mod1.us, data.pgmax, data.pgmin, data.qgmax, data.qgmin, data.c1, data.Pd, data.Qd,
+    mod1.LH_1i, mod1.RH_1i, mod1.LH_1j, mod1.RH_1j, mod1.LH_1k, mod1.RH_1k, mod1.ls, mod1.us, mod1.qpsub_pgmax, mod1.qpsub_pgmin, mod1.qpsub_qgmax, mod1.qpsub_qgmin, mod1.qpsub_c1, mod1.qpsub_c2, mod1.qpsub_Pd, mod1.qpsub_Qd,
     initial_beta; 
     outer_iterlim=10000, inner_iterlim=1, scale = 1e-4, obj_scale = 1, rho_pq = 4000.0, rho_va = 4000.0, verbose=0, outer_eps=2*1e-6, onelevel = true)
 
