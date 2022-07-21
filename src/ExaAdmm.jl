@@ -158,4 +158,8 @@ include("models/mpec/mpec_admm_update_residual_gpu.jl")
 include("models/mpec/mpec_admm_update_lz_gpu.jl")
 include("models/mpec/mpec_admm_prepoststep_gpu.jl")
 =#
+
+include("interface/solve_ucmp.jl")
+include("models/ucmp/ucmp_model.jl")
+
 end # module
