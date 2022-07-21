@@ -201,5 +201,7 @@ include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_ka.jl")
 include("models/qpsub/qpsub_tron_linelimit_kernel_ka.jl")
 include("models/qpsub/qpsub_admm_prepoststep_ka.jl")
 
+include("interface/solve_ucmp.jl")
+include("models/ucmp/ucmp_model.jl")
 
 end # module
