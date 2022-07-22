@@ -159,8 +159,23 @@ include("models/mpec/mpec_admm_update_lz_gpu.jl")
 include("models/mpec/mpec_admm_prepoststep_gpu.jl")
 =#
 
+# ----------------------------------------
+# Unit Commitment Multi-period ACOPF implementation
+# ----------------------------------------
+
+# Interface to solve a unit commitment multi-period ACOPF.
 include("interface/solve_ucmp.jl")
 include("models/ucmp/ucmp_model.jl")
+include("models/ucmp/ucmp_admm_increment.jl")
+
+# CPU specific implementation
 include("models/ucmp/ucmp_init_solution_cpu.jl")
+include("models/ucmp/ucmp_admm_update_x_cpu.jl")
+include("models/ucmp/ucmp_admm_update_xbar_cpu.jl")
+include("models/ucmp/ucmp_admm_update_z_cpu.jl")
+include("models/ucmp/ucmp_admm_update_l_cpu.jl")
+include("models/ucmp/ucmp_admm_update_residual_cpu.jl")
+include("models/ucmp/ucmp_admm_update_lz_cpu.jl")
+include("models/ucmp/ucmp_admm_prepoststep_cpu.jl")
 
 end # module
