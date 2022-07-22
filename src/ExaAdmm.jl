@@ -203,5 +203,6 @@ include("models/qpsub/qpsub_admm_prepoststep_ka.jl")
 
 include("interface/solve_ucmp.jl")
 include("models/ucmp/ucmp_model.jl")
+include("models/ucmp/ucmp_init_solution_cpu.jl")
 
 end # module

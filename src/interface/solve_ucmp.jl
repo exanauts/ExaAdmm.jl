@@ -38,12 +38,12 @@ function solve_ucmp(case::String, load_prefix::String, gen_prefix::String;
     env.params.inner_iterlim = inner_iterlim
 
     # For warm start, solve each time period without ramp constraints.
-    # if warm_start
-    #     for i=1:mod.len_horizon
-    #         admm_two_level(env, mod.models[i])
-    #     end
-    #     init_solution!(mod, mod.solution, rho_pq, rho_va)
-    # end
+    if warm_start
+        for i=1:mod.mpmodel.len_horizon
+            admm_two_level(env, mod.mpmodel.models[i])
+        end
+        init_solution!(mod, mod.uc_solution, rho_pq, rho_va)
+    end
 
     # admm_two_level(env, mod)
 
