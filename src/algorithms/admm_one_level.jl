@@ -87,7 +87,7 @@ function admm_one_level(
     end # @timed
 
     info.time_overall = overall_time.time
-    # admm_poststep(env, mod) #? not used if use_projection = false
+    admm_poststep(env, mod) 
 
     if par.verbose > 0
         print_statistics(env, mod)
