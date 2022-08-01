@@ -89,7 +89,7 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     nvar::Int                               # total number of variables
     mpmodel::ModelMpacopf{T,TD,TI,TM}       # a collection of time periods
 
-    uc_membufs::Vector{TM}                  # memory buffer for uc variables in generator kernel
+    uc_membufs::Vector{TM}                  # memory buffer for uc in generator kernel
 
     function UCMPModel{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}, gen_prefix::String;
         start_period=1, end_period=1, ramp_ratio=0.02) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
@@ -117,6 +117,11 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         copyto!(mod.uc_params.Td, Tds)
         copyto!(mod.uc_params.Hu, Hus)
         copyto!(mod.uc_params.Hd, Hds)
+
+        for submod in mod.mpmodel.models
+            submod.gen_membuf = TM(undef, (43, ngen))
+            fill!(submod.gen_membuf, 0.0)
+        end
 
         # TODO: decide the amount of memory needed for each of uc_membufs
         mod.uc_membufs = Vector{TM}(undef, num_periods)
