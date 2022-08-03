@@ -165,14 +165,15 @@ fix_line = false
     
     
         #gen bound
-        data.pgmax .-= value.(pg)  
-        data.pgmin .-= value.(pg)
-        data.qgmax .-= value.(qg)
-        data.qgmin .-= value.(qg)
+        mod1.qpsub_pgmax .= data.pgmax - value.(pg)  
+        mod1.qpsub_pgmin .= data.pgmin - value.(pg)
+        mod1.qpsub_qgmax .= data.qgmax - value.(qg)
+        mod1.qpsub_qgmin .= data.qgmin - value.(qg)
     
         #new cost coeff
-        data.c1 .+= 2*data.c2.*value.(pg)
-        
+        mod1.qpsub_c1 = data.c1 + 2*data.c2.*value.(pg)
+        mod1.qpsub_c2 = data.c2
+    
         #w theta bound
         for l = 1: data.nline
             mod1.ls[l,1] = -2*data.FrVmBound[2*l]*data.ToVmBound[2*l] #wijR lb
@@ -192,8 +193,8 @@ fix_line = false
         end
     
         for b = 1:data.nbus
-            data.Pd[b] = data.baseMVA * (data.Pd[b]/data.baseMVA - (value.(pgb)[b] - value.(pft)[b] - value.(ptf)[b] - data.YshR[b]*value.(bus_w)[b]))
-            data.Qd[b] = data.baseMVA * (data.Qd[b]/data.baseMVA - (value.(qgb)[b] - value.(qft)[b] - value.(qtf)[b] + data.YshI[b]*value.(bus_w)[b]))
+            mod1.qpsub_Pd[b] = data.baseMVA * (data.Pd[b]/data.baseMVA - (value.(pgb)[b] - value.(pft)[b] - value.(ptf)[b] - data.YshR[b]*value.(bus_w)[b]))
+            mod1.qpsub_Qd[b] = data.baseMVA * (data.Qd[b]/data.baseMVA - (value.(qgb)[b] - value.(qft)[b] - value.(qtf)[b] + data.YshI[b]*value.(bus_w)[b]))
         end
     
         for l = 1: data.nline
@@ -237,8 +238,10 @@ fix_line = false
             mod1.Hs[6*(l-1)+1:6*l,1:6] .= Hs
     
             is_Hs_sym[l] = maximum(abs.(Hs - transpose(Hs)))
+            @assert is_Hs_sym[l] <= 1e-6
             eival, eivec = eigen(Hs)
             is_Hs_PSD[l] = minimum(eival)
+            @assert is_Hs_PSD[l] >= 0.0
     
             #inherit structure of Linear Constraint (overleaf): ignore 1h and 1i with zero assignment in ipopt benchmark
             LH_1h = [2*value.(line_var[1,l]), 2*value.(line_var[2,l]), -value.(line_var[4,l]), -value.(line_var[3,l])] #LH * x = RH
@@ -264,146 +267,146 @@ fix_line = false
             RH_1k = -((value.(line_fl)[3,l])^2 + (value.(line_fl)[4,l])^2 - data.rateA[l]) 
             mod1.RH_1k[l] = RH_1k
         end
-    end #inbound 
+    end #inbound  
     
     
     # ipopt solve admm problem
     use_ipopt = true
-    if use_ipopt
+if use_ipopt
+
+    # generate full qpsub with mod and solve by ipopt 
+    model2 = JuMP.Model(Ipopt.Optimizer)
+    set_silent(model2)
     
-        # generate full qpsub with mod and solve by ipopt 
-        model2 = JuMP.Model(Ipopt.Optimizer)
-        set_silent(model2)
-        
-        
-        
-        # variables 
-        @variable(model2, pg[1:data.ngen])
-        @variable(model2, qg[1:data.ngen])
-        @variable(model2, line_var[1:6,1:data.nline]) #w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
-        
-        @variable(model2, line_fl[1:4,1:data.nline]) #p_ij, q_ij, p_ji, q_ji 
-        
-        @variable(model2, pft[1:data.nbus]) #sum pij over j in B_i (frombus)
-        @variable(model2, ptf[1:data.nbus]) #sum pij over j in B_i (tobus)
-        @variable(model2, pgb[1:data.nbus]) #sum pg over g in G_i
-        
-        @variable(model2, qft[1:data.nbus]) #sum qij over j in B_i (frombus)
-        @variable(model2, qtf[1:data.nbus]) #sum qij over j in B_i (tobus)
-        @variable(model2, qgb[1:data.nbus]) #sum qg over g in G_i
-        
-        @variable(model2, bus_w[1:data.nbus]) #for consensus
-        @variable(model2, bus_theta[1:data.nbus]) #for consensus 
-        
-        
-        
-        
-        # objective (ignore constant in generation objective)
-        @objective(model2, Min, sum(data.c2[g]*(pg[g]*data.baseMVA)^2 + data.c1[g]*pg[g]*data.baseMVA for g=1:data.ngen) +
-            sum(0.5*dot(line_var[:,l],mod1.Hs[6*(l-1)+1:6*l,1:6],line_var[:,l]) for l=1:data.nline) )
-        
-        
-        
-        
-        # generator constraint
-        @constraint(model2, [g=1:data.ngen], pg[g] <= data.pgmax[g])
-        @constraint(model2, [g=1:data.ngen], qg[g] <= data.qgmax[g])
-        @constraint(model2, [g=1:data.ngen], data.pgmin[g] <= pg[g] )
-        @constraint(model2, [g=1:data.ngen], data.qgmin[g] <= qg[g] )
-        
-        
-        
-        
-        # bus constraint: power balance
-        # pd
-        for b = 1:data.nbus
-            if data.FrStart[b] < data.FrStart[b+1]
-                @constraint(model2, pft[b] == sum( line_fl[1,data.FrIdx[k]] for k = data.FrStart[b]:data.FrStart[b+1]-1))
-            else
-                @constraint(model2, pft[b] == 0)
-            end
-        
-            if data.ToStart[b] < data.ToStart[b+1]
-                @constraint(model2, ptf[b] == sum( line_fl[3,data.ToIdx[k]] for k = data.ToStart[b]:data.ToStart[b+1]-1))
-            else
-                @constraint(model2, ptf[b] == 0)
-            end
-        
-            if data.GenStart[b] < data.GenStart[b+1]
-                @constraint(model2, pgb[b] == sum( pg[data.GenIdx[g]] for g = data.GenStart[b]:data.GenStart[b+1]-1))
-            else
-                @constraint(model2, pgb[b] == 0)
-            end
-        
-            @constraint(model2, pgb[b] - pft[b] - ptf[b] - data.YshR[b]*bus_w[b] == data.Pd[b]/data.baseMVA) 
+    
+    
+    # variables 
+    @variable(model2, pg[1:data.ngen])
+    @variable(model2, qg[1:data.ngen])
+    @variable(model2, line_var[1:6,1:data.nline]) #w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
+    
+    @variable(model2, line_fl[1:4,1:data.nline]) #p_ij, q_ij, p_ji, q_ji 
+    
+    @variable(model2, pft[1:data.nbus]) #sum pij over j in B_i (frombus)
+    @variable(model2, ptf[1:data.nbus]) #sum pij over j in B_i (tobus)
+    @variable(model2, pgb[1:data.nbus]) #sum pg over g in G_i
+    
+    @variable(model2, qft[1:data.nbus]) #sum qij over j in B_i (frombus)
+    @variable(model2, qtf[1:data.nbus]) #sum qij over j in B_i (tobus)
+    @variable(model2, qgb[1:data.nbus]) #sum qg over g in G_i
+    
+    @variable(model2, bus_w[1:data.nbus]) #for consensus
+    @variable(model2, bus_theta[1:data.nbus]) #for consensus 
+    
+    
+    
+    
+    # objective (ignore constant in generation objective)
+    @objective(model2, Min, sum(mod1.qpsub_c2[g]*(pg[g]*data.baseMVA)^2 + mod1.qpsub_c1[g]*pg[g]*data.baseMVA for g=1:data.ngen) +
+        sum(0.5*dot(line_var[:,l],mod1.Hs[6*(l-1)+1:6*l,1:6],line_var[:,l]) for l=1:data.nline) )
+    
+    
+    
+    
+    # generator constraint
+    @constraint(model2, [g=1:data.ngen], pg[g] <= mod1.qpsub_pgmax[g])
+    @constraint(model2, [g=1:data.ngen], qg[g] <= mod1.qpsub_qgmax[g])
+    @constraint(model2, [g=1:data.ngen], mod1.qpsub_pgmin[g] <= pg[g] )
+    @constraint(model2, [g=1:data.ngen], mod1.qpsub_qgmin[g] <= qg[g] )
+    
+    
+    
+    
+    # bus constraint: power balance
+    # pd
+    for b = 1:data.nbus
+        if data.FrStart[b] < data.FrStart[b+1]
+            @constraint(model2, pft[b] == sum( line_fl[1,data.FrIdx[k]] for k = data.FrStart[b]:data.FrStart[b+1]-1))
+        else
+            @constraint(model2, pft[b] == 0)
         end
-        
-        #qd
-        for b = 1:data.nbus
-            if data.FrStart[b] < data.FrStart[b+1]
-                @constraint(model2, qft[b] == sum( line_fl[2,data.FrIdx[k]] for k = data.FrStart[b]:data.FrStart[b+1]-1))
-            else
-                @constraint(model2, qft[b] == 0)
-            end
-        
-            if data.ToStart[b] < data.ToStart[b+1]
-                @constraint(model2, qtf[b] == sum( line_fl[4,data.ToIdx[k]] for k = data.ToStart[b]:data.ToStart[b+1]-1))
-            else
-                @constraint(model2, qtf[b] == 0)
-            end
-        
-            if data.GenStart[b] < data.GenStart[b+1]
-                @constraint(model2, qgb[b] == sum( qg[data.GenIdx[g]] for g = data.GenStart[b]:data.GenStart[b+1]-1))
-            else
-                @constraint(model2, qgb[b] == 0)
-            end
-        
-            @constraint(model2, qgb[b] - qft[b] - qtf[b] + data.YshI[b]*bus_w[b] == data.Qd[b]/data.baseMVA) 
+    
+        if data.ToStart[b] < data.ToStart[b+1]
+            @constraint(model2, ptf[b] == sum( line_fl[3,data.ToIdx[k]] for k = data.ToStart[b]:data.ToStart[b+1]-1))
+        else
+            @constraint(model2, ptf[b] == 0)
         end
-        
-        
-        
-        
-        # line constraint (1h 1i igonred)
-        @constraint(model2, [l=1:data.nline], mod1.ls[l,:] .<= line_var[:,l] .<= mod1.us[l,:]) #lower and upper bounds
-        @constraint(model2, [l=1:data.nline], mod1.LH_1j[l,1] * line_fl[1,l] + mod1.LH_1j[l,2] * line_fl[2,l] <= mod1.RH_1j[l])   #1j
-        @constraint(model2, [l=1:data.nline], mod1.LH_1k[l,1] * line_fl[3,l] + mod1.LH_1k[l,2] * line_fl[4,l] <= mod1.RH_1k[l])   #1k
     
-        @constraint(model2, [l=1:data.nline], sum(mod1.LH_1h[l,i] * line_var[i,l] for i=1:4) == mod1.RH_1h[l])   #1h
-        @constraint(model2, [l=1:data.nline], mod1.LH_1i[l,1] * line_var[1,l] + mod1.LH_1i[l,2] * line_var[2,l] + mod1.LH_1i[l,3] * line_var[5,l] + mod1.LH_1i[l,4] * line_var[6,l]  == mod1.RH_1i[l])   #1i
-        
-    
-    
-        for l = 1:data.nline #match line_fl with line_var
-            supY = [data.YftR[l] data.YftI[l] data.YffR[l] 0 0 0;
-            -data.YftI[l] data.YftR[l] -data.YffI[l] 0 0 0;
-            data.YtfR[l] -data.YtfI[l] 0 data.YttR[l] 0 0;
-            -data.YtfI[l] -data.YtfR[l] 0 -data.YttI[l] 0 0]
-            @constraint(model2, supY * line_var[:,l] .== line_fl[:,l])
+        if data.GenStart[b] < data.GenStart[b+1]
+            @constraint(model2, pgb[b] == sum( pg[data.GenIdx[g]] for g = data.GenStart[b]:data.GenStart[b+1]-1))
+        else
+            @constraint(model2, pgb[b] == 0)
         end
-        
-        
-        
-        
-        
-        # coupling constraint for consensus 
-        for b = 1:data.nbus
-            for k = data.FrStart[b]:data.FrStart[b+1]-1
-                @constraint(model2, bus_w[b] == line_var[3, data.FrIdx[k]]) #wi(ij)
-                @constraint(model2, bus_theta[b] == line_var[5, data.FrIdx[k]]) #ti(ij)
-            end
-            for k = data.ToStart[b]:data.ToStart[b+1]-1
-                @constraint(model2, bus_w[b] == line_var[4, data.ToIdx[k]]) #wj(ji)
-                @constraint(model2, bus_theta[b] == line_var[6, data.ToIdx[k]]) #tj(ji)
-            end
-        end
-        
-        
-        optimize!(model2)
-        
-        println(termination_status(model2))
     
-    end #if use_ipopt 
+        @constraint(model2, pgb[b] - pft[b] - ptf[b] - data.YshR[b]*bus_w[b] == mod1.qpsub_Pd[b]/data.baseMVA) 
+    end
+    
+    #qd
+    for b = 1:data.nbus
+        if data.FrStart[b] < data.FrStart[b+1]
+            @constraint(model2, qft[b] == sum( line_fl[2,data.FrIdx[k]] for k = data.FrStart[b]:data.FrStart[b+1]-1))
+        else
+            @constraint(model2, qft[b] == 0)
+        end
+    
+        if data.ToStart[b] < data.ToStart[b+1]
+            @constraint(model2, qtf[b] == sum( line_fl[4,data.ToIdx[k]] for k = data.ToStart[b]:data.ToStart[b+1]-1))
+        else
+            @constraint(model2, qtf[b] == 0)
+        end
+    
+        if data.GenStart[b] < data.GenStart[b+1]
+            @constraint(model2, qgb[b] == sum( qg[data.GenIdx[g]] for g = data.GenStart[b]:data.GenStart[b+1]-1))
+        else
+            @constraint(model2, qgb[b] == 0)
+        end
+    
+        @constraint(model2, qgb[b] - qft[b] - qtf[b] + data.YshI[b]*bus_w[b] == mod1.qpsub_Qd[b]/data.baseMVA) 
+    end
+    
+    
+    
+    
+    # line constraint (1h 1i igonred)
+    @constraint(model2, [l=1:data.nline], mod1.ls[l,:] .<= line_var[:,l] .<= mod1.us[l,:]) #lower and upper bounds
+    @constraint(model2, [l=1:data.nline], mod1.LH_1j[l,1] * line_fl[1,l] + mod1.LH_1j[l,2] * line_fl[2,l] <= mod1.RH_1j[l])   #1j
+    @constraint(model2, [l=1:data.nline], mod1.LH_1k[l,1] * line_fl[3,l] + mod1.LH_1k[l,2] * line_fl[4,l] <= mod1.RH_1k[l])   #1k
+
+    @constraint(model2, [l=1:data.nline], sum(mod1.LH_1h[l,i] * line_var[i,l] for i=1:4) == mod1.RH_1h[l])   #1h
+    @constraint(model2, [l=1:data.nline], mod1.LH_1i[l,1] * line_var[1,l] + mod1.LH_1i[l,2] * line_var[2,l] + mod1.LH_1i[l,3] * line_var[5,l] + mod1.LH_1i[l,4] * line_var[6,l]  == mod1.RH_1i[l])   #1i
+    
+
+
+    for l = 1:data.nline #match line_fl with line_var
+        supY = [data.YftR[l] data.YftI[l] data.YffR[l] 0 0 0;
+        -data.YftI[l] data.YftR[l] -data.YffI[l] 0 0 0;
+        data.YtfR[l] -data.YtfI[l] 0 data.YttR[l] 0 0;
+        -data.YtfI[l] -data.YtfR[l] 0 -data.YttI[l] 0 0]
+        @constraint(model2, supY * line_var[:,l] .== line_fl[:,l])
+    end
+    
+    
+    
+    
+    
+    # coupling constraint for consensus 
+    for b = 1:data.nbus
+        for k = data.FrStart[b]:data.FrStart[b+1]-1
+            @constraint(model2, bus_w[b] == line_var[3, data.FrIdx[k]]) #wi(ij)
+            @constraint(model2, bus_theta[b] == line_var[5, data.FrIdx[k]]) #ti(ij)
+        end
+        for k = data.ToStart[b]:data.ToStart[b+1]-1
+            @constraint(model2, bus_w[b] == line_var[4, data.ToIdx[k]]) #wj(ji)
+            @constraint(model2, bus_theta[b] == line_var[6, data.ToIdx[k]]) #tj(ji)
+        end
+    end
+    
+    
+    optimize!(model2)
+    
+    println(termination_status(model2))
+
+end #if use_ipopt 
 
 # test one-iteration update    
 @testset "Testing [x,xbar,l,residual] updates" begin     
@@ -431,16 +434,15 @@ fix_line = false
     mod2.ls .= mod1.ls
     mod2.us .= mod1.us
     
-    data2.pgmax .= data.pgmax
-    data2.pgmin .= data.pgmin
-    data2.qgmax .= data.qgmax
-    data2.qgmin .= data.qgmin
-    mod2.pgmax_curr .= data.pgmax
-    mod2.pgmin_curr .= data.pgmin 
-    
-    data2.c1 .= data.c1
-    data2.Pd .= data.Pd
-    data2.Qd .= data.Qd
+    mod2.qpsub_pgmax .= mod1.qpsub_pgmax
+    mod2.qpsub_pgmin .= mod1.qpsub_pgmin
+    mod2.qpsub_qgmax .= mod1.qpsub_qgmax
+    mod2.qpsub_qgmin .= mod1.qpsub_qgmin
+
+    mod2.qpsub_c1 .= mod1.qpsub_c1
+    mod2.qpsub_c2 .= mod1.qpsub_c2
+    mod2.qpsub_Pd .= mod1.qpsub_Pd
+    mod2.qpsub_Qd .= mod1.qpsub_Qd
     
     ExaAdmm.init_solution!(mod2, mod2.solution, env2.initial_rho_pq, env2.initial_rho_va)
     
@@ -464,15 +466,19 @@ fix_line = false
     U_SOL = [-0.229424, -0.1339605, -0.0813327, -0.0049391, -0.0465958, 0.2252203, -0.1236772, -0.1271249, 0.1236772, 0.1189746, -0.1182455, -0.1040701, -0.0, 0.0022044, -0.0630247, -0.1092983, 0.0622891, 0.1082608, -0.0297814, -0.0074735, 0.0422504, 0.0451598, 0.0984247, 0.0700557, -0.102193, -0.0905333, 0.0294319, -0.0067947, 0.0250279, 0.0125998, -0.1368894, 0.2542204, 0.1368894, -0.2698603, -0.0770438, -0.1077549, -0.0375397, -0.0344878, -0.0665263, -0.1146067, 0.0658612, 0.1071325, -0.0032826, 0.0208988, -0.0055371, -0.0008479, 0.1049601, 0.1480269, -0.1061072, -0.1593811, 0.0230133, -0.0010432, -0.0026878, -0.0082759, 0.2045771, -0.05922, -0.2045771, 0.0340703, -0.0553384, -0.0495078, -0.0467405, -0.0542589, -0.1322638, -0.1856806, 0.1264451, 0.1533923, -0.0223818, 0.0420754, 0.0141644, 0.0280826, 0.0937455, 0.2743344, -0.0957246, -0.2938647, 0.0406687, -0.0099012, 0.0507601, 0.0458481]
     @test norm( sol2.u_curr .- U_SOL, Inf) <= atol
     
+    
     println("update x_bar start")
     ExaAdmm.admm_update_xbar(env2, mod2)
     V_SOL = [-0.1765506, -0.1305427, -0.1429549, 0.0145656, -0.0917426, 0.2397204, -0.1765506, -0.1305427, 0.1353679, 0.2137041, -0.1182455, -0.0479176, -0.0, 0.030101, -0.051334, -0.0145688, -0.0180678, 0.0191025, -0.0479176, 0.0109792, 0.030101, 0.0350939, 0.0180678, -0.0191025, -0.091583, 0.0678001, 0.0109792, -0.0392774, 0.0350939, -0.0091417, -0.0917426, 0.2397204, 0.1474993, -0.1115269, -0.0770438, -0.0392774, -0.0375397, -0.0091417, -0.0559163, 0.0437267, -0.0195494, -0.0204472, -0.0392774, 0.0219561, -0.0091417, -0.0017678, 0.0195494, 0.0204472, -0.0948426, -0.0246205, 0.0219561, -0.0262545, -0.0017678, -0.0136173, 0.2158417, 0.0755405, -0.1429549, 0.0145656, -0.0262545, -0.0495078, -0.0136173, -0.0542589, -0.1209991, -0.05092, 0.0163498, -0.0604711, -0.0262545, 0.041372, -0.0136173, 0.0394213, -0.0163498, 0.0604711, -0.0840339, -0.1991353, 0.041372, -0.0479176, 0.0394213, 0.030101]
     @test norm( sol2.v_curr .- V_SOL, Inf) <= atol
     
+
+
     println("update λ start")
     ExaAdmm.admm_update_l_single(env2, mod2)
     L_SOL = [-1.057468, -0.0683565, 1.2324431, -0.390094, 0.9029359, -0.2900002, 1.057468, 0.0683565, -0.2338139, -1.8945894, 0.0, -1.1230512, 0.0, -0.5579311, -0.2338139, -1.8945894, 1.6071386, 1.7831649, 0.362723, -0.3690544, 0.2429884, 0.201319, 1.6071386, 1.7831649, -0.2121989, -3.166669, 0.3690544, 0.6496544, -0.201319, 0.4348308, -0.9029359, 0.2900002, -0.2121989, -3.166669, 0.0, -1.3695503, 0.0, -0.5069225, -0.2121989, -3.166669, 1.7082129, 2.5515935, 0.7198958, -0.0211449, 0.0720918, 0.0183997, 1.7082129, 2.5515935, -0.2252933, -2.6952112, 0.0211449, 0.5042264, -0.0183997, 0.1068284, -0.2252933, -2.6952112, -1.2324431, 0.390094, -0.5816791, 0.0, -0.6624625, 0.0, -0.2252933, -2.6952112, 2.2019063, 4.277267, 0.0774527, 0.0140663, 0.5556341, -0.2267749, 2.2019063, 4.277267, -0.2338139, -1.8945894, -0.0140663, 0.7603282, 0.2267749, 0.3149427]
     @test norm( sol2.l_curr .- L_SOL, Inf) <= atol
+    
     
     println("update residual start")
     ExaAdmm.admm_update_residual(env2, mod2)
@@ -481,6 +487,7 @@ fix_line = false
     
     @test norm( sol2.rp .- RP_SOL, Inf) <= atol
     @test norm( sol2.rd .- RD_SOL, Inf) <= atol
+
     
 end #@testset
 
@@ -592,15 +599,18 @@ end #@testset
     @test norm(res3, Inf) <= atol
 end # testset
 
+
 #test solution 
 @testset "Qpsub ADMM vs IPOPT" begin
     env3, mod3 = ExaAdmm.solve_qpsub(case, mod1.Hs, mod1.LH_1h, mod1.RH_1h,
-        mod1.LH_1i, mod1.RH_1i, mod1.LH_1j, mod1.RH_1j, mod1.LH_1k, mod1.RH_1k, mod1.ls, mod1.us, data.pgmax, data.pgmin, data.qgmax, data.qgmin, data.c1, data.Pd, data.Qd,
-        initial_beta; 
+    mod1.LH_1i, mod1.RH_1i, mod1.LH_1j, mod1.RH_1j, mod1.LH_1k, mod1.RH_1k, mod1.ls, mod1.us, mod1.qpsub_pgmax, mod1.qpsub_pgmin, mod1.qpsub_qgmax, mod1.qpsub_qgmin, mod1.qpsub_c1, mod1.qpsub_c2, mod1.qpsub_Pd, mod1.qpsub_Qd,
+    initial_beta; 
         outer_iterlim=10000, inner_iterlim=1, scale = 1e-4, obj_scale = 1, rho_pq = 4000.0, rho_va = 4000.0, verbose=0, outer_eps=2*1e-6, onelevel = true)
 
+  
     @test mod3.info.status == :Solved
     @test mod3.info.outer == 5107
     @test mod3.info.cumul == 5107
-    @test isapprox(mod3.info.objval, objective_value(model2); atol=2e-3)    
+    @test isapprox(mod3.info.objval, objective_value(model2); atol=1e-2)
+    @test isapprox(mod3.info.objval, -21.92744641968529; atol=1e-6)     
 end 

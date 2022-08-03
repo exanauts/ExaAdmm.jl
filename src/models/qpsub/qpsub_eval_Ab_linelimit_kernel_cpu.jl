@@ -67,7 +67,7 @@ function eval_A_branch_kernel_cpu_qpsub(
     end
     
     #! H may not be perfectly symmetric 
-    return H #6*6
+    return H #6*6 #not scale
 end
 
 
@@ -115,7 +115,7 @@ function eval_A_auglag_branch_kernel_cpu_qpsub(
     end
     
     #! A may not be perfectly symmetric 
-    return A*scale #dim = 8*8 
+    return A*scale #dim = 8*8 scaled for non-red
 end
 
 
@@ -168,7 +168,7 @@ function eval_A_auglag_branch_kernel_cpu_qpsub_red(
     C[7,5] = 1
     C[8,6] = 1
 
-    return A*scale, transpose(C)*A*C*scale #dim 8*8 and dim = 6*6 
+    return A, transpose(C)*A*C*scale #dim 8*8 no scale + dim = 6*6 scaled for red
 end
 
 
