@@ -37,7 +37,7 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
     LH_1i::Array{Float64,1}, RH_1i::Float64, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64)
 
     
-    # for debug only
+    #? for debug only
     # max_auglag = 4
     # cnorm_all = zeros(max_auglag)
     # eta_all = zeros(max_auglag)
@@ -120,11 +120,11 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
 
             cnorm = max(abs(cviol3), abs(cviol4)) #worst violation
             
+            #?debug only 
             # print current tron result of current iteration of ALM  
             # println("it = ",it, " with cnorm = ",[cviol1,cviol2,cviol3,cviol4], " and solx = ",x, "param =",[norm(Atron),norm(btron),xl,xu])
             # println("it = ",it, ", cnorm = ",cnorm, ", eta = ",eta, ", mu = ", mu )
             # println("obj from tron =", f," obj from dot = ",fdot)
-            #debug only 
             # cnorm_all[it] = cnorm
             # eta_all[it] = eta
             # mu_all[it] = mu
@@ -153,14 +153,15 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
                 println()
                 println("max_auglag reached for line with cnorm = ", cnorm, " for line = ", lineidx, " with mu ", mu)
                 
-                # println(cnorm_all)
-                # println()
-                # println(eta_all)
-                # println()
-                # println(mu_all)
-
+                
                 terminate = true
             end
+            #?for debug
+            # println(cnorm_all)
+            # println()
+            # println(eta_all)
+            # println()
+            # println(mu_all)
         end #end ALM
 
     #save variables TODO: check if sol.u is actually updated 
