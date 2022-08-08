@@ -14,6 +14,42 @@ mutable struct SolutionRamping{T,TD} <: AbstractSolution{T,TD}
     t::Int
     len_horizon::Int
 
+    function SolutionRamping{T,TD}(
+        u_curr::TD,
+        v_curr::TD,
+        l_curr::TD,
+        rho::TD,
+        rd::TD,
+        rp::TD,
+        z_outer::TD,
+        z_curr::TD,
+        z_prev::TD,
+        lz::TD,
+        Ax_plus_By::TD,
+        s_curr::TD,
+        t::Int,
+        len_horizon::Int
+    ) where {T,TD<:AbstractArray{T}}
+        sol = new{T,TD}(
+            u_curr,
+            v_curr,
+            l_curr,
+            rho,
+            rd,
+            rp,
+            z_outer,
+            z_curr,
+            z_prev,
+            lz,
+            Ax_plus_By,
+            s_curr,
+            t,
+            len_horizon
+        )
+        fill!(sol, 0)
+        return sol
+    end
+
     function SolutionRamping{T,TD}(ngen::Int, ncouple::Int, _t::Int, _len_horizon::Int) where {T,TD<:AbstractArray{T}}
         sol = new{T,TD}(
             TD(undef, ngen),    # u_curr
