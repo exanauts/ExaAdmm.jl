@@ -410,7 +410,7 @@ end #if use_ipopt
 
 # test one-iteration update    
 @testset "Testing [x,xbar,l,residual] updates" begin     
-    atol = 1e-6
+    atol = 2e-6
     env2 = ExaAdmm.AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; verbose=verbose)
     mod2 = ExaAdmm.ModelQpsub{T,TD,TI,TM}(env2)
     sol2 = mod2.solution
