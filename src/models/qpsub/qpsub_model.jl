@@ -130,7 +130,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
     # bool_line::Array{Bool,2} #4* nline: 14h i j k violated violated or not for each line  
     # multi_line::TM #4*nline multiplier for 14h i j k 
-    #? 
+     
 
     # Two-Level ADMM
     nvar_u::Int
@@ -141,6 +141,12 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     nline_padded::Int
     nvar_u_padded::Int
     nvar_padded::Int
+
+    # for integration
+    dual_infeas::TD #kkt error vector |pg |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
+    lambda::TM #14h i j k 
+    #multiplier
+
 
     function ModelQpsub{T,TD,TI,TM}() where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
         return new{T,TD,TI,TM}()
@@ -362,6 +368,13 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.dw_sol = TD(undef, model.grid_data.nbus)
         fill!(model.dw_sol, 0.0)
 
+        # for SQP 
+        model.dual_infeas = TD(undef, model.grid_data.ngen + 6*model.grid_data.nline)
+        fill!(model.dual_infeas, Inf)  
+
+        model.lambda = TM(undef, (4, model.grid_data.nline))
+        fill!(model.lambda, 0.0)
+
 
         return model
     end
@@ -461,6 +474,10 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
 
     model.qpsub_Pd = copy(ref.qpsub_Pd)
     model.qpsub_Qd = copy(ref.qpsub_Qd)
+
+    # for SQP 
+    model.dual_infeas = copy(ref.dual_infeas)
+    model.lambda = copy(ref.lambda)
 
     return model
 end

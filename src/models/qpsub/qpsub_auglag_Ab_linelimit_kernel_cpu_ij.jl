@@ -3,7 +3,9 @@
 
 - for certain line (i,j), update sol.u[pij_idx]
 - use Exatron, eval_A_auglag_branch_kernel_cpu_qpsub, eval_b_auglag_branch_kernel_cpu_qpsub, build_QP_DS
-- LANCELOT ALM algorithm 
+- LANCELOT ALM algorithm
+- without any elimination (v1 in overleaf)
+- without multiplier output #!  
 """
 
 

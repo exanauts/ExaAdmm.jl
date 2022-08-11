@@ -1,9 +1,11 @@
 """
-    auglag_linelimit_two_level_alternative_qpsub_ij()
+    auglag_linelimit_two_level_alternative_qpsub_ij_red()
 
 - for certain line (i,j), update sol.u[pij_idx]
 - use Exatron, eval_A_auglag_branch_kernel_cpu_qpsub, eval_b_auglag_branch_kernel_cpu_qpsub, build_QP_DS
-- LANCELOT ALM algorithm 
+- LANCELOT ALM algorithm
+- with elimination of w_ijR and w_ijI (v2 in overleaf)
+- with multiplier output 
 """
 
 
@@ -34,7 +36,7 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
     YttR::Float64, YttI::Float64,
     YtfR::Float64, YtfI::Float64, 
     LH_1h::Array{Float64,1}, RH_1h::Float64,
-    LH_1i::Array{Float64,1}, RH_1i::Float64, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64)
+    LH_1i::Array{Float64,1}, RH_1i::Float64, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64, lambda::Array{Float64,2})
 
     
     #? for debug only
@@ -48,6 +50,7 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
     f = 0.0
     xl = [0.0; 0.0; lqp[3:6]]
     xu = [200000.0; 200000.0; uqp[3:6]]
+    trg = zeros(6) #hold multiplier 
     
     Ctron = zeros(8,6)
     dtron = zeros(8)
@@ -109,8 +112,9 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
             x .= tron.x
             sqp_line[:,lineidx] .= (Ctron * x + dtron)[3:8] #write to sqp_line
             f = tron.f #! wont match with IPOPT since constant terms are ignored
+            trg = tron.g
             # fdot = 0.5*dot(x,Atron,x) + dot(btron,x) #? not used 
-
+            
             
             # violation on 1h,1i,1j,1k
             # cviol1 = dot(vec_1h, x) - RH_1h #?not used
@@ -135,8 +139,8 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
                 else
                     # membuf[1,lineidx] += mu*cviol1 #λ_1h #?not used 
                     # membuf[2,lineidx] += mu*cviol2 #λ_1i #?not used 
-                    membuf[3,lineidx] += mu*cviol3 #λ_1j
-                    membuf[4,lineidx] += mu*cviol4 #λ_1k
+                    membuf[3,lineidx] += mu*cviol3 #λ_1j #?not reset (following YD)
+                    membuf[4,lineidx] += mu*cviol4 #λ_1k #?not reset (following YD)
 
                     eta = eta / mu^0.9
                     # omega  = omega / mu #? not used 
@@ -162,7 +166,9 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
             # println(eta_all)
             # println()
             # println(mu_all)
-        end #end ALM
+        end #end while ALM
+
+       
 
     #save variables TODO: check if sol.u is actually updated 
     u[shift_idx] = dot(supY[1,:],Ctron * x + dtron) #pij
@@ -173,6 +179,24 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
     u[shift_idx + 5] = x[4] #wj
     u[shift_idx + 6] = x[5] #thetai
     u[shift_idx + 7] = x[6] #thetaj
+
+    # supY = [0 0 YftR YftI YffR 0 0 0;
+    #     0 0 -YftI YftR -YffI 0 0 0;
+    #     0 0 YtfR -YtfI 0 YttR 0 0;
+    #     0 0 -YtfI -YtfR 0 -YttI 0 0]
+    #get multiplier
+    tmpH = inv([LH_1h[1]  LH_1i[1]; LH_1h[2]  LH_1i[2]])
+    tmp14_i = [2*u[shift_idx]*YftR + 2*u[shift_idx + 1]*(-YftI), 2*u[shift_idx]*YftI + 2*u[shift_idx + 1]*YftR]
+    tmp14_h = [2*u[shift_idx + 2]*YtfR + 2*u[shift_idx + 3]*(-YtfI), 2*u[shift_idx + 2]*-YtfI + 2*u[shift_idx + 3]*(-YtfR)]
+    #14h 14i
+    lambda[1:2,lineidx] = -tmpH*(trg[1]*tmp14_i + trg[2]*tmp14_h + Hbr[1:2,1:2]*sqp_line[1:2,lineidx] + Hbr[1:2,3:6]*sqp_line[3:6,lineidx] + bbr[1:2]) 
+    #14j 
+    lambda[3,lineidx] = -abs(trg[1]) #<=0 one_side ineq
+    #14k 
+    lambda[4,lineidx] = -abs(trg[2]) #<=0 one-side ineq
+
+    #for debug
+    # println(tron.g) 
 
     
     # return solution and objective for branch testing     

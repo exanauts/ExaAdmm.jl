@@ -59,6 +59,16 @@ function admm_poststep(
                     for g in 1:grid_data.ngen) + 
                         sum(0.5*dot(mod.sqp_line[:,l],mod.Hs[6*(l-1)+1:6*l,1:6],mod.sqp_line[:,l]) for l=1:grid_data.nline) 
 
+    
+    #find dual infeas kkt for SQP integration
+    pg_dual_infeas = [2*mod.qpsub_c2[g]*(grid_data.baseMVA)^2*sol.u_curr[mod.gen_start+2*(g-1)] for g = 1:grid_data.ngen]
+    line_dual_infeas = vcat([mod.Hs[6*(l-1)+1:6*l,1:6] * mod.sqp_line[:,l] for l = 1:grid_data.nline]...)
+
+    #                     mod.dual_infeas = sum(mod.qpsub_c2[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2
+    # for g in 1:grid_data.ngen) + 
+    #     sum(0.5*dot(mod.sqp_line[:,l],mod.Hs[6*(l-1)+1:6*l,1:6],mod.sqp_line[:,l]) for l=1:grid_data.nline) 
+    mod.dual_infeas = vcat(pg_dual_infeas, line_dual_infeas) #unscale 
+
     #assign value to step variable
     #generation
     @inbounds begin
@@ -71,7 +81,7 @@ function admm_poststep(
         
         mod.dline_var = copy(mod.sqp_line)
 
-        for l = 1:grid_data.ngen
+        for l = 1:grid_data.nline
             shift_idx = mod.line_start + 8*(l-1)
             mod.dline_fl[1,l] = sol.u_curr[shift_idx] #pij
             mod.dline_fl[2,l] = sol.u_curr[shift_idx + 1] #qij
@@ -100,8 +110,8 @@ function admm_poststep(
                     dt_ct += 1
                 end
             end
-            mod.dw_sol[b] = dw_sum/dw_ct
-            mod.dtheta_sol[b] = dt_sum/dt_ct
+            mod.dw_sol[b] = dw_sum/dw_ct #average
+            mod.dtheta_sol[b] = dt_sum/dt_ct #average
         end
     end #inbound
     return   
