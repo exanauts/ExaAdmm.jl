@@ -202,7 +202,7 @@ function eval_b_branch_kernel_cpu_qpsub(
         b[6] += (l[8] - rho[8]*(v[8]-z[8])) #thetaj(ji)
     end
 
-    return b #size 6
+    return b #size 6 noscale
 end
 
 
@@ -250,7 +250,7 @@ function eval_b_auglag_branch_kernel_cpu_qpsub(
             b .+= (membuf[4] - membuf[5]*RH_1k)*vec_1k #1k
     end
 
-    return b*scale #dim = 8
+    return b*scale #dim = 8 scaled
 end
 
 
@@ -304,5 +304,5 @@ function eval_b_auglag_branch_kernel_cpu_qpsub_red(
 
 
 
-    return C, d, transpose(C) * (A_aug * d  + b)*scale #dims = 8*6, 8, 6
+    return C, d, transpose(C) * (A_aug * d  + b)*scale #dims = 8*6, 8, 6, coeff, coeff, scaled 
 end
