@@ -60,6 +60,7 @@ function init_solution!(
     # fill!(model.multi_line, 1.0) #? tuning
     # fill!(model.bool_line, false)
     fill!(sol, 0.0)
+    fill!(model.lambda, 0.0)
 
     #qpsub var
     sol.rho .= rho_pq
