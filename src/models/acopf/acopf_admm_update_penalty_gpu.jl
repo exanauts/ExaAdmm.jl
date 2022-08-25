@@ -13,7 +13,8 @@ end
 
 function acopf_admm_update_penalty(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::Model{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    device::Nothing=nothing
 )
 #=
     par, sol = env.params, mod.solution

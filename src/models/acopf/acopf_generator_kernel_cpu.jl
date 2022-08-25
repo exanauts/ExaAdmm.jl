@@ -22,10 +22,11 @@ end
 
 function generator_kernel_two_level(
     model::ModelAcopf{Float64,Array{Float64,1},Array{Int,1}},
-    baseMVA::Float64, u, xbar, zu, lu, rho_u
+    baseMVA::Float64, u, xbar, zu, lu, rho_u,
+    device::Nothing=nothing
 )
     tcpu = @timed generator_kernel_two_level(baseMVA, model.grid_data.ngen, model.gen_start,
-                u, xbar, zu, lu, rho_u, model.pgmin_curr, model.pgmax_curr, model.grid_data.qgmin, model.grid_data.qgmax, 
+                u, xbar, zu, lu, rho_u, model.pgmin_curr, model.pgmax_curr, model.grid_data.qgmin, model.grid_data.qgmax,
                 model.grid_data.c2, model.grid_data.c1)
     return tcpu
 end

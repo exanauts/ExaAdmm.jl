@@ -46,14 +46,17 @@ function mpec_init_solution_line(
         v[pij_idx+6] = 0.0
         v[pij_idx+7] = 0.0
 
-        rho[pij_idx+4:pij_idx+7] .= rho_va
+        rho[pij_idx+4] = rho_va
+        rho[pij_idx+5] = rho_va
+        rho[pij_idx+6] = rho_va
+        rho[pij_idx+7] = rho_va
     end
     return
 end
 
 function init_solution!(
     model::ComplementarityModel{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    sol::SolutionOneLevel{Float64,CuArray{Float64,1}},
+    sol::Solution{Float64,CuArray{Float64,1}},
     rho_pq::Float64, rho_va::Float64
 )
     grid = model.grid

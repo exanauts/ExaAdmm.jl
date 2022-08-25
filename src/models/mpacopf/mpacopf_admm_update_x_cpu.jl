@@ -31,7 +31,8 @@ end
 
 function admm_update_x(
   env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-  mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+  mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+  device::Nothing=nothing
 )
     mpacopf_admm_update_x_gen(env, mod)
 
@@ -56,16 +57,16 @@ function acopf_admm_update_x_gen_first(
     r_v, r_z, r_l, r_rho = sol_ramp.v_curr, sol_ramp.z_curr, sol_ramp.l_curr, sol_ramp.rho
     c2, c1, baseMVA = mod.grid_data.c2, mod.grid_data.c1, mod.grid_data.baseMVA
 
-    for I=1:mod.ngen
+    for I=1:mod.grid_data.ngen
         pg_idx = mod.gen_start + 2*(I-1)
         qg_idx = mod.gen_start + 2*(I-1) + 1
 
-        u[pg_idx] = max(mod.pgmin[I],
-                        min(mod.pgmax[I],
+        u[pg_idx] = max(mod.grid_data.pgmin[I],
+                        min(mod.grid_data.pgmax[I],
                         (-(c1[I]*baseMVA + (l[pg_idx] + rho[pg_idx]*(-v[pg_idx] + z[pg_idx])) +
                             (r_l[I] + r_rho[I]*(-r_v[I] + r_z[I])))) / (2*c2[I]*(baseMVA^2) + rho[pg_idx] + r_rho[I])))
-        u[qg_idx] = max(mod.qgmin[I],
-                        min(mod.qgmax[I],
+        u[qg_idx] = max(mod.grid_data.qgmin[I],
+                        min(mod.grid_data.qgmax[I],
                             (-(l[qg_idx] + rho[qg_idx]*(-v[qg_idx] + z[qg_idx]))) / rho[qg_idx]))
     end
 end
@@ -101,7 +102,8 @@ end
 
 function admm_update_x(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelMpacopfLoose{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ModelMpacopfLoose{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+    device::Nothing=nothing
 )
     for i=1:mod.len_horizon
         admm_two_level(env, mod.models[i])

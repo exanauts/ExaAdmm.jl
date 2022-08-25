@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+authors:
+  - family-names: Kim
+    given-names: Youngdae
+  - family-names: Kim
+    given-names: Kibaek
+  - family-names: Zhang
+    given-names: Weiqi
+  - family-names: Pacaud
+    given-names: François
+  - family-names: Schanen
+    given-names: Michel
+doi: 10.5281/zenodo.6613877

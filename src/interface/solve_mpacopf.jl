@@ -12,7 +12,7 @@ function solve_mpacopf(case::String, load_prefix::String;
     end
 
     env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; case_format=case_format,
-            use_gpu=use_gpu, use_linelimit=use_linelimit, use_twolevel=false,
+            use_gpu=use_gpu, use_linelimit=use_linelimit,
             load_prefix=load_prefix, tight_factor=tight_factor, gpu_no=gpu_no, verbose=verbose)
     mod = ModelMpacopf{T,TD,TI,TM}(env; start_period=start_period, end_period=end_period, ramp_ratio=ramp_ratio)
 
@@ -22,8 +22,6 @@ function solve_mpacopf(case::String, load_prefix::String;
     env.params.outer_eps = outer_eps
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
-    env.params.shmem_size = sizeof(Float64)*(14*n+3*n^2) + sizeof(Int)*(4*n)
-    env.params.gen_shmem_size = sizeof(Float64)*(14*3+3*3^2) + sizeof(Int)*(4*3)
 
     # For warm start, solve each time period without ramp constraints.
     if warm_start

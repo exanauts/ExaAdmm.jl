@@ -1,6 +1,6 @@
 function acopf_admm_update_x_gen(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+    mod::AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     gen_sol::EmptyGeneratorSolution{Float64,Array{Float64,1}}
 )
     sol, info, data = mod.solution, mod.info, mod.grid_data
@@ -12,7 +12,7 @@ end
 
 function acopf_admm_update_x_line(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
 
@@ -41,9 +41,13 @@ function acopf_admm_update_x_line(
     return
 end
 
+"""
+Update variable `x`, representing the variables for generators and lines in the component-based decomposition of ACOPF.
+"""
 function admm_update_x(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelAcopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+    device::Nothing=nothing
 )
     acopf_admm_update_x_gen(env, mod, mod.gen_solution)
     acopf_admm_update_x_line(env, mod)

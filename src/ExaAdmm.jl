@@ -7,22 +7,24 @@ using LinearAlgebra
 using SparseArrays
 using MPI
 using CUDA
+import AMDGPU: ROCArray, has_rocm_gpu
+using KernelAbstractions
 using ExaTron
 using Random
 
-## added by bowen 
-using Test
-using JuMP
-using Ipopt
+const KA = KernelAbstractions
 
+export solve_acopf
 
-## original files 
+struct KAArray{T} end
+
 include("utils/parse_matpower.jl")
 include("utils/opfdata.jl")
 include("utils/environment.jl")
 include("utils/grid_data.jl")
 include("utils/print_statistics.jl")
 include("utils/utilities_gpu.jl")
+include("utils/utilities_ka.jl")
 
 include("algorithms/admm_two_level.jl")
 include("algorithms/admm_one_level.jl")
@@ -52,7 +54,7 @@ include("models/acopf/acopf_admm_update_residual_cpu.jl")
 include("models/acopf/acopf_admm_update_lz_cpu.jl")
 include("models/acopf/acopf_admm_prepoststep_cpu.jl")
 
-# GPU specific implementation
+# CUDA specific implementation
 include("models/acopf/acopf_init_solution_gpu.jl")
 include("models/acopf/acopf_generator_kernel_gpu.jl")
 include("models/acopf/acopf_eval_linelimit_kernel_gpu.jl")
@@ -67,9 +69,25 @@ include("models/acopf/acopf_admm_update_residual_gpu.jl")
 include("models/acopf/acopf_admm_update_lz_gpu.jl")
 include("models/acopf/acopf_admm_prepoststep_gpu.jl")
 
+# KA specific implementation
+include("models/acopf/acopf_init_solution_ka.jl")
+include("models/acopf/acopf_generator_kernel_ka.jl")
+include("models/acopf/acopf_eval_linelimit_kernel_ka.jl")
+include("models/acopf/acopf_tron_linelimit_kernel_ka.jl")
+include("models/acopf/acopf_auglag_linelimit_kernel_ka.jl")
+include("models/acopf/acopf_bus_kernel_ka.jl")
+include("models/acopf/acopf_admm_update_x_ka.jl")
+include("models/acopf/acopf_admm_update_xbar_ka.jl")
+include("models/acopf/acopf_admm_update_z_ka.jl")
+include("models/acopf/acopf_admm_update_l_ka.jl")
+include("models/acopf/acopf_admm_update_residual_ka.jl")
+include("models/acopf/acopf_admm_update_lz_ka.jl")
+include("models/acopf/acopf_admm_prepoststep_ka.jl")
+
 # Rolling horizon
 include("models/acopf/acopf_admm_rolling_cpu.jl")
 include("models/acopf/acopf_admm_rolling_gpu.jl")
+include("models/acopf/acopf_admm_rolling_ka.jl")
 
 # ----------------------------------------
 # Multi-period ACOPF implementation
@@ -175,7 +193,5 @@ include("models/qpsub/qpsub_admm_update_xbar_gpu.jl")
 include("models/qpsub/qpsub_admm_update_l_single_gpu.jl")
 include("models/qpsub/qpsub_admm_update_residual_gpu.jl")
 include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_gpu.jl") #eval A,b for Ipopt and Tron
-
-
 
 end # module

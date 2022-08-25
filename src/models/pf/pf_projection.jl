@@ -13,8 +13,8 @@ function pf_projection(
     FrStart = zeros(Int, length(mod.FrStart))
     ToIdx = zeros(Int, length(mod.ToIdx))
     ToStart = zeros(Int, length(mod.ToStart))
-    Pd = zeros(length(mod.Pd))
-    Qd = zeros(length(mod.Qd))
+    Pd = zeros(length(mod.grid_data.Pd))
+    Qd = zeros(length(mod.grid_data.Qd))
 
     copyto!(u_curr, sol.u_curr)
     copyto!(v_curr, sol.v_curr)
@@ -25,10 +25,10 @@ function pf_projection(
     copyto!(FrStart, mod.FrStart)
     copyto!(ToIdx, mod.ToIdx)
     copyto!(ToStart, mod.ToStart)
-    copyto!(Pd, mod.Pd)
-    copyto!(Qd, mod.Qd)
+    copyto!(Pd, mod.grid_data.Pd)
+    copyto!(Qd, mod.grid_data.Qd)
 
-    v_curr[mod.gen_start:mod.gen_start+2*mod.ngen-1] .= u_curr[mod.gen_start:mod.gen_start+2*mod.ngen-1]
+    v_curr[mod.gen_start:mod.gen_start+2*mod.grid_data.ngen-1] .= u_curr[mod.gen_start:mod.gen_start+2*mod.grid_data.ngen-1]
 
     nw = env.data.nw
     pf = PowerFlow{Float64,Array{Float64}}(nw)
@@ -60,7 +60,7 @@ function pf_projection(
         pf.x[pf.var_vmva_start+2*(b-1)] = min(nw["bus"][b]["Vmax"], max(nw["bus"][b]["Vmin"], vm[b]))
         pf.x[pf.var_vmva_start+2*(b-1)+1] = va[b]
     end
-    for g=1:mod.ngen
+    for g=1:mod.grid_data.ngen
         pf.x[pf.var_pgqg_start+2*(g-1)] = v_curr[mod.gen_start+2*(g-1)]
         pf.x[pf.var_pgqg_start+2*(g-1)+1] = v_curr[mod.gen_start+2*(g-1)+1]
     end

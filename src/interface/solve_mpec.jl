@@ -12,7 +12,7 @@ function solve_acopf_mpec(case::String;
     end
 
     env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; case_format=case_format,
-            use_gpu=use_gpu, use_linelimit=use_linelimit, use_twolevel=false,
+            use_gpu=use_gpu, use_linelimit=use_linelimit,
             use_projection=use_projection, tight_factor=tight_factor,
             storage_ratio=storage_ratio, storage_charge_max=storage_charge_max,
             gpu_no=gpu_no, verbose=verbose)
@@ -23,13 +23,12 @@ function solve_acopf_mpec(case::String;
     env.params.outer_eps = outer_eps
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
-    env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
 
-    admm_restart(env, mod)
+    admm_two_level(env, mod)
 
 
     vm_dev = 0.0
-    for i=1:mod.grid.ngen
+    for i=1:mod.grid_data.ngen
         pg_idx = mod.gen_start + 2*(i-1)
         qg_idx = mod.gen_start + 2*(i-1) + 1
         vg_idx = mod.gen_start + 2*mod.grid.ngen + (i-1)

@@ -3,8 +3,8 @@ function mpacopf_admm_update_x_gen(
     mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
     par, info = env.params, mod.info
+    shmem_size = sizeof(Float64)*(14*3+3*3^2) + sizeof(Int)*(4*3)
 
-    shmem_size = env.params.gen_shmem_size
     ngen = mod.models[1].grid_data.ngen
     acopf_admm_update_x_gen(env, mod.models[1], mod.models[1].gen_solution)
 
@@ -35,7 +35,8 @@ end
 
 function admm_update_x(
   env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-  mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+  mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+  device::Nothing=nothing
 )
     mpacopf_admm_update_x_gen(env, mod)
     for i=1:mod.len_horizon

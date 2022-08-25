@@ -28,10 +28,9 @@ mutable struct Parameters
     inc_c::Float64 #increase rate on beta 
     theta::Float64 #dynamic tolerance rate for norm_z_curr
     outer_eps::Float64
-    shmem_size::Int
-    gen_shmem_size::Int
-    Kf::Int             #? not used
-    Kf_mean::Int        #? not used
+    shmem_size::Int # used by QP subproblems solver
+    Kf::Int             # TODO: not used
+    Kf_mean::Int        # TODO: not used
     MAX_MULTIPLIER::Float64
     DUAL_TOL::Float64
 
@@ -61,8 +60,6 @@ mutable struct Parameters
         par.inc_c = 6.0
         par.theta = 0.8
         par.outer_eps = 2*1e-4
-        par.shmem_size = 0
-        par.gen_shmem_size = 0
         par.Kf = 100
         par.Kf_mean = 10
         par.MAX_MULTIPLIER = 1e12
@@ -95,8 +92,8 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     tight_factor::T
     horizon_length::Int
     use_gpu::Bool
+    ka_device::Union{Nothing,KA.GPU}
     use_linelimit::Bool
-    use_twolevel::Bool
     use_mpi::Bool
     use_projection::Bool
     load_specified::Bool
@@ -108,9 +105,9 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 #    membuf::TM # was param
 
     function AdmmEnv{T,TD,TI,TM}(
-        case::String, rho_pq::Float64, rho_va::Float64;
+        data::OPFData, case::String, rho_pq::Float64, rho_va::Float64;
         case_format="matpower",
-        use_gpu=false, use_linelimit=true, use_twolevel=false, use_mpi=false, use_projection=false,
+        use_gpu=false, ka_device=nothing, use_linelimit=true, use_mpi=false, use_projection=false,
         gpu_no::Int=0, verbose::Int=1, tight_factor=1.0, droop=0.04, storage_ratio=0.0, storage_charge_max=1.0,
         horizon_length=1, load_prefix::String="", comm::MPI.Comm=MPI.COMM_WORLD
     ) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
@@ -118,19 +115,22 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 
         env = new{T,TD,TI,TM}()
         env.case = case
-        env.data = opf_loaddata(env.case; storage_ratio=storage_ratio, storage_charge_max=storage_charge_max,
-                                          VI=TI, VD=TD, case_format=case_format, verbose=verbose)
+        env.data = data
         env.storage_ratio = storage_ratio
         env.droop = droop
         env.initial_rho_pq = rho_pq
         env.initial_rho_va = rho_va
         env.tight_factor = tight_factor
         env.use_gpu = use_gpu
-        env.use_linelimit = use_linelimit 
+        if isa(ka_device, KA.CPU)
+            env.ka_device = nothing
+        else
+            env.ka_device = ka_device
+        end
+        env.use_linelimit = use_linelimit
         env.use_mpi = use_mpi
         env.use_projection = use_projection
         env.gpu_no = gpu_no
-        env.use_twolevel = use_twolevel
         env.load_specified = false
         env.comm = comm
 
@@ -139,7 +139,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 
         env.horizon_length = horizon_length
         if !isempty(load_prefix)
-            env.load = get_load(load_prefix; use_gpu=use_gpu)
+            env.load = get_load(load_prefix, env.ka_device; use_gpu=use_gpu)
             @assert size(env.load.pd) == size(env.load.qd)
             @assert size(env.load.pd,2) >= horizon_length && size(env.load.qd,2) >= horizon_length
             env.load_specified = true
@@ -147,6 +147,13 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 
         return env
     end
+end
+
+function AdmmEnv{T,TD,TI,TM}(
+    case::String, rho_pq::Float64, rho_va::Float64; case_format="matpower", verbose::Int=1, options...
+) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
+    data = opf_loaddata(case; VI=TI, VD=TD, case_format=case_format, verbose=verbose)
+    return AdmmEnv{T, TD, TI, TM}(data, case, rho_pq, rho_va; case_format=case_format, verbose=verbose, options...)
 end
 
 abstract type AbstractSolution{T,TD} end
@@ -162,11 +169,11 @@ function Base.copy(ref::EmptyGeneratorSolution{T,TD}) where {T,TD<:AbstractArray
 end
 
 """
-    SolutionOneLevel{T,TD}
+    Solution{T,TD}
 
 This contains the solutions of ACOPF model instance, including the ADMM parameter rho.
 """
-mutable struct SolutionOneLevel{T,TD} <: AbstractSolution{T,TD}
+mutable struct Solution{T,TD} <: AbstractSolution{T,TD}
     u_curr::TD
     v_curr::TD
     l_curr::TD
@@ -188,7 +195,7 @@ mutable struct SolutionOneLevel{T,TD} <: AbstractSolution{T,TD}
     cumul_iters::Int
     status::Symbol
 
-    function SolutionOneLevel{T,TD}(nvar::Int) where {T, TD<:AbstractArray{T}}
+    function Solution{T,TD}(nvar::Int) where {T, TD<:AbstractArray{T}}
         sol = new{T,TD}(
             TD(undef, nvar), # u_curr
             TD(undef, nvar), # v_curr
@@ -218,7 +225,7 @@ mutable struct SolutionOneLevel{T,TD} <: AbstractSolution{T,TD}
 end
 
 
-function Base.fill!(sol::SolutionOneLevel, val)
+function Base.fill!(sol::Solution, val)
     fill!(sol.u_curr, val)
     fill!(sol.v_curr, val)
     fill!(sol.l_curr, val)
@@ -236,9 +243,9 @@ function Base.fill!(sol::SolutionOneLevel, val)
     fill!(sol.Ax_plus_By, val)
 end
 
-function Base.copy(ref::SolutionOneLevel{T,TD}) where {T,TD<:AbstractArray{T}}
+function Base.copy(ref::Solution{T,TD}) where {T,TD<:AbstractArray{T}}
     nvar = length(ref.u_curr)
-    sol = SolutionOneLevel{T,TD}(nvar)
+    sol = Solution{T,TD}(nvar)
 
     copyto!(sol.u_curr, ref.u_curr)
     copyto!(sol.v_curr, ref.v_curr)
@@ -263,101 +270,6 @@ function Base.copy(ref::SolutionOneLevel{T,TD}) where {T,TD<:AbstractArray{T}}
     return sol
 end
 
-"""
-    SolutionTwoLevel{T,TD}
-
-This contains the solutions of ACOPF model instance for two-level ADMM algorithm,
-    including the ADMM parameter rho.
-"""
-mutable struct SolutionTwoLevel{T,TD} <: AbstractSolution{T,TD}
-    x_curr::TD
-    xbar_curr::TD
-    z_outer::TD
-    z_curr::TD
-    z_prev::TD
-    l_curr::TD
-    lz::TD
-    rho::TD
-    rp::TD
-    rd::TD
-    rp_old::TD
-    Ax_plus_By::TD
-    wRIij::TD
-
-    function SolutionTwoLevel{T,TD}() where {T, TD<:AbstractArray{T}}
-        return new{T,TD}()
-    end
-
-    function SolutionTwoLevel{T,TD}(nvar::Int, nvar_v::Int, nline::Int) where {T, TD<:AbstractArray{T}}
-        sol = new{T,TD}(
-            TD(undef, nvar),      # x_curr
-            TD(undef, nvar_v),    # xbar_curr
-            TD(undef, nvar),      # z_outer
-            TD(undef, nvar),      # z_curr
-            TD(undef, nvar),      # z_prev
-            TD(undef, nvar),      # l_curr
-            TD(undef, nvar),      # lz
-            TD(undef, nvar),      # rho
-            TD(undef, nvar),      # rp
-            TD(undef, nvar),      # rd
-            TD(undef, nvar),      # rp_old
-            TD(undef, nvar),      # Ax_plus_By
-            TD(undef, 2*nline)    # wRIij
-        )
-
-        fill!(sol, 0.0)
-
-        return sol
-    end
-end
-
-function Base.fill!(sol::SolutionTwoLevel, val)
-    fill!(sol.x_curr, val)
-    fill!(sol.xbar_curr, val)
-    fill!(sol.z_outer, val)
-    fill!(sol.z_curr, val)
-    fill!(sol.z_prev, val)
-    fill!(sol.l_curr, val)
-    fill!(sol.lz, val)
-    fill!(sol.rho, val)
-    fill!(sol.rp, val)
-    fill!(sol.rd, val)
-    fill!(sol.rp_old, val)
-    fill!(sol.Ax_plus_By, val)
-    fill!(sol.wRIij, val)
-end
-
-function Base.copy(ref::SolutionTwoLevel{T,TD}) where {T, TD<:AbstractArray{T}}
-    sol = SolutionTwoLevel{T,TD}()
-    sol.x_curr = TD(undef, length(ref.x_curr))
-    sol.xbar_curr = TD(undef, length(ref.xbar_curr))
-    sol.z_outer = TD(undef, length(ref.z_outer))
-    sol.z_curr = TD(undef, length(ref.z_curr))
-    sol.z_prev = TD(undef, length(ref.z_prev))
-    sol.l_curr = TD(undef, length(ref.l_curr))
-    sol.lz = TD(undef, length(ref.lz))
-    sol.rho = TD(undef, length(ref.rho))
-    sol.rp = TD(undef, length(ref.rp))
-    sol.rd = TD(undef, length(ref.rd))
-    sol.rp_old = TD(undef, length(ref.rp_old))
-    sol.Ax_plus_By = TD(undef, length(ref.Ax_plus_By))
-    sol.wRIij = TD(undef, length(ref.wRIij))
-
-    copyto!(sol.x_curr, ref.x_curr)
-    copyto!(sol.xbar_curr, ref.xbar_curr)
-    copyto!(sol.z_outer, ref.z_outer)
-    copyto!(sol.z_curr, ref.z_curr)
-    copyto!(sol.z_prev, ref.z_prev)
-    copyto!(sol.l_curr, ref.l_curr)
-    copyto!(sol.lz, ref.lz)
-    copyto!(sol.rho, ref.rho)
-    copyto!(sol.rp, ref.rp)
-    copyto!(sol.rd, ref.rd)
-    copyto!(sol.rp_old, ref.rp_old)
-    copyto!(sol.Ax_plus_By, ref.Ax_plus_By)
-    copyto!(sol.wRIij, ref.wRIij)
-    return sol
-end
 
 abstract type AbstractUserIterationInformation end
 
@@ -492,232 +404,6 @@ function Base.copy(ref::IterationInformation{ComponentInformation})
 end
 
 abstract type AbstractOPFModel{T,TD,TI,TM} end
-
-"""
-    Model{T,TD,TI}
-
-This contains the parameters specific to ACOPF model instance.
-"""
-mutable struct Model{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
-    info::IterationInformation
-    solution::AbstractSolution{T,TD}
-
-    # Used for multiple dispatch for multi-period case.
-    gen_solution::AbstractSolution{T,TD}
-
-    n::Int
-    ngen::Int
-    nline::Int
-    nbus::Int
-    nvar::Int
-
-    gen_start::Int
-    line_start::Int
-
-    baseMVA::T
-    pgmin::TD
-    pgmax::TD
-    qgmin::TD
-    qgmax::TD
-    pgmin_curr::TD   # taking ramping into account for rolling horizon
-    pgmax_curr::TD   # taking ramping into account for rolling horizon
-    ramp_rate::TD
-    c2::TD
-    c1::TD
-    c0::TD
-    YshR::TD
-    YshI::TD
-    YffR::TD
-    YffI::TD
-    YftR::TD
-    YftI::TD
-    YttR::TD
-    YttI::TD
-    YtfR::TD
-    YtfI::TD
-    FrVmBound::TD
-    ToVmBound::TD
-    FrVaBound::TD
-    ToVaBound::TD
-    rateA::TD
-    FrStart::TI
-    FrIdx::TI
-    ToStart::TI
-    ToIdx::TI
-    GenStart::TI
-    GenIdx::TI
-    Pd::TD
-    Qd::TD
-    Vmin::TD
-    Vmax::TD
-
-    chg_min::TD
-    chg_max::TD
-    energy_min::TD
-    energy_max::TD
-    eta_chg::TD
-    eta_dischg::TD
-
-    StorageStart::TI
-    StorageIdx::TI
-
-    membuf::TM      # memory buffer for line kernel
-    gen_membuf::TM  # memory buffer for generator kernel
-
-    # Two-Level ADMM
-    nvar_u::Int
-    nvar_v::Int
-    bus_start::Int # this is for varibles of type v.
-    brBusIdx::TI
-
-    # Padded sizes for MPI
-    nline_padded::Int
-    nvar_u_padded::Int
-    nvar_padded::Int
-
-    function Model{T,TD,TI,TM}() where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
-        return new{T,TD,TI,TM}()
-    end
-
-    function Model{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}; ramp_ratio=0.02) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
-        model = new{T,TD,TI,TM}()
-
-        model.baseMVA = env.data.baseMVA
-        model.n = (env.use_linelimit == true) ? 6 : 4
-        model.ngen = length(env.data.generators)
-        model.nline = length(env.data.lines)
-        model.nbus = length(env.data.buses)
-        model.nline_padded = model.nline
-
-        # Memory space is padded for the lines as a multiple of # processes.
-        if env.use_mpi
-            nprocs = MPI.Comm_size(env.comm)
-            model.nline_padded = nprocs * div(model.nline, nprocs, RoundUp)
-        end
-
-        model.nvar = 2*model.ngen + 8*model.nline
-        model.nvar_padded = model.nvar + 8*(model.nline_padded - model.nline)
-        model.gen_start = 1
-        model.line_start = 2*model.ngen + 1
-        model.pgmin, model.pgmax, model.qgmin, model.qgmax, model.c2, model.c1, model.c0 = get_generator_data(env.data; use_gpu=env.use_gpu)
-        model.YshR, model.YshI, model.YffR, model.YffI, model.YftR, model.YftI,
-            model.YttR, model.YttI, model.YtfR, model.YtfI,
-            model.FrVmBound, model.ToVmBound,
-            model.FrVaBound, model.ToVaBound, model.rateA = get_branch_data(env.data; use_gpu=env.use_gpu, tight_factor=env.tight_factor)
-        model.FrStart, model.FrIdx, model.ToStart, model.ToIdx, model.GenStart, model.GenIdx, model.Pd, model.Qd, model.Vmin, model.Vmax = get_bus_data(env.data; use_gpu=env.use_gpu)
-        model.brBusIdx = get_branch_bus_index(env.data; use_gpu=env.use_gpu)
-        model.chg_min, model.chg_max, model.energy_min, model.energy_max, model.eta_chg, model.eta_dischg = get_storage_data(env.data; use_gpu=env.use_gpu)
-        model.StorageIdx, model.StorageStart = get_bus_storage_index(env.data; use_gpu=env.use_gpu)
-
-        model.pgmin_curr = TD(undef, model.ngen)
-        model.pgmax_curr = TD(undef, model.ngen)
-        copyto!(model.pgmin_curr, model.pgmin)
-        copyto!(model.pgmax_curr, model.pgmax)
-
-        model.ramp_rate = TD(undef, model.ngen)
-        model.ramp_rate .= ramp_ratio.*model.pgmax
-
-        if env.params.obj_scale != 1.0
-            model.c2 .*= env.params.obj_scale
-            model.c1 .*= env.params.obj_scale
-            model.c0 .*= env.params.obj_scale
-        end
-
-        # These are only for two-level ADMM.
-        model.nvar_u = 2*model.ngen + 8*model.nline
-        model.nvar_u_padded = model.nvar_u + 8*(model.nline_padded - model.nline)
-        model.nvar_v = 2*model.ngen + 4*model.nline + 2*model.nbus
-        model.bus_start = 2*model.ngen + 4*model.nline + 1
-        if env.use_twolevel
-            model.nvar = model.nvar_u + model.nvar_v
-            model.nvar_padded = model.nvar_u_padded + model.nvar_v
-        end
-
-        # Memory space is allocated based on the padded size.
-        model.solution = ifelse(env.use_twolevel,
-            SolutionTwoLevel{T,TD}(model.nvar_padded, model.nvar_v, model.nline_padded),
-            SolutionOneLevel{T,TD}(model.nvar_padded))
-        init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va)
-        model.gen_solution = EmptyGeneratorSolution{T,TD}()
-
-        model.membuf = TM(undef, (31, model.nline))
-        fill!(model.membuf, 0.0)
-        model.membuf[29,:] .= model.rateA
-
-        model.info = IterationInformation{ComponentInformation}()
-
-        return model
-    end
-end
-
-"""
-This is to share power network data between models. Some fields that could be modified are deeply copied.
-"""
-function Base.copy(ref::Model{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
-    model = Model{T,TD,TI,TM}()
-
-    model.solution = copy(ref.solution)
-    model.gen_solution = copy(ref.gen_solution)
-    model.info = copy(ref.info)
-
-    model.n = ref.n
-    model.ngen = ref.ngen
-    model.nline = ref.nline
-    model.nbus = ref.nbus
-    model.nvar = ref.nvar
-
-    model.gen_start = ref.gen_start
-    model.line_start = ref.line_start
-
-    model.baseMVA = ref.baseMVA
-    model.pgmin = ref.pgmin
-    model.pgmax = ref.pgmax
-    model.qgmin = ref.qgmin
-    model.qgmax = ref.qgmax
-    model.pgmin_curr = copy(ref.pgmin_curr)
-    model.pgmax_curr = copy(ref.pgmax_curr)
-    model.ramp_rate = ref.ramp_rate
-    model.c2 = ref.c2
-    model.c1 = ref.c1
-    model.c0 = ref.c0
-    model.YshR = ref.YshR
-    model.YshI = ref.YshI
-    model.YffR = ref.YffR
-    model.YffI = ref.YffI
-    model.YftR = ref.YftR
-    model.YftI = ref.YftI
-    model.YttR = ref.YttR
-    model.YttI = ref.YttI
-    model.YtfR = ref.YtfR
-    model.YtfI = ref.YtfI
-    model.FrVmBound = ref.FrVmBound
-    model.ToVmBound = ref.ToVmBound
-    model.FrVaBound = ref.FrVaBound
-    model.ToVaBound = ref.ToVaBound
-    model.rateA = ref.rateA
-    model.FrStart = ref.FrStart
-    model.FrIdx = ref.FrIdx
-    model.ToStart = ref.ToStart
-    model.ToIdx = ref.ToIdx
-    model.GenStart = ref.GenStart
-    model.GenIdx = ref.GenIdx
-    model.Pd = copy(ref.Pd)
-    model.Qd = copy(ref.Qd)
-    model.Vmin = ref.Vmin
-    model.Vmax = ref.Vmax
-
-    model.membuf = copy(ref.membuf)
-
-    model.nvar_u = ref.nvar_u
-    model.nvar_v = ref.nvar_v
-    model.bus_start = ref.bus_start
-    model.brBusIdx = ref.brBusIdx
-
-    model.nline_padded = ref.nline_padded
-    model.nvar_padded = ref.nvar_padded
-
-    return model
-end
 
 #=
 mutable struct ComplementarityModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
