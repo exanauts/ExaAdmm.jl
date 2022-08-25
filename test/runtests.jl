@@ -19,6 +19,7 @@ init_time = time()
     @testset "Testing ADMM algorithms on CPUs" begin
         include("algorithms/acopf_update_cpu.jl")
         include("algorithms/mpacopf_update_cpu.jl")
+        include("algorithms/qpsub_update_cpu.jl")
     end
 
     using CUDA
@@ -26,14 +27,12 @@ init_time = time()
         @testset "Testing ADMM algorithms using CUDA.jl" begin
             include("algorithms/acopf_update_gpu.jl")
             include("algorithms/mpacopf_update_gpu.jl")
+            include("algorithms/qpsub_update_gpu.jl")
         end
     end
 
     @testset "Testing ADMM algorithms using KA" begin
         include("algorithms/acopf_update_ka.jl")
-    end
-    @testset "Testing QPsub algorithms on CPUs" begin
-        include("algorithms/qpsub_update_cpu.jl")
     end
 end
 

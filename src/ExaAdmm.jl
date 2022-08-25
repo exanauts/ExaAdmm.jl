@@ -174,8 +174,6 @@ include("models/qpsub/qpsub_admm_increment.jl")
 # CPU
 include("models/qpsub/qpsub_init_solution_cpu.jl")
 include("models/qpsub/qpsub_generator_kernel_cpu.jl")
-# include("models/qpsub/qpsub_eval_linelimit_kernel_cpu.jl")
-# include("models/qpsub/qpsub_auglag_linelimit_kernel_cpu.jl")
 include("models/qpsub/qpsub_bus_kernel_cpu.jl")
 include("models/qpsub/qpsub_admm_update_x_cpu.jl")
 include("models/qpsub/qpsub_admm_update_xbar_cpu.jl")
@@ -190,14 +188,15 @@ include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_cpu_ij.jl")  #line by lin
 include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_cpu_ij_red.jl")  #line by line reduced model
 include("models/qpsub/qpsub_auglag_tron_linelimit_kernel_cpu.jl") #Exatron build
 
-#SQP_ipopt
-# include("algorithms/sqp_ipopt.jl") #? moved to SQOPF
-# include("interface/solve_sqp_ipopt.jl")
-# include("models/sqp/sqp_init_solution.jl")
-# include("models/sqp/sqp_lin_feas_cpu.jl")
-
-# Others for individual use 
-
+# GPU
+include("models/qpsub/qpsub_init_solution_gpu.jl")
+include("models/qpsub/qpsub_generator_kernel_gpu.jl")
+include("models/qpsub/qpsub_bus_kernel_gpu.jl")
+include("models/qpsub/qpsub_admm_update_x_gpu.jl")
+include("models/qpsub/qpsub_admm_update_xbar_gpu.jl")
+include("models/qpsub/qpsub_admm_update_l_single_gpu.jl")
+include("models/qpsub/qpsub_admm_update_residual_gpu.jl")
+include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_gpu.jl") #eval A,b for Ipopt and Tron
 
 
 
