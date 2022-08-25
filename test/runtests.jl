@@ -4,10 +4,10 @@ using Printf
 # using CUDA
 
 using ExaAdmm
-using Random
+using LazyArtifacts
+
 using JuMP
 using Ipopt
-using LazyArtifacts
 
 # Data
 const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
