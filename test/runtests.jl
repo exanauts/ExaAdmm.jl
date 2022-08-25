@@ -23,12 +23,13 @@ init_time = time()
     # include("algorithms/mpacopf_update_cpu.jl")
 end
 
-# using CUDA
-# if CUDA.functional()
-#     @testset "Testing ADMM algorithms on GPUs" begin
-#         include("algorithms/acopf_update_gpu.jl")
-#         include("algorithms/mpacopf_update_gpu.jl")
-#     end
-# end
+using CUDA
+if CUDA.functional()
+    @testset "Testing ADMM algorithms on GPUs" begin
+        # include("algorithms/acopf_update_gpu.jl")
+        # include("algorithms/mpacopf_update_gpu.jl")
+        include("algorithms/qpsub_update_gpu.jl")
+    end
+end
 
 println("\nTotal Running Time: $(round(time() - init_time; digits=1)) seconds.")
