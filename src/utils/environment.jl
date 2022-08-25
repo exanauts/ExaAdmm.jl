@@ -453,7 +453,7 @@ mutable struct ComplementarityModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.line_start = 4*model.grid.ngen + model.grid.nstorage + 1
 #        model.line_start = 3*model.grid.ngen + 1
 
-        model.solution = SolutionOneLevel{T,TD}(model.nvar_padded)
+        model.solution = Solution{T,TD}(model.nvar_padded)
         init_solution!(model, model.solution, env.initial_rho_pq, env.initial_rho_va)
         model.gen_solution = EmptyGeneratorSolution{T,TD}()
 
