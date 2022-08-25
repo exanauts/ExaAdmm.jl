@@ -54,7 +54,8 @@ function solve_qpsub(case::String, Hs, LH_1h, RH_1h,
     end
 
     env = AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; case_format=case_format,
-            use_gpu=use_gpu, use_linelimit=use_linelimit, use_twolevel=false,
+            use_gpu=use_gpu, use_linelimit=use_linelimit, 
+            # use_twolevel=false,
             use_projection=use_projection, tight_factor=tight_factor, gpu_no=gpu_no,
             storage_ratio=storage_ratio, storage_charge_max=storage_charge_max,
             verbose=verbose)
