@@ -1,7 +1,7 @@
 """
     Model{T,TD,TI,TM}
 
-This contains the parameters specific to ACOPF model instance.
+This contains the parameters specific to QPSUB model instance.
 """
 
 
@@ -57,6 +57,13 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     
     #qpsub_construct
     Hs::TM  # Hessian information for all lines 6*nline x 6: |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
+    
+    #QP coefficient for orignal branch kernel QP problem
+    #only for testing for now 
+    A_ipopt::TM #|w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)| 
+    b_ipopt::TM #|w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
+    
+    
     LH_1h::TM  # nline * 4 : w_ijR w_ijI wi(ij) wj(ji)
     RH_1h::TD  # nline   
     LH_1i::TM  # nline * 4 : w_ijR w_ijI thetai(ij) thetaj(ji)
@@ -147,6 +154,10 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     lambda::TM #14h i j k 
     #multiplier
 
+    # additional memory allocation for branch kernel (GPU)
+    # NOTE: added by bowen 
+    supY::TM #in gpu initialization 
+
 
     function ModelQpsub{T,TD,TI,TM}() where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
         return new{T,TD,TI,TM}()
@@ -228,6 +239,14 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         #new qpsub parameters
         model.Hs = TM(undef,(6*model.grid_data.nline,6))
         fill!(model.Hs, 0.0)
+
+        model.A_ipopt = TM(undef,(6*model.grid_data.nline,6))
+        fill!(model.A_ipopt, 0.0)
+
+        model.b_ipopt = TM(undef,(6,model.grid_data.nline))
+        fill!(model.b_ipopt, 0.0)
+
+
         
         #1h
         model.LH_1h = TM(undef,(model.grid_data.nline,4))
@@ -375,6 +394,10 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.lambda = TM(undef, (4, model.grid_data.nline))
         fill!(model.lambda, 0.0)
 
+        #additional options
+        model.supY = TM(undef, (4*model.grid_data.nline, 8)) #see supY def in eval_A_b_branch_kernel_gpu_qpsub
+        fill!(model.supY, 0.0) 
+
 
         return model
     end
@@ -478,6 +501,11 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
     # for SQP 
     model.dual_infeas = copy(ref.dual_infeas)
     model.lambda = copy(ref.lambda)
+
+    #additional parameters 
+    model.A_ipopt = copy(ref.A_ipopt)
+    model.b_ipopt = copy(ref.b_ipopt)
+    model.supY = copy(ref.supY)
 
     return model
 end

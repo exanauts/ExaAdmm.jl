@@ -16,12 +16,12 @@ const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "matpower")
 init_time = time()
 
 
-# @testset "Testing ADMM algorithms on CPUs" begin
-# @testset "Testing ADMM algorithms on CPUs" begin
+
+@testset "Testing ADMM algorithms on CPUs" begin
     # include("algorithms/acopf_update_cpu.jl")
-include("algorithms/qpsub_update_cpu.jl")
+    include("algorithms/qpsub_update_cpu.jl")
     # include("algorithms/mpacopf_update_cpu.jl")
-# end
+end
 
 # using CUDA
 # if CUDA.functional()

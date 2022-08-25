@@ -3,7 +3,6 @@
 
 - prepare call backs for build_QP_DS and IPOPT benchmark (solve branch kernel directly)
 - use mod.membuf (see model.jl)
-- TODO: membuf and better structure for memory
 """
 
 
@@ -45,7 +44,7 @@ function eval_A_branch_kernel_cpu_qpsub(
     YtfR::Float64, YtfI::Float64)
     
     
-    # TODO: find better way to structure and speed up computation (e.g., membuf)
+ 
     #linear transform pij qij pji qji wrt Hessian inherited structure 
     supY = [YftR YftI YffR 0 0 0;
     -YftI YftR -YffI 0 0 0;
@@ -91,7 +90,7 @@ function eval_A_auglag_branch_kernel_cpu_qpsub(
     A = zeros(8,8)
     A[3:8,3:8] = Hbr
     
-    # TODO: find better way to structure and speed up computation (e.g., membuf)
+    
     #pij qij pji qji wrt branch structure ExaTron
     supY = [0 0 YftR YftI YffR 0 0 0;
     0 0 -YftI YftR -YffI 0 0 0;
@@ -133,7 +132,7 @@ function eval_A_auglag_branch_kernel_cpu_qpsub_red(
     A = zeros(8,8)
     A[3:8,3:8] = Hbr
     
-    # TODO: find better way to structure and speed up computation (e.g., membuf)
+    
     #pij qij pji qji wrt branch structure ExaTron
     supY = [0 0 YftR YftI YffR 0 0 0;
     0 0 -YftI YftR -YffI 0 0 0;
@@ -183,7 +182,7 @@ function eval_b_branch_kernel_cpu_qpsub(
     YttR::Float64, YttI::Float64,
     YtfR::Float64, YtfI::Float64)
     
-    # TODO: find better way to structure and speed up computation (e.g., membuf)
+    
     supY = [YftR YftI YffR 0 0 0;
     -YftI YftR -YffI 0 0 0;
     YtfR -YtfI 0 YttR 0 0;
@@ -230,7 +229,7 @@ function eval_b_auglag_branch_kernel_cpu_qpsub(
     b = zeros(8)
     b[3:8] = bbr
     
-    # TODO: find better way to structure and speed up computation (e.g., membuf)
+    
     #pij qij pji qji wrt branch structure ExaTron
     supY = [0 0 YftR YftI YffR 0 0 0;
     0 0 -YftI YftR -YffI 0 0 0;
@@ -266,7 +265,7 @@ function eval_b_auglag_branch_kernel_cpu_qpsub_red(
     b = zeros(8)
     b[3:8] = bbr
     
-    # TODO: find better way to structure and speed up computation (e.g., membuf)
+    
     #pij qij pji qji wrt branch structure ExaTron
     supY = [0 0 YftR YftI YffR 0 0 0;
     0 0 -YftI YftR -YffI 0 0 0;

@@ -1,5 +1,5 @@
 """
-    acopf_admm_update_l()
+    admm_update_l()
     
 - update l
 - record time info.time_l_update

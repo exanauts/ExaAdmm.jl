@@ -23,7 +23,8 @@ function solve_acopf(case::String;
     env.params.outer_eps = outer_eps
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
-    env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
+    #memory allocation for CuDynamicSharedArray
+    env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n) 
 
     admm_two_level(env, mod)
 
