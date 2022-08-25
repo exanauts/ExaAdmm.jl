@@ -1,11 +1,11 @@
 """
-    acopf_admm_update_x_gen()
+    admm_update_x_gen()
     
 - update xgen: call generator_kernel_two_level_qpsub() = update sol.x[pg_idx], sol.x[qp_idx]
 - record run time info.user.time_generators, info.time_x_update
 """
 
-function acopf_admm_update_x_gen(
+function admm_update_x_gen(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     gen_sol::EmptyGeneratorSolution{Float64,Array{Float64,1}}
@@ -29,16 +29,16 @@ end
 
 
 """
-    acopf_admm_update_x_line()
+    admm_update_x_line()
     
 - update xline: call auglag_linelimit_two_level_alternative_qpsub() = update sol.x[pij_idx]
 - record run time info.user.time_branches, info.time_x_update
 """
 
-function acopf_admm_update_x_line(
+function admm_update_x_line(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
-)
+    )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
 
 #=
@@ -93,7 +93,7 @@ function acopf_admm_update_x_line(
         # println(b_ipopt)
         
         #ij or ij_red
-        time_br = @timed tronx, tronf = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(info.inner, par.max_auglag, par.mu_max, par.scale, A_ipopt, b_ipopt, mod.ls[i,:], mod.us[i,:], mod.sqp_line, sol.l_curr[shift_idx : shift_idx + 7], 
+        time_br = @timed tronx, tronf = auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(info.inner, par.max_auglag, par.mu_max, par.scale, A_ipopt, b_ipopt, mod.ls[i,:], mod.us[i,:], mod.sqp_line, sol.l_curr[shift_idx : shift_idx + 7], 
         sol.rho[shift_idx : shift_idx + 7], sol.u_curr, shift_idx, sol.v_curr[shift_idx : shift_idx + 7], 
         sol.z_curr[shift_idx : shift_idx + 7], mod.qpsub_membuf,i,
         mod.grid_data.YffR[i], mod.grid_data.YffI[i],
@@ -123,7 +123,7 @@ end
 
 
 """
-    acopf_admm_update_x()
+    admm_update_x()
     
 update xgen and xline
 """
@@ -132,10 +132,10 @@ function admm_update_x(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
-    acopf_admm_update_x_gen(env, mod, mod.gen_solution)
+    admm_update_x_gen(env, mod, mod.gen_solution)
 
     # println(mod.solution.u_curr)
-    acopf_admm_update_x_line(env, mod)
+    admm_update_x_line(env, mod) #! comment out for gpu testing 
 
 
     return

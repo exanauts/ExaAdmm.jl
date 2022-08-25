@@ -1,5 +1,5 @@
 """
-    acopf_admm_update_residual()
+    admm_update_residual()
 
 - compute termination errors and other info
 - update info.primres, info.dualres, info.norm_z_curr, info.mismatch, info. objval
@@ -12,19 +12,21 @@ function admm_update_residual(
 )
     sol, info, data, par, grid_data = mod.solution, mod.info, env.data, env.params, mod.grid_data
 
-    sol.rp .= sol.u_curr .- sol.v_curr .+ sol.z_curr #x-xbar+z_curr
-    # sol.rd .= sol.z_curr .- sol.z_prev #? NOT USED
+     #? two level
+    # sol.rp .= sol.u_curr .- sol.v_curr .+ sol.z_curr #?x-xbar+z_curr 
+    # sol.rd .= sol.z_curr .- sol.z_prev 
+    # sol.Ax_plus_By .= sol.rp .- sol.z_curr #x-xbar
+
+    #? one level (no z and new rd)
+    sol.rp .= sol.u_curr .- sol.v_curr #u-v
     sol.rd .= sol.rho .* (sol.v_curr - mod.v_prev)#single level admm from Boyd
-    sol.Ax_plus_By .= sol.rp .- sol.z_curr #x-xbar
+    sol.Ax_plus_By .= sol.rp #x-xbar
 
     info.primres = norm(sol.rp)
     info.dualres = norm(sol.rd)
-    info.norm_z_curr = norm(sol.z_curr) #? NOT USED
+    # info.norm_z_curr = norm(sol.z_curr) #? NOT USED one level 
     info.mismatch = norm(sol.Ax_plus_By)
-    # info.objval = sum(data.generators[g].coeff[data.generators[g].n-2]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
-    #                   data.generators[g].coeff[data.generators[g].n-1]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)]) +
-    #                   data.generators[g].coeff[data.generators[g].n]
-    #                   for g in 1:grid_data.ngen)::Float64
+    
 
     info.objval = sum(mod.qpsub_c2[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +
                         mod.qpsub_c1[g]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])

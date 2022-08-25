@@ -72,7 +72,7 @@ function init_solution!(
     end
 
     for l=1:nline
-        #acopf
+        
         # wij0 = (Vmax[brBusIdx[2*(l-1)+1]]^2 + Vmin[brBusIdx[2*(l-1)+1]]^2) / 2
         # wji0 = (Vmax[brBusIdx[2*l]]^2 + Vmin[brBusIdx[2*l]]^2) / 2
         # wR0 = sqrt(wij0 * wji0)
