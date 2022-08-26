@@ -55,6 +55,12 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
     Ctron = zeros(8,6)
     dtron = zeros(8)
 
+    #? for debug
+    # if lineidx == 1
+    #     println("Hbr = ", Hbr)
+    #     println("bbr = ", bbr)
+    # end
+
 
     # initialization on penalty
     if major_iter == 1 #info.inner = 1 (first inner iteration)
@@ -86,6 +92,9 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
     vec_1j = [1, 0, 0, 0, 0, 0, 0, 0] + LH_1j[1]* supY[1,:] + LH_1j[2]* supY[2,:] #1j with t_ij
     vec_1k = [0, 1, 0, 0, 0, 0, 0, 0] + LH_1k[1]* supY[3,:] + LH_1k[2]* supY[4,:] #1k with t_ji
 
+    # println("vec1j = ", vec_1j)
+    # println("vec1k = ", vec_1k)
+
         while !terminate
             it += 1
             
@@ -96,6 +105,16 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
             Ctron, dtron, btron_red =  eval_b_auglag_branch_kernel_cpu_qpsub_red(Atron, bbr,l, rho, v, z_curr, membuf[:,lineidx],
             YffR, YffI, YftR, YftI, YttR, YttI, YtfR, YtfI, 
             LH_1h, RH_1h, LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, scale)
+
+            # if lineidx == 2 && it == 1
+            #     println("Ctron ", Ctron)
+            #     println("dtron ", dtron)
+            #     println("A_aug ",Atron)
+            #     println("Atron ",Atron_red)
+            #     println("btron ",btron_red)
+            # end
+
+
 
             # for debug only 
             # print(Atron)
