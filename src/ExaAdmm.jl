@@ -199,6 +199,7 @@ include("models/qpsub/qpsub_admm_update_residual_gpu.jl")
 include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_gpu.jl")
 include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_gpu.jl") 
 include("models/qpsub/qpsub_tron_linelimit_kernel.jl")
+include("models/qpsub/qpsub_admm_prepoststep_gpu.jl")
 
 
 
