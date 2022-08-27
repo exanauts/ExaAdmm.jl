@@ -98,14 +98,14 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     sqp_line::TM #6 * nline 
     
     #collect qpsub solution 
-    dpg_sol::TD #ngen
-    dqg_sol::TD #ngen
+    dpg_sol::Array{Float64,1} #ngen
+    dqg_sol::Array{Float64,1} #ngen
 
-    dline_var::TM #6*nline: w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
-    dline_fl::TM #4*nline: p_ij, q_ij, p_ji, q_ji 
+    dline_var::Array{Float64,2} #6*nline: w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
+    dline_fl::Array{Float64,2} #4*nline: p_ij, q_ij, p_ji, q_ji 
 
-    dtheta_sol::TD #nbus consensus with line_var
-    dw_sol::TD #nbus consensus with line_var
+    dtheta_sol::Array{Float64,1} #nbus consensus with line_var
+    dw_sol::Array{Float64,1} #nbus consensus with line_var
 
     #? moved to sqp model =>
     #SQP sol and param
@@ -150,7 +150,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     nvar_padded::Int
 
     # for integration
-    dual_infeas::TD #kkt error vector |pg |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
+    dual_infeas::Array{Float64,1} #kkt error vector |pg |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
     lambda::TM #14h i j k 
     #multiplier
 
@@ -370,27 +370,27 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         
 
         # qpsub solution
-        model.dpg_sol = TD(undef, model.grid_data.ngen)
+        model.dpg_sol = Array{Float64,1}(undef, model.grid_data.ngen)
         fill!(model.dpg_sol, 0.0)
 
-        model.dqg_sol = TD(undef, model.grid_data.ngen)
+        model.dqg_sol = Array{Float64,1}(undef, model.grid_data.ngen)
         fill!(model.dqg_sol, 0.0)
         
-        model.dline_var = TM(undef,(6, model.grid_data.nline))
+        model.dline_var = Array{Float64,2}(undef,(6, model.grid_data.nline))
         fill!(model.dline_var, 0.0)
 
-        model.dline_fl = TM(undef,(4, model.grid_data.nline))
+        model.dline_fl = Array{Float64,2}(undef,(4, model.grid_data.nline))
         fill!(model.dline_fl, 0.0)
 
-        model.dtheta_sol = TD(undef, model.grid_data.nbus)
+        model.dtheta_sol = Array{Float64,1}(undef, model.grid_data.nbus)
         fill!(model.dtheta_sol, 0.0)
 
-        model.dw_sol = TD(undef, model.grid_data.nbus)
+        model.dw_sol = Array{Float64,1}(undef, model.grid_data.nbus)
         fill!(model.dw_sol, 0.0)
 
         # for SQP 
-        model.dual_infeas = TD(undef, model.grid_data.ngen + 6*model.grid_data.nline)
-        fill!(model.dual_infeas, Inf)  
+        model.dual_infeas = Array{Float64,1}(undef, model.grid_data.ngen + 6*model.grid_data.nline)
+        fill!(model.dual_infeas, 1000.0)  
 
         model.lambda = TM(undef, (4, model.grid_data.nline))
         fill!(model.lambda, 0.0)

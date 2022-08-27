@@ -63,17 +63,49 @@ function solve_qpsub(case::String, Hs, LH_1h, RH_1h,
 
     data = mod.grid_data
 
-    mod.Hs .= Hs
-    mod.LH_1h .= LH_1h
-    mod.RH_1h .= RH_1h
-    mod.LH_1i .= LH_1i
-    mod.RH_1i .= RH_1i
-    mod.LH_1j .= LH_1j
-    mod.RH_1j .= RH_1j
-    mod.LH_1k .= LH_1k
-    mod.RH_1k .= RH_1k
-    mod.ls .= ls
-    mod.us .= us
+    # mod.Hs .= Hs
+    # mod.LH_1h .= LH_1h
+    # mod.RH_1h .= RH_1h
+    # mod.LH_1i .= LH_1i
+    # mod.RH_1i .= RH_1i
+    # mod.LH_1j .= LH_1j
+    # mod.RH_1j .= RH_1j
+    # mod.LH_1k .= LH_1k
+    # mod.RH_1k .= RH_1k
+    # mod.ls .= ls
+    # mod.us .= us
+
+    # mod.qpsub_pgmax .= pgmax
+    # mod.qpsub_pgmin .= pgmin
+    # mod.qpsub_qgmax .= qgmax
+    # mod.qpsub_qgmin .= qgmin
+    
+    # mod.qpsub_c1 .= c1
+    # mod.qpsub_c2 .= c2
+    # mod.qpsub_Pd .= Pd
+    # mod.qpsub_Qd .= Qd
+
+    mod.Hs = copy(Hs)
+    mod.LH_1h = copy(LH_1h)
+    mod.RH_1h = copy(RH_1h)
+    mod.LH_1i = copy(LH_1i)
+    mod.RH_1i = copy(RH_1i)
+    mod.LH_1j = copy(LH_1j)
+    mod.RH_1j = copy(RH_1j)
+    mod.LH_1k = copy(LH_1k)
+    mod.RH_1k = copy(RH_1k)
+    mod.ls = copy(ls)
+    mod.us = copy(us)
+    
+    mod.qpsub_pgmax = copy(pgmax)
+    mod.qpsub_pgmin = copy(pgmin)
+    mod.qpsub_qgmax = copy(qgmax)
+    mod.qpsub_qgmin = copy(qgmin)
+
+    mod.qpsub_c1 = copy(c1)
+    mod.qpsub_c2 = copy(c2)
+    mod.qpsub_Pd = copy(Pd)
+    mod.qpsub_Qd = copy(Qd)
 
     
 
@@ -82,24 +114,13 @@ function solve_qpsub(case::String, Hs, LH_1h, RH_1h,
     env.params.outer_eps = outer_eps
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
-    env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
+    # env.params.shmem_size = sizeof(Float64)*(14*mod.n+3*mod.n^2) + sizeof(Int)*(4*mod.n)
+    env.params.shmem_size = sizeof(Float64)*(16*mod.n+4*mod.n^2+178) + sizeof(Int)*(4*mod.n)
 
     env.params.initial_beta = initial_beta #use my initial beta 
 
-    mod.qpsub_pgmax .= pgmax
-    mod.qpsub_pgmin .= pgmin
-    mod.qpsub_qgmax .= qgmax
-    mod.qpsub_qgmin .= qgmin
-    
-
-    mod.qpsub_c1 .= c1
-    mod.qpsub_c2 .= c2
-    mod.qpsub_Pd .= Pd
-    mod.qpsub_Qd .= Qd
-
     init_solution!(mod, mod.solution, env.initial_rho_pq, env.initial_rho_va)
 
-    
     #debug check all values before using admm
     
     #onelevel or two level admm 
