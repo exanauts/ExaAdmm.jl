@@ -508,11 +508,17 @@ end
 
      dual_infeas_cpu = vcat(dual_infeas_1_cpu,dual_infeas_2_cpu,dual_infeas_3_cpu,dual_infeas_4_cpu,dual_infeas_5_cpu)
 
+     lambda_cpu = [0.488894     435.795        282.155     -0.0489912    248.787        348.203         0.135763     267.164        315.305
+     0.790211       0.88808        0.816501  -0.0653646      0.576725       0.456339      0.0687841      0.210784       0.140033
+    -8.67362e-19   -8.67362e-19   -0.0       -0.0           -4.33681e-19   -1.73472e-18  -0.0           -8.67362e-19   -8.67362e-19
+    -2.60209e-18   -0.0           -0.0       -1.73472e-18   -8.67362e-19   -8.67362e-19  -8.67362e-19   -0.0           -8.67362e-19]
+
      @test norm(dpg_sol_cpu - Array(mod3.dpg_sol),  Inf) <= atol 
      @test norm(dqg_sol_cpu - Array(mod3.dqg_sol),  Inf) <= atol 
      @test norm(dline_var_cpu - Array(mod3.dline_var),  Inf) <= atol 
      @test norm(dline_fl_cpu - Array(mod3.dline_fl),  Inf) <= atol 
      @test norm(dtheta_sol_cpu - Array(mod3.dtheta_sol),  Inf) <= atol 
      @test norm(dw_sol_cpu - Array(mod3.dw_sol),  Inf) <= atol 
-     @test norm(dual_infeas_cpu - Array(mod3.dual_infeas),  Inf) <= atol 
+     @test norm(dual_infeas_cpu - Array(mod3.dual_infeas),  Inf) <= atol
+     @test norm((lambda_cpu - Array(mod3.lambda))./max.(abs.(lambda_cpu),1), Inf) <= 2e-6 
 end
