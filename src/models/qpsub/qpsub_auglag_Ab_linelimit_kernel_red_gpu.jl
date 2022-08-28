@@ -339,9 +339,48 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
 
     
     #TODO:get multiplier
+
+    # tmpH = inv([LH_1h[1]  LH_1i[1]; LH_1h[2]  LH_1i[2]])
+    # tmp14_i = [2*u[shift_idx]*YftR + 2*u[shift_idx + 1]*(-YftI), 2*u[shift_idx]*YftI + 2*u[shift_idx + 1]*YftR]
+    # tmp14_h = [2*u[shift_idx + 2]*YtfR + 2*u[shift_idx + 3]*(-YtfI), 2*u[shift_idx + 2]*-YtfI + 2*u[shift_idx + 3]*(-YtfR)]
+    # #14h 14i
+    # lambda[1:2,lineidx] = -tmpH*(trg[1]*tmp14_i + trg[2]*tmp14_h + Hbr[1:2,1:2]*sqp_line[1:2,lineidx] + Hbr[1:2,3:6]*sqp_line[3:6,lineidx] + bbr[1:2]) 
+    # #14j 
+    # lambda[3,lineidx] = -abs(trg[1]) #<=0 one_side ineq
+    # #14k 
+    # lambda[4,lineidx] = -abs(trg[2]) #<=0 one-side ineq
+
+    tmpH11 = inv11
+    tmpH12 = inv21
+    tmpH21 = inv12
+    tmpH22 = inv22
+
+    tmp14i_1 = 2*u_curr[shift_idx]*YftR[lineidx] + 2*u_curr[shift_idx + 1]*(-YftI[lineidx])
+    tmp14i_2 = 2*u_curr[shift_idx]*YftI[lineidx] + 2*u_curr[shift_idx + 1]*YftR[lineidx]
+
+    tmp14h_1 = 2*u_curr[shift_idx + 2]*YtfR[lineidx] + 2*u_curr[shift_idx + 3]*(-YtfI[lineidx])
+    tmp14h_2 = 2*u_curr[shift_idx + 2]*(-YtfI[lineidx]) + 2*u_curr[shift_idx + 3]*(-YtfR[lineidx])
+
+    trg[1] = Atron[1,1] * x[1] + Atron[1,2]*x[2] + Atron[1,3]*x[3] + Atron[1,4]*x[4] +
+            Atron[1,5]*x[5] + Atron[1,6]*x[6] + btron[1]
+
+    trg[2] = Atron[2,1] * x[1] + Atron[2,2]*x[2] + Atron[2,3]*x[3] + Atron[2,4]*x[4] +
+            Atron[2,5]*x[5] + Atron[2,6]*x[6] + btron[2]
+            
+    lambda[3,lineidx] = -abs(trg[1])
+    lambda[4,lineidx] = -abs(trg[2])
+
+    rhs_1 = trg[1]*tmp14i_1 + trg[2]*tmp14h_1 + Hbr[1,1]*sqp_line[1,lineidx] + Hbr[1,2]*sqp_line[2,lineidx] + 
+                Hbr[1,3]*sqp_line[3,lineidx] + Hbr[1,4]*sqp_line[4,lineidx] + Hbr[1,5]*sqp_line[5,lineidx] +
+                Hbr[1,6]*sqp_line[6,lineidx] + bbr[1]
+
+    rhs_2 = trg[1]*tmp14i_2 + trg[2]*tmp14h_2 + Hbr[2,1]*sqp_line[1,lineidx] + Hbr[2,2]*sqp_line[2,lineidx] + 
+                Hbr[2,3]*sqp_line[3,lineidx] + Hbr[2,4]*sqp_line[4,lineidx] + Hbr[2,5]*sqp_line[5,lineidx] +
+                Hbr[2,6]*sqp_line[6,lineidx] + bbr[2]
+
+    lambda[1,lineidx] = -tmpH11*rhs_1 - tmpH12*rhs_2
+    lambda[2,lineidx] = -tmpH21*rhs_1 - tmpH22*rhs_2
     
-
-
     CUDA.sync_threads()   
     return 
 end
