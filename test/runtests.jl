@@ -1,7 +1,6 @@
 using Test
 using LinearAlgebra
 using Printf
-# using CUDA
 
 using ExaAdmm
 using LazyArtifacts
