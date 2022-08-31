@@ -59,11 +59,6 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     Hs::TM  # Hessian information for all lines 6*nline x 6: |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
     
     #QP coefficient for orignal branch kernel QP problem
-    #only for testing for now 
-    A_ipopt::TM #|w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)| 
-    b_ipopt::TM #|w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
-    
-    
     LH_1h::TM  # nline * 4 : w_ijR w_ijI wi(ij) wj(ji)
     RH_1h::TD  # nline   
     LH_1i::TM  # nline * 4 : w_ijR w_ijI thetai(ij) thetaj(ji)
@@ -109,38 +104,6 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     dtheta_sol::Array{Float64,1} #nbus consensus with line_var
     dw_sol::Array{Float64,1} #nbus consensus with line_var
 
-    #? moved to sqp model =>
-    #SQP sol and param
-    # pg_sol::TD #ngen
-    # qg_sol::TD #ngen
-
-    # line_var::TM #6*nline: w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
-    # line_fl::TM #4*nline: p_ij, q_ij, p_ji, q_ji 
-
-    # theta_sol::TD #nbus consensus with line_var
-    # w_sol::TD #nbus consensus with line_var
-
-    # pft::TD #nbus support Pd balance
-    # ptf::TD #nbus support Pd balance
-    # pgb::TD #nbus support Pd balance
-
-    # qft::TD #nbus support Qd balance
-    # qtf::TD #nbus support Qd balance
-    # qgb::TD #nbus support Qd balance
-
-    #? moved to sqp model =>
-    # eps_sqp::T
-    # TR_sqp::TD #trust region radius for independent var 2*ngen + 4*nline: w_i, w_j, theta_i, theta_j
-    # iter_lim_sqp::T
-    # pen_merit::T #penalty for merit
-    # FR_check::Bool #do FR or not
-    # LF_check::Bool #do LF or not
-    # SOC_check::Bool #do SOC or not 
-
-    # bool_line::Array{Bool,2} #4* nline: 14h i j k violated violated or not for each line  
-    # multi_line::TM #4*nline multiplier for 14h i j k 
-     
-
     # Two-Level ADMM
     nvar_u::Int
     nvar_v::Int
@@ -153,8 +116,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
     # for integration
     dual_infeas::Array{Float64,1} #kkt error vector |pg |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
-    lambda::TM #14h i j k 
-    #multiplier
+    lambda::TM #14h i j k multiplier
 
     # additional memory allocation for branch kernel (GPU)
     # NOTE: added by bowen 
@@ -206,16 +168,9 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.nvar_u_padded = model.nvar_u + 8*(model.nline_padded - model.grid_data.nline)
         model.nvar_v = 2*model.grid_data.ngen + 4*model.grid_data.nline + 2*model.grid_data.nbus
         model.bus_start = 2*model.grid_data.ngen + 4*model.grid_data.nline + 1
-        # if env.use_twolevel
-        #     model.nvar = model.nvar_u + model.nvar_v
-        #     model.nvar_padded = model.nvar_u_padded + model.nvar_v
-        # end
 
         # Memory space is allocated based on the padded size.
         model.solution = Solution{T,TD}(model.nvar_padded)
-        # model.solution = ifelse(env.use_twolevel,
-        #     SolutionTwoLevel{T,TD}(model.nvar_padded, model.nvar_v, model.nline_padded),
-        #     Solution{T,TD}(model.nvar_padded))
         
         model.gen_solution = EmptyGeneratorSolution{T,TD}()
         
@@ -223,7 +178,6 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.membuf = TM(undef, (31, model.grid_data.nline))
         fill!(model.membuf, 0.0)
         model.membuf[29,:] .= model.grid_data.rateA
-
 
         model.info = IterationInformation{ComponentInformation}()
 
@@ -242,12 +196,6 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         #new qpsub parameters
         model.Hs = TM(undef,(6*model.grid_data.nline,6))
         fill!(model.Hs, 0.0)
-
-        model.A_ipopt = TM(undef,(6*model.grid_data.nline,6))
-        fill!(model.A_ipopt, 0.0)
-
-        model.b_ipopt = TM(undef,(6,model.grid_data.nline))
-        fill!(model.b_ipopt, 0.0)
 
         model.line_res = TM(undef,(4,model.grid_data.nline))
         fill!(model.line_res, 0.0)
@@ -316,61 +264,6 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         model.qpsub_Qd = TD(undef, model.grid_data.nbus)
         fill!(model.qpsub_Qd, 0.0)
-
-        # SQP
-        # model.pg_sol = TD(undef, model.grid_data.ngen)
-        # fill!(model.pg_sol, 0.0)
-
-        # model.qg_sol = TD(undef, model.grid_data.ngen)
-        # fill!(model.qg_sol, 0.0)
-        
-        # model.line_var = TM(undef,(6, model.grid_data.nline))
-        # fill!(model.line_var, 0.0)
-
-        # model.line_fl = TM(undef,(4, model.grid_data.nline))
-        # fill!(model.line_fl, 0.0)
-
-        # model.theta_sol = TD(undef, model.grid_data.nbus)
-        # fill!(model.theta_sol, 0.0)
-
-        # model.w_sol = TD(undef, model.grid_data.nbus)
-        # fill!(model.w_sol, 0.0)
-
-        # model.pft = TD(undef, model.grid_data.nbus)
-        # fill!(model.pft, 0.0)
-
-        # model.ptf = TD(undef, model.grid_data.nbus)
-        # fill!(model.ptf, 0.0)
-
-        # model.pgb = TD(undef, model.grid_data.nbus)
-        # fill!(model.pgb, 0.0)
-
-        # model.qft = TD(undef, model.grid_data.nbus)
-        # fill!(model.qft, 0.0)
-
-        # model.qtf = TD(undef, model.grid_data.nbus)
-        # fill!(model.qtf, 0.0)
-
-        # model.qgb = TD(undef, model.grid_data.nbus)
-        # fill!(model.qgb, 0.0)
-
-        # model.TR_sqp = TD(undef, 2*model.grid_data.ngen + 4*model.grid_data.nline)
-        # fill!(model.TR_sqp, TR)
-
-        # model.eps_sqp = eps
-        # model.iter_lim_sqp = iter_lim
-        # model.pen_merit = 1.0 
-        # model.FR_check = false
-        # model.SOC_check = false
-        # model.LF_check = false
-
-        # model.bool_line = Array{Bool,2}(undef, (4, model.grid_data.nline))
-        # fill!(model.bool_line, false)
-
-        # model.multi_line = TM(undef, (4, model.grid_data.nline))
-        # fill!(model.multi_line, 0.0)
-
-        
 
         # qpsub solution
         model.dpg_sol = Array{Float64,1}(undef, model.grid_data.ngen)
@@ -459,30 +352,6 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
 
     model.sqp_line = copy(ref.sqp_line)
 
-    # model.pg_sol = copy(ref.pg_sol)
-    # model.qg_sol = copy(ref.qg_sol)
-    # model.line_var = copy(ref.line_var)
-    # model.line_fl = copy(ref.line_fl)
-    # model.theta_sol = copy(ref.theta_sol)
-    # model.w_sol = copy(ref.w_sol)
-    # model.pft = copy(ref.pft)
-    # model.ptf = copy(ref.ptf)
-    # model.pgb = copy(ref.pgb)
-    # model.qft = copy(ref.qft)
-    # model.qtf = copy(ref.qtf)
-    # model.qgb = copy(ref.qgb)
-
-    # model.eps_sqp = copy(ref.eps_sqp)
-    # model.iter_lim_sqp = copy(ref.iter_lim_sqp)
-    # model.TR_sqp = copy(ref.TR_sqp)
-    # model.pen_merit = ref.pen_merit
-    # model.FR_check = ref.FR_check
-    # model.SOC_check = ref.SOC_check
-    # model.LF_check = ref.LF_check
-    
-    # model.bool_line = copy(ref.bool_line)
-    # model.multi_line = copy(ref.multi_line) 
-
     model.dpg_sol = copy(ref.dpg_sol)
     model.dqg_sol = copy(ref.dqg_sol)
     model.dline_var = copy(ref.dline_var)
@@ -509,8 +378,6 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
     model.lambda = copy(ref.lambda)
 
     #additional parameters 
-    model.A_ipopt = copy(ref.A_ipopt)
-    model.b_ipopt = copy(ref.b_ipopt)
     model.supY = copy(ref.supY)
 
     return model

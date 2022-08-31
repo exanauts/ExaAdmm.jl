@@ -1,7 +1,6 @@
 function admm_one_level(
     env::AdmmEnv, mod::AbstractOPFModel
 )
-    println("version date = 0831")
     par = env.params
     info = mod.info
     sol = mod.solution
@@ -35,38 +34,19 @@ function admm_one_level(
     overall_time = @timed begin
     while info.outer < par.outer_iterlim
         admm_increment_outer(env, mod)
-        # admm_outer_prestep(env, mod) #?not used one level
+
 
         admm_increment_reset_inner(env, mod)
         while info.inner < par.inner_iterlim
             admm_increment_inner(env, mod)
-            # admm_inner_prestep(env, mod) #?not used one level  
             
-            #? debug
-            # println(maximum(par.beta),maximum(abs.(mod.solution.z_curr)),maximum(abs.(mod.solution.lz)))
-            # println(norm(mod.solution.u_curr),norm(mod.solution.v_curr),norm(mod.solution.l_curr))
-            # println(mod.solution.u_curr)
+            
             admm_update_x(env, mod)
             
-            #? debug
-            # println(maximum(par.beta),maximum(abs.(mod.solution.z_curr)),maximum(abs.(mod.solution.lz)))
-            # println(norm(mod.solution.u_curr),norm(mod.solution.v_curr),norm(mod.solution.l_curr))
-            
-            #? debug
-            # println(mod.solution.v_curr)
             admm_update_xbar(env, mod)
-            # println(mod.solution.v_curr)
 
-            #? debug
-            # println(maximum(par.beta),maximum(abs.(mod.solution.z_curr)),maximum(abs.(mod.solution.lz)))
-            # println(norm(mod.solution.u_curr),norm(mod.solution.v_curr),norm(mod.solution.l_curr))
-            # println(mod.solution.l_curr)
             admm_update_l_single(env, mod)
-            # println(mod.solution.l_curr)
 
-            #? debug
-            # println(maximum(par.beta),maximum(abs.(mod.solution.z_curr)),maximum(abs.(mod.solution.lz)))
-            # println(norm(mod.solution.u_curr),norm(mod.solution.v_curr),norm(mod.solution.l_curr))
             admm_update_residual(env, mod)
 
             if par.verbose > 0

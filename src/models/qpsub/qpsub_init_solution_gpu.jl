@@ -39,12 +39,6 @@ function init_branch_bus_kernel_qpsub(n::Int, line_start::Int, rho_va::Float64,
         sqp_line[6,l] = (ls[l,6] + us[l,6])/2
 
         pij_idx = line_start + 8*(l-1)
-        
-       
-        # supY = [YftR[l] YftI[l] YffR[l] 0 0 0;
-        # -YftI[l] YftR[l] -YffI[l] 0 0 0;
-        # YtfR[l] -YtfI[l] 0 YttR[l] 0 0;
-        # -YtfI[l] -YtfR[l] 0 -YttI[l] 0 0]
 
         supY[4*(l-1) + 1,3] = YftR[l]
         supY[4*(l-1) + 1,4] = YftI[l]

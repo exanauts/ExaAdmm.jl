@@ -78,19 +78,12 @@ function admm_poststep(
 
     Hs = Array(mod.Hs)
 
-    # println("here")
-
     #final objective and auglag 
     info.objval = sum(c2[g]*(grid_data.baseMVA*u_curr[mod.gen_start+2*(g-1)])^2 +
                     c1[g]*(grid_data.baseMVA*u_curr[mod.gen_start+2*(g-1)])
                     for g in 1:grid_data.ngen) + 
                         sum(0.5*dot(sqp_line[:,l],Hs[6*(l-1)+1:6*l,1:6],sqp_line[:,l]) for l=1:grid_data.nline) 
     
-    # info.auglag = info.objval + sum(sol.lz[i]*sol.z_curr[i] for i=1:mod.nvar) +
-    #                     0.5*par.beta*sum(sol.z_curr[i]^2 for i=1:mod.nvar) +
-    #                     sum(sol.l_curr[i]*sol.rp[i] for i=1:mod.nvar) +
-    #                     0.5*sum(sol.rho[i]*(sol.rp[i])^2 for i=1:mod.nvar)   
-
     info.auglag = info.objval +
                         sum(l_curr[i]*rp[i] for i=1:mod.nvar) +
                         0.5*sum(rho[i]*(rp[i])^2 for i=1:mod.nvar) 
@@ -111,7 +104,6 @@ function admm_poststep(
             mod.dqg_sol[g] = u_curr[qg_idx]
         end
         
-        # mod.dline_var = copy(mod.sqp_line)
         copyto!(mod.dline_var, sqp_line)
 
         for l = 1:grid_data.nline

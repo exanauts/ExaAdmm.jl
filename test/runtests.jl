@@ -5,9 +5,6 @@ using Printf
 using ExaAdmm
 using LazyArtifacts
 
-using JuMP
-using Ipopt
-
 # Data
 const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
 const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "matpower")
