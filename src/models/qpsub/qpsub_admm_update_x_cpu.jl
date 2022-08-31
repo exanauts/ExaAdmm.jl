@@ -87,7 +87,7 @@ function admm_update_x_line(
         mod.grid_data.YffR[i], mod.grid_data.YffI[i],
         mod.grid_data.YftR[i], mod.grid_data.YftI[i],
         mod.grid_data.YttR[i], mod.grid_data.YttI[i],
-        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i])
+        mod.grid_data.YtfR[i], mod.grid_data.YtfI[i], mod.line_res[:,i])
 
         # println(A_ipopt)
         # println(b_ipopt)
@@ -100,7 +100,7 @@ function admm_update_x_line(
         mod.grid_data.YftR[i], mod.grid_data.YftI[i],
         mod.grid_data.YttR[i], mod.grid_data.YttI[i],
         mod.grid_data.YtfR[i], mod.grid_data.YtfI[i],
-        mod.LH_1h[i,:], mod.RH_1h[i], mod.LH_1i[i,:], mod.RH_1i[i], mod.LH_1j[i,:], mod.RH_1j[i], mod.LH_1k[i,:], mod.RH_1k[i], mod.lambda)
+        mod.LH_1h[i,:], mod.RH_1h[i], mod.LH_1i[i,:], mod.RH_1i[i], mod.LH_1j[i,:], mod.RH_1j[i], mod.LH_1k[i,:], mod.RH_1k[i], mod.lambda, mod.line_res[:,i])
 
 
         # println(mod.solution.u_curr)

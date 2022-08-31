@@ -523,7 +523,7 @@ end #@testset
         mod1.grid_data.YffR[i], mod1.grid_data.YffI[i],
         mod1.grid_data.YftR[i], mod1.grid_data.YftI[i],
         mod1.grid_data.YttR[i], mod1.grid_data.YttI[i],
-        mod1.grid_data.YtfR[i], mod1.grid_data.YtfI[i])
+        mod1.grid_data.YtfR[i], mod1.grid_data.YtfI[i], mod1.line_res[:,i])
         # println()
         # print("3 ",mod.Hs[6*(i-1)+1:6*i,1:6])
 
@@ -576,7 +576,7 @@ end #@testset
         mod1.grid_data.YftR[i], mod1.grid_data.YftI[i],
         mod1.grid_data.YttR[i], mod1.grid_data.YttI[i],
         mod1.grid_data.YtfR[i], mod1.grid_data.YtfI[i],
-        mod1.LH_1h[i,:], mod1.RH_1h[i], mod1.LH_1i[i,:], mod1.RH_1i[i], mod1.LH_1j[i,:], mod1.RH_1j[i], mod1.LH_1k[i,:], mod1.RH_1k[i])
+        mod1.LH_1h[i,:], mod1.RH_1h[i], mod1.LH_1i[i,:], mod1.RH_1i[i], mod1.LH_1j[i,:], mod1.RH_1j[i], mod1.LH_1k[i,:], mod1.RH_1k[i], mod1.line_res[:,i])
         # println(sol.u_curr[shift_idx : shift_idx + 7]) #output u_curr[pij]
 
         tronx2, tronf2 = ExaAdmm.auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(1, par.max_auglag, par.mu_max, 1e-4, A_ipopt, b_ipopt, mod1.ls[i,:], mod1.us[i,:], mod1.sqp_line, sol.l_curr[shift_idx : shift_idx + 7], 
@@ -586,7 +586,7 @@ end #@testset
         mod1.grid_data.YftR[i], mod1.grid_data.YftI[i],
         mod1.grid_data.YttR[i], mod1.grid_data.YttI[i],
         mod1.grid_data.YtfR[i], mod1.grid_data.YtfI[i],
-        mod1.LH_1h[i,:], mod1.RH_1h[i], mod1.LH_1i[i,:], mod1.RH_1i[i], mod1.LH_1j[i,:], mod1.RH_1j[i], mod1.LH_1k[i,:], mod1.RH_1k[i], mod1.lambda)
+        mod1.LH_1h[i,:], mod1.RH_1h[i], mod1.LH_1i[i,:], mod1.RH_1i[i], mod1.LH_1j[i,:], mod1.RH_1j[i], mod1.LH_1k[i,:], mod1.RH_1k[i], mod1.lambda, mod1.line_res[:,i])
 
         res[i] = norm(tronx[3:8] - x_ipopt1, Inf)
         res2[i] = norm(tronx[3:8] - x_ipopt2, Inf)

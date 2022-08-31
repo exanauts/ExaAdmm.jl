@@ -33,7 +33,7 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij(
     YttR::Float64, YttI::Float64,
     YtfR::Float64, YtfI::Float64, 
     LH_1h::Array{Float64,1}, RH_1h::Float64,
-    LH_1i::Array{Float64,1}, RH_1i::Float64, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64)
+    LH_1i::Array{Float64,1}, RH_1i::Float64, LH_1j::Array{Float64,1},RH_1j::Float64, LH_1k::Array{Float64,1},RH_1k::Float64, line_res::Array{Float64,1})
 
     
     # for debug only
@@ -161,10 +161,10 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij(
         end #end ALM
 
     #save variables TODO: check if sol.u is actually updated 
-    u[shift_idx] = dot(supY[1,:],x) #pij
-    u[shift_idx + 1] = dot(supY[2,:],x) #qij
-    u[shift_idx + 2] = dot(supY[3,:],x) #pji
-    u[shift_idx + 3] = dot(supY[4,:],x) #qji
+    u[shift_idx] = dot(supY[1,:],x) + line_res[1]#pij
+    u[shift_idx + 1] = dot(supY[2,:],x) + line_res[2]#qij
+    u[shift_idx + 2] = dot(supY[3,:],x) + line_res[3]#pji
+    u[shift_idx + 3] = dot(supY[4,:],x) + line_res[4]#qji
     u[shift_idx + 4] = x[5] #wi
     u[shift_idx + 5] = x[6] #wj
     u[shift_idx + 6] = x[7] #thetai

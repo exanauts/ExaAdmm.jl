@@ -26,7 +26,7 @@
 
 
 function eval_A_b_branch_kernel_gpu_qpsub(
-    H, l, rho, v, z, A_ipopt, b_ipopt, id_line, shift_idx, supY, tx)
+    H, l, rho, v, z, A_ipopt, b_ipopt, id_line, shift_idx, supY, tx, line_res)
 
     # YffR = _YffR[id_line]; YffI = _YffI[id_line]
     # YftR = _YftR[id_line]; YftI = _YftI[id_line]
@@ -73,10 +73,10 @@ function eval_A_b_branch_kernel_gpu_qpsub(
                                 # b[5] += (l[7] - rho[7]*(v[7]-z[7])) #thetai(ij)
                                 # b[6] += (l[8] - rho[8]*(v[8]-z[8])) #thetaj(ji) 
                         
-                                b_ipopt[j] = (l[shift_idx] - rho[shift_idx]*(v[shift_idx] - z[shift_idx]))*supY[4*(id_line - 1) + 1,j+2] + 
-                                (l[shift_idx+1] - rho[shift_idx+1]*(v[shift_idx+1] - z[shift_idx+1]))*supY[4*(id_line - 1) + 2,j+2] +
-                                (l[shift_idx+2] - rho[shift_idx+2]*(v[shift_idx+2] - z[shift_idx+2]))*supY[4*(id_line - 1) + 3,j+2] +
-                                (l[shift_idx+3] - rho[shift_idx+3]*(v[shift_idx+3] - z[shift_idx+3]))*supY[4*(id_line - 1) + 4,j+2]  
+                                b_ipopt[j] = (l[shift_idx] - rho[shift_idx]*(v[shift_idx] - z[shift_idx] - line_res[1, id_line]))*supY[4*(id_line - 1) + 1,j+2] + 
+                                (l[shift_idx+1] - rho[shift_idx+1]*(v[shift_idx+1] - z[shift_idx+1] - line_res[2, id_line]))*supY[4*(id_line - 1) + 2,j+2] +
+                                (l[shift_idx+2] - rho[shift_idx+2]*(v[shift_idx+2] - z[shift_idx+2] -  line_res[3, id_line]))*supY[4*(id_line - 1) + 3,j+2] +
+                                (l[shift_idx+3] - rho[shift_idx+3]*(v[shift_idx+3] - z[shift_idx+3] -  line_res[4, id_line]))*supY[4*(id_line - 1) + 4,j+2]  
                 end
 
                 b_ipopt[3] += l[shift_idx+4] - rho[shift_idx+4]*(v[shift_idx+4] - z[shift_idx+4])

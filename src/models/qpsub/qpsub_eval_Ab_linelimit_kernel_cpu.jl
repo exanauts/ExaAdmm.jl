@@ -180,7 +180,7 @@ function eval_b_branch_kernel_cpu_qpsub(
     YffR::Float64, YffI::Float64,
     YftR::Float64, YftI::Float64,
     YttR::Float64, YttI::Float64,
-    YtfR::Float64, YtfI::Float64)
+    YtfR::Float64, YtfI::Float64, res::Array{Float64,1})
     
     
     supY = [YftR YftI YffR 0 0 0;
@@ -191,10 +191,10 @@ function eval_b_branch_kernel_cpu_qpsub(
     b = zeros(6)
 
     @inbounds begin
-        b .+= (l[1] - rho[1]*(v[1]-z[1])) * supY[1,:] #pij
-        b .+=  (l[2] - rho[2]*(v[2]-z[2])) * supY[2,:] #qij
-        b .+= (l[3] - rho[3]*(v[3]-z[3])) * supY[3,:] #pji
-        b .+=  (l[4] - rho[4]*(v[4]-z[4])) * supY[4,:] #qji
+        b .+= (l[1] - rho[1]*(v[1]-z[1]-res[1])) * supY[1,:] #pij
+        b .+=  (l[2] - rho[2]*(v[2]-z[2]-res[2])) * supY[2,:] #qij
+        b .+= (l[3] - rho[3]*(v[3]-z[3]-res[3])) * supY[3,:] #pji
+        b .+=  (l[4] - rho[4]*(v[4]-z[4]-res[4])) * supY[4,:] #qji
         b[3] += (l[5] - rho[5]*(v[5]-z[5])) #wi(ij)
         b[4] += (l[6] - rho[6]*(v[6]-z[6])) #wj(ji)
         b[5] += (l[7] - rho[7]*(v[7]-z[7])) #thetai(ij)

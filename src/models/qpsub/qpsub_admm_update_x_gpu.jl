@@ -43,7 +43,7 @@ function admm_update_x_line(
     mod.grid_data.YftR, mod.grid_data.YftI,
     mod.grid_data.YttR, mod.grid_data.YttI,
     mod.grid_data.YtfR, mod.grid_data.YtfI, info.inner, par.max_auglag, par.mu_max, par.scale, mod.ls, mod.us, mod.sqp_line,
-    mod.qpsub_membuf, mod.LH_1h, mod.RH_1h, mod.LH_1i, mod.RH_1i, mod.LH_1j, mod.RH_1j, mod.LH_1k, mod.RH_1k, mod.lambda, mod.line_start, mod.grid_data.nline, mod.supY)
+    mod.qpsub_membuf, mod.LH_1h, mod.RH_1h, mod.LH_1i, mod.RH_1i, mod.LH_1j, mod.RH_1j, mod.LH_1k, mod.RH_1k, mod.lambda, mod.line_start, mod.grid_data.nline, mod.supY, mod.line_res)
 
     info.user.time_branches += time_br.time
     info.time_x_update += time_br.time
