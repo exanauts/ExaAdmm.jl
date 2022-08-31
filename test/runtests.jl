@@ -4,9 +4,6 @@ using Printf
 
 using ExaAdmm
 using LazyArtifacts
-using Random
-using JuMP
-using Ipopt
 
 # Data
 const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")

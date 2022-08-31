@@ -53,19 +53,18 @@ function eval_A_branch_kernel_cpu_qpsub(
 
     H_new = H
     @inbounds begin 
-            # println(H)
+          
             H_new .+= rho[1]*supY[1,:]*transpose(supY[1,:]) #pij
             H_new .+= rho[2]*supY[2,:]*transpose(supY[2,:]) #qij
             H_new .+= rho[3]*supY[3,:]*transpose(supY[3,:]) #pji
             H_new .+= rho[4]*supY[4,:]*transpose(supY[4,:]) #qji
-            # println(H)
+            
             H_new[3,3] += rho[5] #wi(ij) 
             H_new[4,4] += rho[6] #wj(ji) 
             H_new[5,5] += rho[7] #thetai(ij)
             H_new[6,6] += rho[8] #thetaj(ji)
     end
     
-    #! H may not be perfectly symmetric 
     return H #6*6 #not scale
 end
 
@@ -113,7 +112,6 @@ function eval_A_auglag_branch_kernel_cpu_qpsub(
             A .+= membuf[5]*vec_1k*transpose(vec_1k) #add auglag for 1k
     end
     
-    #! A may not be perfectly symmetric 
     return A*scale #dim = 8*8 scaled for non-red
 end
 
@@ -140,24 +138,18 @@ function eval_A_auglag_branch_kernel_cpu_qpsub_red(
     0 0 -YtfI -YtfR 0 -YttI 0 0]
 
     #ALM on equality constraint wrt branch structure ExaTron
-    # vec_1h = [0, 0, LH_1h[1], LH_1h[2], LH_1h[3], LH_1h[4], 0, 0 ] #1h #?not used 
-    # vec_1i = [0, 0, LH_1i[1], LH_1i[2], 0, 0, LH_1i[3], LH_1i[4]]  #1i #?not used 
     vec_1j = [1, 0, 0, 0, 0, 0, 0, 0] + LH_1j[1]* supY[1,:] + LH_1j[2]* supY[2,:] #1j with t_ij
     vec_1k = [0, 1, 0, 0, 0, 0, 0, 0] + LH_1k[1]* supY[3,:] + LH_1k[2]* supY[4,:] #1k with t_ji
 
-    @inbounds begin 
-            # A .+= membuf[5]*vec_1h*transpose(vec_1h) #add auglag for 1h #?not used
-            
-            # A .+= membuf[5]*vec_1i*transpose(vec_1i) #add auglag for 1i #? not used 
-            
+    @inbounds begin          
             A .+= membuf[5]*vec_1j*transpose(vec_1j) #add auglag for 1j
             
             A .+= membuf[5]*vec_1k*transpose(vec_1k) #add auglag for 1k
     end
     
-    #! A may not be perfectly symmetric 
 
-    inv_ij = inv([LH_1h[1]  LH_1h[2]; LH_1i[1]  LH_1i[2]]) #TODO: fix with computation 
+
+    inv_ij = inv([LH_1h[1]  LH_1h[2]; LH_1i[1]  LH_1i[2]]) 
     C_ij = -inv_ij * [0  0  LH_1h[3] LH_1h[4] 0 0; 0 0 0 0 LH_1i[3] LH_1i[4]]
     C = zeros(8,6)
     C[1,1] = C[2,2] = 1
@@ -273,19 +265,15 @@ function eval_b_auglag_branch_kernel_cpu_qpsub_red(
     0 0 -YtfI -YtfR 0 -YttI 0 0]
 
     #ALM on equality constraint wrt branch structure ExaTron
-    # vec_1h = [0, 0, LH_1h[1], LH_1h[2], LH_1h[3], LH_1h[4], 0, 0 ] #1h #not used 
-    # vec_1i = [0, 0, LH_1i[1], LH_1i[2], 0, 0, LH_1i[3], LH_1i[4]] #1i #not used 
     vec_1j = [1, 0, 0, 0, 0, 0, 0, 0] + LH_1j[1]* supY[1,:] + LH_1j[2]* supY[2,:] #1j with t_ij
     vec_1k = [0, 1, 0, 0, 0, 0, 0, 0] + LH_1k[1]* supY[3,:] + LH_1k[2]* supY[4,:] #1k with t_ji
 
     @inbounds begin 
-            # b .+= (membuf[1] - membuf[5]*RH_1h)*vec_1h #1h #?not used
-            # b .+= (membuf[2] - membuf[5]*RH_1i)*vec_1i #1i #?not used 
             b .+= (membuf[3] - membuf[5]*RH_1j)*vec_1j #1j
             b .+= (membuf[4] - membuf[5]*RH_1k)*vec_1k #1k
     end
 
-    inv_ij = inv([LH_1h[1] LH_1h[2]; LH_1i[1] LH_1i[2]]) #TODO: fix with computation 
+    inv_ij = inv([LH_1h[1] LH_1h[2]; LH_1i[1] LH_1i[2]]) 
     C_ij = -inv_ij * [0 0 LH_1h[3] LH_1h[4] 0 0; 0 0 0 0 LH_1i[3] LH_1i[4]]
     d_ij = inv_ij * [RH_1h; RH_1i]
     C = zeros(8,6)

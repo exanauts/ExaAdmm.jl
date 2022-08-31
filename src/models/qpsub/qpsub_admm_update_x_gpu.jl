@@ -31,14 +31,8 @@ function admm_update_x_line(
     )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
 
-    # nblk = div(model.grid_data.ngen, 32, RoundUp)
     shmem_size = env.params.shmem_size
 
-    #reset
-    # fill!(mod.A_ipopt, 0.0)
-    # fill!(mod.b_ipopt, 0.0)
-
-    #use nline blocks 
     time_br = CUDA.@timed @cuda threads=32 blocks=data.nline shmem=shmem_size auglag_linelimit_qpsub(mod.Hs, sol.l_curr, sol.rho, sol.u_curr, sol.v_curr, sol.z_curr, mod.grid_data.YffR, mod.grid_data.YffI,
     mod.grid_data.YftR, mod.grid_data.YftI,
     mod.grid_data.YttR, mod.grid_data.YttI,
@@ -50,33 +44,6 @@ function admm_update_x_line(
     
 return
 end
-
-# function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, YffI,
-#          YftR, YftI, YttR, YttI, YtfR, YtfI, inner, max_auglag, mu_max, scale, ls, us, sqp_line,
-#          qpsub_membuf, LH_1h, RH_1h, LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, lambda, line_start, nline, supY)
-
-#     tx = threadIdx().x
-#     id_line = blockIdx().x
-#     # id_line = I + shift_lines
-#     shift_idx = line_start + 8*(id_line-1)
-
-#     if id_line <= nline 
-#         auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(inner, max_auglag, mu_max, scale, Hs[6*(id_line - 1) + 1:6*id_line, 1:6], ls[i,:], us[i,:], sqp_line, l_curr[shift_idx : shift_idx + 7], 
-#         rho[shift_idx : shift_idx + 7], u_curr, shift_idx, v_curr[shift_idx : shift_idx + 7], 
-#         z_curr[shift_idx : shift_idx + 7], qpsub_membuf,i,
-#         YffR[id_line], YffI[id_line],
-#         YftR[id_line], YftI[id_line],
-#         YttR[id_line], YttI[id_line],
-#         YtfR[id_line], YtfI[id_line],
-#         LH_1h[id_line,:], RH_1h[id_line], LH_1i[id_line,:], RH_1i[id_line], LH_1j[id_line,:], RH_1j[id_line], LH_1k[id_line,:], RH_1k[id_line], lambda, supY[4*(id_line - 1) + 1:4*id_line, 1:8])
-    
-#             # println(mod.solution.u_curr)
-#     end #if
-
-
-#     return
-# end
-
 
 
 """

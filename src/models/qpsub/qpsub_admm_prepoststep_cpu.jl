@@ -77,7 +77,7 @@ function admm_poststep(
         for g = 1: grid_data.ngen
             pg_idx = mod.gen_start + 2*(g-1)
             qg_idx = mod.gen_start + 2*(g-1) + 1
-            mod.dpg_sol[g] = sol.u_curr[pg_idx] #? or use u+v/2 if terminate with iter limit 
+            mod.dpg_sol[g] = sol.u_curr[pg_idx] 
             mod.dqg_sol[g] = sol.u_curr[qg_idx]
         end
         
