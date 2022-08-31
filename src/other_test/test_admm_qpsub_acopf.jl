@@ -10,8 +10,8 @@ using JuMP
 using Ipopt
 
 
-INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
-MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "matpower")
+# INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
+# MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "matpower")
 
 fix_line = false
 # case = joinpath(INSTANCES_DIR, "case9.m")

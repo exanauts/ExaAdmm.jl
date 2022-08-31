@@ -80,6 +80,8 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     is_HS_sym::Array{Bool,1} #nline
     is_HS_PSD::Array{Bool,1} #nline 
 
+    line_res::TM #4*nline
+
     qpsub_c1::TD #ngen
     qpsub_c2::TD #ngen
 
@@ -247,8 +249,9 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.b_ipopt = TM(undef,(6,model.grid_data.nline))
         fill!(model.b_ipopt, 0.0)
 
+        model.line_res = TM(undef,(4,model.grid_data.nline))
+        fill!(model.line_res, 0.0)
 
-        
         #1h
         model.LH_1h = TM(undef,(model.grid_data.nline,4))
         fill!(model.LH_1h, 0.0)
@@ -451,6 +454,8 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
 
     model.ls = copy(ref.ls)
     model.us = copy(ref.us)
+
+    model.line_res = copy(ref.line_res)
 
     model.sqp_line = copy(ref.sqp_line)
 

@@ -28,7 +28,7 @@
 
 function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, YffI,
     YftR, YftI, YttR, YttI, YtfR, YtfI, inner, max_auglag, mu_max, scale, lqp, uqp, sqp_line,
-    membuf, LH_1h, RH_1h, LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, lambda, line_start, nline, supY)
+    membuf, LH_1h, RH_1h, LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, lambda, line_start, nline, supY, line_res)
 
     tx = threadIdx().x
     lineidx = blockIdx().x
@@ -93,7 +93,7 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     trg[6] = 0.0
 
     eval_A_b_branch_kernel_gpu_qpsub(
-    Hs, l_curr, rho, v_curr, z_curr, Hbr, bbr, lineidx, shift_idx, supY, tx)
+    Hs, l_curr, rho, v_curr, z_curr, Hbr, bbr, lineidx, shift_idx, supY, tx, line_res)
 
     #for debug 
     # if lineidx == 1
@@ -318,19 +318,19 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     # #save variables
     # u[shift_idx] = dot(supY[1,:],Ctron * x + dtron) #pij
     u_curr[shift_idx] = supY[4*(lineidx - 1) + 1,3]*sqp_line[1,lineidx] + supY[4*(lineidx - 1) + 1,4]*sqp_line[2,lineidx] + supY[4*(lineidx - 1) + 1,5]*sqp_line[3,lineidx] +
-                    supY[4*(lineidx - 1) + 1,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 1,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 1,8]*sqp_line[6,lineidx]
+                    supY[4*(lineidx - 1) + 1,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 1,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 1,8]*sqp_line[6,lineidx] + line_res[1,lineidx]
     
     # u[shift_idx + 1] = dot(supY[2,:],Ctron * x + dtron) #qij
     u_curr[shift_idx + 1] = supY[4*(lineidx - 1) + 2,3]*sqp_line[1,lineidx] + supY[4*(lineidx - 1) + 2,4]*sqp_line[2,lineidx] + supY[4*(lineidx - 1) + 2,5]*sqp_line[3,lineidx] +
-                    supY[4*(lineidx - 1) + 2,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 2,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 2,8]*sqp_line[6,lineidx]
+                    supY[4*(lineidx - 1) + 2,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 2,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 2,8]*sqp_line[6,lineidx] + line_res[2,lineidx]
     
     # u[shift_idx + 2] = dot(supY[3,:],Ctron * x + dtron) #pji
     u_curr[shift_idx + 2] = supY[4*(lineidx - 1) + 3,3]*sqp_line[1,lineidx] + supY[4*(lineidx - 1) + 3,4]*sqp_line[2,lineidx] + supY[4*(lineidx - 1) + 3,5]*sqp_line[3,lineidx] +
-                    supY[4*(lineidx - 1) + 3,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 3,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 3,8]*sqp_line[6,lineidx]
+                    supY[4*(lineidx - 1) + 3,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 3,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 3,8]*sqp_line[6,lineidx] + line_res[3,lineidx]
     
     # u[shift_idx + 3] = dot(supY[4,:],Ctron * x + dtron) #qji
     u_curr[shift_idx + 3] = supY[4*(lineidx - 1) + 4,3]*sqp_line[1,lineidx] + supY[4*(lineidx - 1) + 4,4]*sqp_line[2,lineidx] + supY[4*(lineidx - 1) + 4,5]*sqp_line[3,lineidx] +
-                    supY[4*(lineidx - 1) + 4,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 4,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 4,8]*sqp_line[6,lineidx]
+                    supY[4*(lineidx - 1) + 4,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 4,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 4,8]*sqp_line[6,lineidx] + line_res[4,lineidx]
 
     u_curr[shift_idx + 4] = x[3] #wi
     u_curr[shift_idx + 5] = x[4] #wj
