@@ -18,10 +18,10 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-AMDGPU = "0.3"
+AMDGPU = "0.4"
 CUDA = "3.4"
 ExaTron = "2"
 FileIO = "1.14"
 KernelAbstractions = "0.8"
 MPI = "0.19"
-julia = "1.7"
+julia = "1.8"
