@@ -1,7 +1,7 @@
 name = "ExaAdmm"
 uuid = "4d6a948c-1075-4240-a564-361a5d4e22a2"
 authors = ["Youngdae Kim <youngdae@anl.gov>", "Kibaek Kim <kimk@anl.gov>", "Weiqi Zhang <wzhang483@wisc.edu>", "François Pacaud <fpacaud@anl.gov>", "Michel Schanen <mschanen@anl.gov>"]
-version = "0.2.0"
+version = "0.3.0"
 
 [deps]
 AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
@@ -18,10 +18,10 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-AMDGPU = "0.3"
+AMDGPU = "0.4"
 CUDA = "3.4"
 ExaTron = "2"
 FileIO = "1.14"
 KernelAbstractions = "0.8"
 MPI = "0.19"
-julia = "1.7"
+julia = "1.8"
