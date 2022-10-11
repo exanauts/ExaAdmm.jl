@@ -28,47 +28,38 @@ function Base.fill!(uc_params::UCParameters, val)
 end
 
 # This is the solution struct for UC variables (v, w, y)
-mutable struct SolutionUC{T,TD} <: AbstractSolution{T,TD}
-    u_curr::TD
-    v_curr::TD
-    l_curr::TD
-    u_prev::Union{TD, Nothing}
-    rho::TD
-    rd::TD
-    rp::TD
-    z_outer::TD
-    z_curr::TD
-    z_prev::TD
-    lz::TD
-    Ax_plus_By::TD
-    t::Int
+mutable struct SolutionUC{T,TM} <: AbstractSolution{T,TM}
+    u_curr::TM
+    v_curr::TM
+    l_curr::TM
+    rho::TM
+    rd::TM
+    rp::TM
+    z_outer::TM
+    z_curr::TM
+    z_prev::TM
+    lz::TM
+    Ax_plus_By::TM
+    s_curr::TM
     len_horizon::Int
 
-    function SolutionUC{T,TD}(
+    function SolutionUC{T,TM}(
         ngen::Int, 
-        _t::Int, 
-        _len_horizon::Int,
-        at_first::Bool=false
-    ) where {T,TD<:AbstractArray{T}}
-        if at_first
-            u_prev = TD(undef, ngen)
-        else
-            u_prev = nothing
-        end
-        sol = new{T,TD}(
-            TD(undef, 3*ngen), # u_curr: [v, w, y]
-            TD(undef, 3*ngen), # v_curr: [\bar{v}, \bar{w}, \bar{y}]
-            TD(undef, 3*ngen), # l_curr: [λ_v, λ_w, λ_y]
-            u_prev,            # u_prev: [\hat{v}]
-            TD(undef, 3*ngen), # rho: [ρ_v, ρ_w, ρ_y]
-            TD(undef, 3*ngen), # rd
-            TD(undef, 3*ngen), # rp
-            TD(undef, 3*ngen), # z_outer
-            TD(undef, 3*ngen), # z_curr
-            TD(undef, 3*ngen), # z_prev
-            TD(undef, 3*ngen), # lz
-            TD(undef, 3*ngen), # Ax_plus_By
-            _t,                # t
+        _len_horizon::Int
+    ) where {T,TM<:AbstractArray{T, 2}}
+        sol = new{T,TM}(
+            TM(undef, ngen, 3*_len_horizon), # u_curr: [v, w, y]
+            TM(undef, ngen, 3*_len_horizon), # v_curr: [\bar{v}, \bar{w}, \bar{y}]
+            TM(undef, ngen, 3*_len_horizon), # l_curr: [λ_v, λ_w, λ_y]
+            TM(undef, ngen, 3*_len_horizon), # rho: [ρ_v, ρ_w, ρ_y]
+            TM(undef, ngen, 3*_len_horizon), # rd
+            TM(undef, ngen, 3*_len_horizon), # rp
+            TM(undef, ngen, 3*_len_horizon), # z_outer
+            TM(undef, ngen, 3*_len_horizon), # z_curr
+            TM(undef, ngen, 3*_len_horizon), # z_prev
+            TM(undef, ngen, 3*_len_horizon), # lz
+            TM(undef, ngen, 3*_len_horizon), # Ax_plus_By
+            TM(undef, ngen, 4*_len_horizon), # s_curr: [s^{p,UB}, s^{p,LB}, s^{q,UB}, s^{q,LB}]
             _len_horizon       # len_horizon
         )
 
@@ -77,11 +68,13 @@ mutable struct SolutionUC{T,TD} <: AbstractSolution{T,TD}
     end
 end
 
+# The ramping solution records solutions of previous-time p and v.
+# Not actually needed for t = 1.
 function UCSolutionRamping(T, TD, ngen::Int, _t::Int, _len_horizon::Int)
     sol = SolutionRamping{T,TD}(
-        TD(undef, 2*ngen),  # u_curr: [p, q]
-        TD(undef, 2*ngen),  # v_curr
-        TD(undef, 2*ngen),  # l_curr
+        TD(undef, 2*ngen),  # u_curr: [\hat{p}, \hat{v}]
+        TD(undef, 2*ngen),  # v_curr: NOT USED, will couple with bus vars at previous time
+        TD(undef, 2*ngen),  # l_curr: [λ_{\hat{p}}, λ_{\hat{v}}]
         TD(undef, 2*ngen),  # rho
         TD(undef, 2*ngen),  # rd
         TD(undef, 2*ngen),  # rp
@@ -90,7 +83,7 @@ function UCSolutionRamping(T, TD, ngen::Int, _t::Int, _len_horizon::Int)
         TD(undef, 2*ngen),  # z_prev
         TD(undef, 2*ngen),  # lz
         TD(undef, 2*ngen),  # Ax_plus_By
-        TD(undef, 6*ngen),  # s_curr: [s^U, s^D, s^{p,UB}, s^{p,LB}, s^{q,UB}, s^{q,LB}]
+        TD(undef, 2*ngen),  # s_curr: [s^U, s^D]
         _t,                 # t
         _len_horizon        # len_horizon
     )
@@ -109,12 +102,13 @@ function Base.fill!(sol::SolutionUC, val)
     fill!(sol.z_prev, val)
     fill!(sol.lz, val)
     fill!(sol.Ax_plus_By, val)
+    fill!(sol.s_curr, val)
 end
 
 mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     info::IterationInformation
     uc_params::UCParameters{TI}             # uc related parameters
-    uc_solution::Vector{SolutionUC{T, TD}}  # uc related solution
+    uc_solution::SolutionUC{T, TM}          # uc related solution
 
     nvar::Int                               # total number of variables
     mpmodel::ModelMpacopf{T,TD,TI,TM}       # a collection of time periods
@@ -165,10 +159,7 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
             fill!(mod.uc_membufs[i], 0.0)
         end
 
-        mod.uc_solution = Vector{SolutionUC{T,TD}}(undef, num_periods)
-        for i=1:num_periods
-            mod.uc_solution[i] = SolutionUC{T,TD}(ngen, i, num_periods, i==1)
-        end
+        mod.uc_solution = SolutionUC{T,TM}(ngen, num_periods)
         init_solution!(mod, mod.uc_solution, env.initial_rho_pq, env.initial_rho_va)
 
         # TODO: double check what nvar means here
