@@ -30,7 +30,6 @@ function solve_ucmp(case::String, load_prefix::String, gen_prefix::String;
             verbose=verbose)
     mod = UCMPModel{T,TD,TI,TM}(env, gen_prefix; start_period=start_period, end_period=end_period, ramp_ratio=ramp_ratio)
 
-    n = mod.mpmodel.models[1].n
     env.params.scale = scale
     env.params.obj_scale = obj_scale
     env.params.outer_eps = outer_eps
