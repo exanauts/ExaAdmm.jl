@@ -170,6 +170,8 @@ include("models/ucmp/ucmp_admm_increment.jl")
 
 # CPU specific implementation
 include("models/ucmp/ucmp_init_solution_cpu.jl")
+include("models/ucmp/ucmp_eval_generator_kernel_cpu.jl")
+include("models/ucmp/ucmp_auglag_generator_kernel_cpu.jl")
 include("models/ucmp/ucmp_admm_update_x_cpu.jl")
 include("models/ucmp/ucmp_admm_update_xbar_cpu.jl")
 include("models/ucmp/ucmp_admm_update_z_cpu.jl")
