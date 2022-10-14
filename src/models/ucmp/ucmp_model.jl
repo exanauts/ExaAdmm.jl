@@ -50,8 +50,8 @@ mutable struct SolutionUC{T,TM} <: AbstractSolution{T,TM}
         sol = new{T,TM}(
             TM(undef, ngen, 3*_len_horizon), # u_curr: [v, w, y]
             TM(undef, ngen, 3*_len_horizon), # v_curr: [\bar{v}, \bar{w}, \bar{y}]
-            TM(undef, ngen, 3*_len_horizon), # l_curr: [λ_v, λ_w, λ_y]
-            TM(undef, ngen, 3*_len_horizon), # rho: [ρ_v, ρ_w, ρ_y]
+            TM(undef, ngen, 7*_len_horizon), # l_curr: [λ_v, λ_w, λ_y, λ_pu, λ_pl, λ_qu, λ_ql]
+            TM(undef, ngen, 7*_len_horizon), # rho: [ρ_v, ρ_w, ρ_y, ρ_pu, ρ_pl, ρ_qu, ρ_ql]
             TM(undef, ngen, 3*_len_horizon), # rd
             TM(undef, ngen, 3*_len_horizon), # rp
             TM(undef, ngen, 3*_len_horizon), # z_outer
@@ -74,8 +74,8 @@ function UCSolutionRamping(T, TD, ngen::Int, _t::Int, _len_horizon::Int)
     sol = SolutionRamping{T,TD}(
         TD(undef, 2*ngen),  # u_curr: [\hat{p}, \hat{v}]
         TD(undef, 2*ngen),  # v_curr: NOT USED, will couple with bus vars at previous time
-        TD(undef, 2*ngen),  # l_curr: [λ_{\hat{p}}, λ_{\hat{v}}]
-        TD(undef, 2*ngen),  # rho
+        TD(undef, 4*ngen),  # l_curr: [λ_{\hat{p}}, λ_{\hat{v}}, λ_{su}, λ_{sd}]
+        TD(undef, 4*ngen),  # rho: [ρ_{\hat{p}}, ρ_{\hat{v}}, ρ_{su}, ρ_{sd}]
         TD(undef, 2*ngen),  # rd
         TD(undef, 2*ngen),  # rp
         TD(undef, 2*ngen),  # z_outer
