@@ -8,6 +8,7 @@ function ucmp_admm_update_x_gen(
 )
     par, info = env.params, mod.info
     mpmod = mod.mpmodel
+    fill!(mod.uc_membuf, 0)
 
     for i=1:mpmod.len_horizon
         submod, subsol, sol_ramp, subdata = mpmod.models[i], mpmod.models[i].solution, mpmod.solution[i], mpmod.models[i].grid_data
@@ -28,6 +29,15 @@ function ucmp_admm_update_x_gen(
 
         submod.info.time_x_update += time_gen.time
         submod.info.user.time_generators += time_gen.time
+
+        if i > 1
+            ucmp_update_uc_membuf_with_ramping_kernel(
+                i, subdata.ngen,
+                sol_ramp.u_curr, sol_ramp.z_curr,
+                sol_ramp.l_curr, sol_ramp.rho,
+                mod.uc_membuf
+            )
+        end
     end
     return
 end
