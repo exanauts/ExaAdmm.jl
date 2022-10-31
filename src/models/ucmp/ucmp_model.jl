@@ -1,17 +1,21 @@
-mutable struct UCParameters{TI}
-    v0::TI # Generator initial statuses
-    Tu::TI # Minimum up time
-    Td::TI # Minimum down time
-    Hu::TI # Up hours required at the beginning
-    Hd::TI # Down hours required at the beginning
+mutable struct UCParameters{TI,TD}
+    v0::TI      # Generator initial statuses
+    Tu::TI      # Minimum up time
+    Td::TI      # Minimum down time
+    Hu::TI      # Up hours required at the beginning
+    Hd::TI      # Down hours required at the beginning
+    con::TD     # Cost of switching on
+    coff::TD    # Cost of switching off
 
-    function UCParameters{TI}(ngen::Int) where {TI <: AbstractArray}
-        uc_params = new{TI}(
+    function UCParameters{TI,TD}(ngen::Int) where {TI <: AbstractArray, TD <: AbstractArray}
+        uc_params = new{TI,TD}(
             TI(undef, ngen),
             TI(undef, ngen),
             TI(undef, ngen),
             TI(undef, ngen),
-            TI(undef, ngen)
+            TI(undef, ngen),
+            TD(undef, ngen),
+            TD(undef, ngen)
         )
 
         fill!(uc_params, 0)
@@ -25,6 +29,8 @@ function Base.fill!(uc_params::UCParameters, val)
     fill!(uc_params.Td, val)
     fill!(uc_params.Hu, val)
     fill!(uc_params.Hd, val)
+    fill!(uc_params.con, val)
+    fill!(uc_params.coff, val)
 end
 
 # This is the solution struct for UC variables (v, w, y)
@@ -113,7 +119,8 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     nvar::Int                               # total number of variables
     mpmodel::ModelMpacopf{T,TD,TI,TM}       # a collection of time periods
 
-    uc_membufs::Vector{TM}                  # memory buffer for uc in generator kernel
+    # uc_membufs::Vector{TM}                  # memory buffer for uc in generator kernel
+    uc_membuf::TM                           # memory buffer for uc in generator kernel
 
     function UCMPModel{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM}, gen_prefix::String;
         start_period=1, end_period=1, ramp_ratio=0.02) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
@@ -125,7 +132,7 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         num_periods = end_period - start_period + 1
         mod.mpmodel = ModelMpacopf{T,TD,TI,TM}(env, start_period=start_period, end_period=end_period, ramp_ratio=ramp_ratio)
         ngen = mod.mpmodel.models[1].grid_data.ngen
-        mod.uc_params = UCParameters{TI}(ngen)
+        mod.uc_params = UCParameters{TI,TD}(ngen)
 
         # Resize ramping solution in ModelMpacopf
         for i=1:num_periods
@@ -138,14 +145,18 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         Tds = readdlm(gen_prefix*".td")
         Hus = readdlm(gen_prefix*".hu")
         Hds = readdlm(gen_prefix*".hd")
+        cons = readdlm(gen_prefix*".con")
+        coffs = readdlm(gen_prefix*".coff")
 
-        @assert ngen == length(v0s) == length(Tus) == length(Tds) == length(Hus) == length(Hds)
+        @assert ngen == length(v0s) == length(Tus) == length(Tds) == length(Hus) == length(Hds) == length(cons) == length(coffs)
 
         copyto!(mod.uc_params.v0, v0s)
         copyto!(mod.uc_params.Tu, Tus)
         copyto!(mod.uc_params.Td, Tds)
         copyto!(mod.uc_params.Hu, Hus)
         copyto!(mod.uc_params.Hd, Hds)
+        copyto!(mod.uc_params.con, cons)
+        copyto!(mod.uc_params.coff, coffs)
 
         for submod in mod.mpmodel.models
             submod.gen_membuf = TM(undef, (43, ngen))
@@ -153,11 +164,13 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         end
 
         # TODO: decide the amount of memory needed for each of uc_membufs
-        mod.uc_membufs = Vector{TM}(undef, num_periods)
-        for i in 1:num_periods
-            mod.uc_membufs[i] = TM(undef, (1,ngen)) # TODO: replace 1 with the actual amount of memory needed
-            fill!(mod.uc_membufs[i], 0.0)
-        end
+        # mod.uc_membufs = Vector{TM}(undef, num_periods)
+        # for i in 1:num_periods
+        #     mod.uc_membufs[i] = TM(undef, (1,ngen)) # TODO: replace 1 with the actual amount of memory needed
+        #     fill!(mod.uc_membufs[i], 0.0)
+        # end
+        mod.uc_membuf = TM(undef, (ngen, 3*num_periods))
+        fill!(mod.uc_membuf, 0.0)
 
         mod.uc_solution = SolutionUC{T,TM}(ngen, num_periods)
         init_solution!(mod, mod.uc_solution, env.initial_rho_pq, env.initial_rho_va)
