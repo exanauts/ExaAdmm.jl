@@ -7,7 +7,8 @@ function bus_kernel_ramp(
     u::Array{Float64,1}, v::Array{Float64,1},
     z::Array{Float64,1}, l::Array{Float64,1}, rho::Array{Float64,1},
     YshR::Array{Float64,1}, YshI::Array{Float64,1},
-    r_u::Array{Float64,1}, r_z::Array{Float64,1}, r_l::Array{Float64,1}, r_rho::Array{Float64,1}
+    r_u::Array{Float64,1}, r_z::Array{Float64,1}, r_l::Array{Float64,1}, r_rho::Array{Float64,1},
+    modeltype::Symbol=:mpacopf
 )
     for I=1:nbus
         common_wi = 0.0
@@ -54,11 +55,17 @@ function bus_kernel_ramp(
             if GenStart[I] < GenStart[I+1]
                 for g=GenStart[I]:GenStart[I+1]-1
                     pg_idx = gen_start + 2*(GenIdx[g]-1)
-                    gid = GenIdx[g]
+                    if modeltype == :ucmp
+                        gid = GenIdx[g]
+                        ruid = rzid = 2*gid-1
+                        rrhoid = rlid = 4*gid-3
+                    else
+                        ruid = rrhoid = rlid = rzid = GenIdx[g]
+                    end
                     rhs1 += ( (l[pg_idx]+rho[pg_idx]*(u[pg_idx]+z[pg_idx])) +
-                              (r_l[gid] + r_rho[gid]*(r_u[gid]+r_z[gid])) ) / (rho[pg_idx] + r_rho[gid])
+                              (r_l[rlid] + r_rho[rrhoid]*(r_u[ruid]+r_z[rzid])) ) / (rho[pg_idx] + r_rho[rrhoid])
                     rhs2 += (u[pg_idx+1] + z[pg_idx+1]) + (l[pg_idx+1]/rho[pg_idx+1])
-                    inv_rhosum_pg += 1.0 / (rho[pg_idx] + r_rho[gid])
+                    inv_rhosum_pg += 1.0 / (rho[pg_idx] + r_rho[rrhoid])
                     inv_rhosum_qg += 1.0 / rho[pg_idx+1]
                 end
             end
@@ -97,10 +104,16 @@ function bus_kernel_ramp(
 
             for k=GenStart[I]:GenStart[I+1]-1
                 pg_idx = gen_start + 2*(GenIdx[k]-1)
-                gid = GenIdx[k]
+                if modeltype == :ucmp
+                    gid = GenIdx[k]
+                    ruid = rzid = 2*gid-1
+                    rrhoid = rlid = 4*gid-3
+                else
+                    ruid = rrhoid = rlid = rzid = GenIdx[k]
+                end
                 #v[pg_idx] = (u[pg_idx] + z[pg_idx]) + (l[pg_idx] - mu1) / rho[pg_idx]
                 v[pg_idx] = ( (l[pg_idx]+rho[pg_idx]*(u[pg_idx]+z[pg_idx])) +
-                              (r_l[gid]+r_rho[gid]*(r_u[gid]+r_z[gid])) - mu1 ) / (rho[pg_idx]+r_rho[gid])
+                              (r_l[rlid]+r_rho[rrhoid]*(r_u[ruid]+r_z[rzid])) - mu1 ) / (rho[pg_idx]+r_rho[rrhoid])
                 v[pg_idx+1] = (u[pg_idx+1] + z[pg_idx+1]) + (l[pg_idx+1] - mu2) / rho[pg_idx+1]
             end
             for j=FrStart[I]:FrStart[I+1]-1
