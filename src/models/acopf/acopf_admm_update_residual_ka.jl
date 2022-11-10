@@ -13,7 +13,7 @@ end
 function admm_update_residual(
     env::AdmmEnv,
     mod::AbstractOPFModel,
-    device::KA.GPU
+    device
 )
     sol, info = mod.solution, mod.info
 

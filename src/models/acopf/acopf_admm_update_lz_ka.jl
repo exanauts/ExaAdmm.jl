@@ -13,7 +13,7 @@ end
 function admm_update_lz(
     env::AdmmEnv,
     mod::AbstractOPFModel,
-    device::KA.GPU
+    device
 )
     par, sol, info = env.params, mod.solution, mod.info
     ev = update_lz_kernel_ka(device,64,mod.nvar)(

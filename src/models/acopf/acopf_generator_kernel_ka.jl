@@ -26,7 +26,7 @@ end
 function generator_kernel_two_level(
     model::ModelAcopf,
     baseMVA::Float64, u, xbar,
-    zu, lu, rho_u, device::KA.GPU
+    zu, lu, rho_u, device
 )
     nblk = div(model.grid_data.ngen, 32, RoundUp)
     ev = generator_kernel_two_level_ka(device,32,nblk*32)(

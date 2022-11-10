@@ -91,7 +91,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     tight_factor::T
     horizon_length::Int
     use_gpu::Bool
-    ka_device::Union{Nothing,KA.GPU}
+    ka_device
     use_linelimit::Bool
     use_mpi::Bool
     use_projection::Bool

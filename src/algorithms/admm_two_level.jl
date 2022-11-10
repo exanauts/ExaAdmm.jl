@@ -1,5 +1,5 @@
 function admm_two_level(
-    env::AdmmEnv, mod::AbstractOPFModel, device::Union{Nothing,KA.GPU}=nothing
+    env::AdmmEnv, mod::AbstractOPFModel, device=nothing
 )
     par = env.params
     info = mod.info

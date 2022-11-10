@@ -1,7 +1,7 @@
 function admm_update_xbar(
     env::AdmmEnv,
     mod::AbstractOPFModel,
-    device::KA.GPU
+    device
 )
     sol, info, data = mod.solution, mod.info, mod.grid_data
     # nblk_bus = div(data.nbus, 32, RoundUp)
