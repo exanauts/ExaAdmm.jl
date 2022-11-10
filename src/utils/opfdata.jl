@@ -578,7 +578,7 @@ function get_generator_data(data::OPFData, device::Nothing=nothing; use_gpu=fals
   return pgmin,pgmax,qgmin,qgmax,c2,c1,c0
 end
 
-function get_generator_data(data::OPFData, device::KA.GPU; use_gpu=false)
+function get_generator_data(data::OPFData, device; use_gpu=false)
   ngen = length(data.generators)
 
     pgmin = KAArray{Float64}(ngen, device)
@@ -651,7 +651,7 @@ function get_bus_data(data::OPFData, device::Nothing=nothing; use_gpu=false)
   end
 end
 
-function get_bus_data(data::OPFData, device::KA.GPU; use_gpu=false)
+function get_bus_data(data::OPFData, device; use_gpu=false)
   nbus = length(data.buses)
 
   FrIdx = Int[l for b=1:nbus for l in data.FromLines[b]]
@@ -755,7 +755,7 @@ function get_branch_data(data::OPFData, device::Nothing=nothing; use_gpu::Bool=f
   end
 end
 
-function get_branch_data(data::OPFData, device::KA.GPU; use_gpu::Bool=false, tight_factor::Float64=1.0)
+function get_branch_data(data::OPFData, device; use_gpu::Bool=false, tight_factor::Float64=1.0)
   buses = data.buses
   lines = data.lines
   BusIdx = data.BusIdx
@@ -829,7 +829,7 @@ function get_branch_bus_index(data::OPFData, device::Nothing=nothing; use_gpu=fa
   end
 end
 
-function get_branch_bus_index(data::OPFData, device::KA.GPU; use_gpu=false)
+function get_branch_bus_index(data::OPFData, device; use_gpu=false)
   lines = data.lines
   BusIdx = data.BusIdx
   nline = length(lines)
@@ -866,7 +866,7 @@ function get_generator_bus_data(data::OPFData, device::Nothing=nothing; use_gpu=
   return vgmin, vgmax, vm_setpoint
 end
 
-function get_generator_bus_data(data::OPFData, device::KA.GPU; use_gpu=false)
+function get_generator_bus_data(data::OPFData, device; use_gpu=false)
   ngen = length(data.generators)
 
   vgmin = KAArray{Float64}(ngen, device)
@@ -906,7 +906,7 @@ function get_generator_primary_control(data::OPFData, device::Nothing=nothing; d
   return alpha_g, pg_setpoint
 end
 
-function get_generator_primary_control(data::OPFData, device::KA.GPU; droop::Float64=0.04, use_gpu=false)
+function get_generator_primary_control(data::OPFData, device; droop::Float64=0.04, use_gpu=false)
   ngen = length(data.generators)
 
   alpha_g = KAArray{Float64}(ngen, device)
@@ -955,7 +955,7 @@ function get_storage_data(data::OPFData, device::Nothing=nothing; use_gpu=false)
   end
 end
 
-function get_storage_data(data::OPFData, device::KA.GPU; use_gpu=false)
+function get_storage_data(data::OPFData, device; use_gpu=false)
   nstorage = length(data.storages)
 
   chg_min = Float64[data.storages[s].chg_min for s=1:nstorage]
@@ -1004,7 +1004,7 @@ function get_bus_storage_index(data::OPFData, device::Nothing=nothing; use_gpu=f
   end
 end
 
-function get_bus_storage_index(data::OPFData, device::KA.GPU; use_gpu=false)
+function get_bus_storage_index(data::OPFData, device; use_gpu=false)
   nbus = length(data.buses)
 
   StorageIdx = Int[s for b=1:nbus for s in data.BusStorages[b]]

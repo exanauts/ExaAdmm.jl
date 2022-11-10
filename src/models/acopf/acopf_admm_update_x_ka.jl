@@ -2,7 +2,7 @@ function acopf_admm_update_x_gen(
     env::AdmmEnv,
     mod::AbstractOPFModel,
     gen_solution::EmptyGeneratorSolution,
-    device::KA.GPU
+    device
 )
     sol, info, data = mod.solution, mod.info, mod.grid_data
     generator_kernel_two_level(mod, data.baseMVA, sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho, device)
@@ -13,7 +13,7 @@ end
 function acopf_admm_update_x_line(
     env::AdmmEnv,
     mod::AbstractOPFModel,
-    device::KA.GPU
+    device
 )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
     if env.use_linelimit
@@ -45,7 +45,7 @@ end
 function admm_update_x(
     env::AdmmEnv,
     mod::AbstractOPFModel,
-    device::KA.GPU
+    device
 )
     acopf_admm_update_x_gen(env, mod, mod.gen_solution, device)
     acopf_admm_update_x_line(env, mod, device)

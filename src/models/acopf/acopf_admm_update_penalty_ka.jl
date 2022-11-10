@@ -15,7 +15,7 @@ end
 function acopf_admm_update_penalty(
     env::AdmmEnv,
     mod::Model,
-    device::KA.GPU
+    device
 )
 #=
     par, sol = env.params, mod.solution

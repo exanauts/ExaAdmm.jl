@@ -1,7 +1,7 @@
 function admm_outer_prestep(
     env::AdmmEnv,
     mod::AbstractOPFModel,
-    device::KA.GPU
+    device
 )
     sol, info = mod.solution, mod.info
     info.norm_z_prev = norm(sol.z_curr)
@@ -11,7 +11,7 @@ end
 function admm_inner_prestep(
     env::AdmmEnv,
     mod::AbstractOPFModel,
-    device::KA.GPU
+    device
 )
     sol = mod.solution
     ev = copy_data_kernel_ka(device, 64, mod.nvar)(
@@ -26,7 +26,7 @@ end
 function admm_poststep(
     env::AdmmEnv,
     mod::AbstractOPFModel,
-    device::KA.GPU
+    device
 )
     data, sol, info, grid_data = env.data, mod.solution, mod.info, mod.grid_data
 
