@@ -57,8 +57,6 @@
         # param[39,I]: pmin
         # param[40,I]: qmax
         # param[41,I]: qmin
-        # param[42,I]: mu
-        # param[43,I]: xi
 #########################################################
 
 function ucmp_auglag_generator_kernel(
@@ -116,12 +114,12 @@ function ucmp_auglag_generator_kernel(
         param[5,I] = uc_l[I, 7*I-5]
         param[6,I] = uc_l[I, 7*I-4]
         param[7,I] = r_l[4*I-2]
-        param[8,I] = r_l[4*I-1]
-        param[9,I] = r_l[4*I]
-        param[10,I] = uc_l[I, 7*t-3]
-        param[11,I] = uc_l[I, 7*t-2]
-        param[12,I] = uc_l[I, 7*t-1]
-        param[13,I] = uc_l[I, 7*t]
+        # param[8,I] = r_l[4*I-1]
+        # param[9,I] = r_l[4*I]
+        # param[10,I] = uc_l[I, 7*t-3]
+        # param[11,I] = uc_l[I, 7*t-2]
+        # param[12,I] = uc_l[I, 7*t-1]
+        # param[13,I] = uc_l[I, 7*t]
         param[14,I] = rho[pg_idx]
         param[15,I] = rho[qg_idx]
         param[16,I] = r_rho[4*I-3]
@@ -129,12 +127,12 @@ function ucmp_auglag_generator_kernel(
         param[18,I] = uc_rho[7*I-5]
         param[19,I] = uc_rho[7*I-4]
         param[20,I] = r_rho[4*I-2]
-        param[21,I] = r_rho[4*I-1]
-        param[22,I] = r_rho[4*I]
-        param[23,I] = uc_rho[7*I-3]
-        param[24,I] = uc_rho[7*I-2]
-        param[25,I] = uc_rho[7*I-1]
-        param[26,I] = uc_rho[7*I]
+        # param[21,I] = r_rho[4*I-1]
+        # param[22,I] = r_rho[4*I]
+        # param[23,I] = uc_rho[7*I-3]
+        # param[24,I] = uc_rho[7*I-2]
+        # param[25,I] = uc_rho[7*I-1]
+        # param[26,I] = uc_rho[7*I]
         param[27,I] = v[pg_idx] - z[pg_idx]
         param[28,I] = v[qg_idx] - z[qg_idx]
         t > 1 ? param[29,I] = v[pg_idx-2] - z[pg_idx-2] : param[29,I] = 0.
@@ -151,11 +149,28 @@ function ucmp_auglag_generator_kernel(
         param[40,I] = qgmax[I]
         param[41,I] = qgmin[I]
 
+        # Initialization of Augmented Lagrangian Method Parameters
         if major_iter <= 1
-            param[43,I] = 10.0
-            xi = 10.0
-        else
-            xi = param[43,I]
+            # mu (Lagrangian term parameter)
+            param[10,I] = 10.0
+            param[11,I] = 10.0
+            param[12,I] = 10.0
+            param[13,I] = 10.0
+            # xi (augmented term parameter)
+            param[23,I] = 10.0
+            param[24,I] = 10.0
+            param[25,I] = 10.0
+            param[26,I] = 10.0
+            if t > 1
+                # mu
+                param[8,I] = 10.0
+                param[9,I] = 10.0
+                # xi
+                param[21,I] = 10.0
+                param[22,I] = 10.0    
+            end
+        # else
+        #     xi = param[43,I]
         end
 
         function eval_f_cb(x)
@@ -174,8 +189,13 @@ function ucmp_auglag_generator_kernel(
             return
         end
 
-        eta = 1 / xi^0.1
-        omega = 1 / xi
+        t > 1 ? _st = 1 : _st = 3
+        etas = zeros(6)
+        omegas = zeros(6)
+        for i in _st:6
+            etas[i] = 1 / param[20+i,I]^0.1
+            omegas[i] = 1 / param[20+i,I]
+        end
         gtol = 1e-6
 
         nele_hess = 41
@@ -195,33 +215,41 @@ function ucmp_auglag_generator_kernel(
             avg_tron_minor += tron.minor_iter
 
             # Check the termination condition.
-            cnorm = max(
-                abs(x[1] - pgmax[I]*x[4] - x[10]),
-                abs(x[1] - pgmin[I]*x[4] + x[11]),
-                abs(x[2] - qgmax[I]*x[4] - x[12]),
-                abs(x[2] - qgmin[I]*x[4] + x[13])
-            )
+            pUB_cviol = x[1] - pgmax[I]*x[4] - x[10]
+            pLB_cviol = x[1] - pgmin[I]*x[4] + x[11]
+            qUB_cviol = x[2] - qgmax[I]*x[4] - x[12]
+            qLB_cviol = x[2] - qgmin[I]*x[4] + x[13]
+
+            cnorms = Float64[0., 0., abs(pUB_cviol), abs(pLB_cviol), abs(qUB_cviol), abs(qLB_cviol)]
             if t > 1
-                cnorm = max(
-                    cnorm,
-                    abs(x[1] - x[3] - param[34,I]*x[7] - param[35,I]*x[5] - x[8]),
-                    abs(x[1] - x[3] + param[36,I]*x[4] + param[37,I]*x[6] + x[9]),
-                )
+                cnorms[1] = abs(x[1] - x[3] - param[34,I]*x[7] - param[35,I]*x[5] - x[8])
+                cnorms[2] = abs(x[1] - x[3] + param[36,I]*x[4] + param[37,I]*x[6] + x[9])
             end
 
-            if cnorm <= eta
-                if cnorm <= 1e-6
-                    terminate = true
+            terminate = true
+            for i in _st:6
+                if cnorms[i] <= etas[i]
+                    if cnorms[i] > 1e-6
+                        terminate = false
+
+                        param[10,I] += param[23,I]*pUB_cviol
+                        param[11,I] += param[24,I]*pLB_cviol
+                        param[12,I] += param[25,I]*qUB_cviol
+                        param[13,I] += param[26,I]*qLB_cviol
+                        if t > 1
+                            param[8,I] += param[21,I]*pUB_cviol
+                            param[9,I] += param[22,I]*pLB_cviol    
+                        end
+                        
+                        etas[i] = etas[i] / param[20+i,I]^0.9
+                        omegas[i] = omegas[i] / param[20+i,I]
+                    end
                 else
-                    param[42,I] += xi*cviol
-                    eta = eta / xi^0.9
-                    omega = omega / xi
+                    terminate = false
+                    param[20+i,I] = min(xi_max, param[20+i,I]*10)
+                    etas[i] = 1 / param[20+i,I]^0.1
+                    omegas[i] = 1 / param[20+i,I]
                 end
-            else
-                xi = min(xi_max, xi*10)
-                eta = 1 / xi^0.1
-                omega = 1 / xi
-                param[43,I] = xi
             end
 
             if it >= max_auglag

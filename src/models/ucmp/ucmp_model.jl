@@ -159,7 +159,7 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         copyto!(mod.uc_params.coff, coffs)
 
         for submod in mod.mpmodel.models
-            submod.gen_membuf = TM(undef, (43, ngen))
+            submod.gen_membuf = TM(undef, (41, ngen))
             fill!(submod.gen_membuf, 0.0)
         end
 
