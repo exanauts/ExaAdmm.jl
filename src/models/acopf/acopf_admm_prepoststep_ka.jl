@@ -4,7 +4,7 @@ function admm_outer_prestep(
     device
 )
     sol, info = mod.solution, mod.info
-    info.norm_z_prev = norm(sol.z_curr)
+    info.norm_z_prev = norm(sol.z_curr, device)
     return
 end
 

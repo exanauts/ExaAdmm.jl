@@ -33,10 +33,10 @@ function admm_update_residual(
     )
     wait(ev)
 
-    info.primres = norm(sol.rp)
-    info.dualres = norm(sol.rd)
-    info.norm_z_curr = norm(sol.z_curr)
-    info.mismatch = norm(sol.Ax_plus_By)
+    info.primres = norm(sol.rp, device)
+    info.dualres = norm(sol.rd, device)
+    info.norm_z_curr = norm(sol.z_curr, device)
+    info.mismatch = norm(sol.Ax_plus_By, device)
 
     return
 end
