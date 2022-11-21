@@ -14,7 +14,7 @@ function acopf_set_linelimit(
     env::AdmmEnv,
     mod::AbstractOPFModel,
     info::IterationInformation,
-    device::KA.GPU
+    device
 )
     ev = set_rateA_kernel_ka(device,64,mod.nline)(mod.nline, mod.membuf, mod.rateA)
     wait(ev)

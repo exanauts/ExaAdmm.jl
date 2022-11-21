@@ -91,7 +91,7 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     tight_factor::T
     horizon_length::Int
     use_gpu::Bool
-    ka_device::Union{Nothing,KA.GPU}
+    ka_device
     use_linelimit::Bool
     use_mpi::Bool
     use_projection::Bool
@@ -146,6 +146,29 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
 
         return env
     end
+end
+
+function ExaAdmm.AdmmEnv(opfdata, rho_va::Float64, rho_pq::Float64; use_gpu=false, ka_device=nothing, options...)
+    if use_gpu
+        if isa(ka_device, Nothing)
+            T = Float64
+            VT = CuVector{Float64}
+            VI = CuVector{Int}
+            MT = CuMatrix{Float64}
+        else
+            T = Float64
+            VT = typeof(KAArray{Float64}(undef, 0))
+            VI = typeof(KAArray{Int}(undef, 0))
+            MT = typeof(KAArray{Float64}(undef, 0, 0))
+        end
+    else
+        T = Float64
+        VT = Vector{Float64}
+        VI = Vector{Int}
+        MT = Matrix{Float64}
+    end
+    env = ExaAdmm.AdmmEnv{T,VT,VI,MT}(opfdata, "proxal", rho_pq, rho_va; use_gpu=use_gpu, ka_device=ka_device, options...)
+    return env
 end
 
 function AdmmEnv{T,TD,TI,TM}(
