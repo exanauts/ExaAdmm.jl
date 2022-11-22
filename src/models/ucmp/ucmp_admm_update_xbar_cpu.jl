@@ -12,8 +12,8 @@ function admm_update_xbar(
             subdata.FrStart, subdata.FrIdx, subdata.ToStart, subdata.ToIdx, subdata.GenStart,
             subdata.GenIdx, subdata.Pd, subdata.Qd, subsol.u_curr, subsol.v_curr, subsol.z_curr,
             subsol.l_curr, subsol.rho, subdata.YshR, subdata.YshI,
-            sol_ramp.u_curr, sol_ramp.z_curr, sol_ramp.l_curr, sol_ramp.rho,
-            :ucmp)
+            sol_ramp.u_curr, sol_ramp.z_curr, sol_ramp.l_curr, sol_ramp.rho
+        )
 
         submod.info.time_xbar_update += bus_time.time
         submod.info.user.time_buses += bus_time.time
