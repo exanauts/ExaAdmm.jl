@@ -9,16 +9,19 @@ function ucmp_admm_update_x_gen(
     par, info = env.params, mod.info
     mpmod = mod.mpmodel
     fill!(mod.uc_membuf, 0)
+    uc_sol = mod.uc_solution
 
     for i=1:mpmod.len_horizon
         submod, subsol, sol_ramp, subdata = mpmod.models[i], mpmod.models[i].solution, mpmod.solution[i], mpmod.models[i].grid_data
-        uc_sol = mod.uc_solution
+        v_ramp = mod.vr_solution[i]
         time_gen = @timed ucmp_auglag_generator_kernel(i, 13, subdata.ngen, submod.gen_start,
             info.inner, par.max_auglag, par.mu_max, 1.0,
             subsol.u_curr, subsol.v_curr, subsol.z_curr,
             subsol.l_curr, subsol.rho,
             sol_ramp.u_curr, sol_ramp.v_curr, sol_ramp.z_curr,
             sol_ramp.l_curr, sol_ramp.rho, sol_ramp.s_curr,
+            v_ramp.u_curr, v_ramp.v_curr, v_ramp.z_curr,
+            v_ramp.l_curr, v_ramp.rho, v_ramp.s_curr,
             uc_sol.u_curr, uc_sol.v_curr, uc_sol.z_curr,
             uc_sol.l_curr, uc_sol.rho, uc_sol.s_curr,
             submod.gen_membuf,

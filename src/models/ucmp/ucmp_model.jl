@@ -76,25 +76,25 @@ end
 
 # The ramping solution records solutions of previous-time p and v.
 # Not actually needed for t = 1.
-function UCSolutionRamping(T, TD, ngen::Int, _t::Int, _len_horizon::Int)
-    sol = SolutionRamping{T,TD}(
-        TD(undef, 2*ngen),  # u_curr: [\hat{p}, \hat{v}]
-        TD(undef, 2*ngen),  # v_curr: NOT USED, will couple with bus vars at previous time
-        TD(undef, 4*ngen),  # l_curr: [λ_{\hat{p}}, λ_{\hat{v}}, λ_{su}, λ_{sd}]
-        TD(undef, 4*ngen),  # rho: [ρ_{\hat{p}}, ρ_{\hat{v}}, ρ_{su}, ρ_{sd}]
-        TD(undef, 2*ngen),  # rd
-        TD(undef, 2*ngen),  # rp
-        TD(undef, 2*ngen),  # z_outer
-        TD(undef, 2*ngen),  # z_curr
-        TD(undef, 2*ngen),  # z_prev
-        TD(undef, 2*ngen),  # lz
-        TD(undef, 2*ngen),  # Ax_plus_By
-        TD(undef, 2*ngen),  # s_curr: [s^U, s^D]
-        _t,                 # t
-        _len_horizon        # len_horizon
-    )
-    return sol
-end
+# function UCSolutionRamping(T, TD, ngen::Int, _t::Int, _len_horizon::Int)
+#     sol = SolutionRamping{T,TD}(
+#         TD(undef, 2*ngen),  # u_curr: [\hat{p}, \hat{v}]
+#         TD(undef, 2*ngen),  # v_curr: NOT USED, will couple with bus vars at previous time
+#         TD(undef, 4*ngen),  # l_curr: [λ_{\hat{p}}, λ_{\hat{v}}, λ_{su}, λ_{sd}]
+#         TD(undef, 4*ngen),  # rho: [ρ_{\hat{p}}, ρ_{\hat{v}}, ρ_{su}, ρ_{sd}]
+#         TD(undef, 2*ngen),  # rd
+#         TD(undef, 2*ngen),  # rp
+#         TD(undef, 2*ngen),  # z_outer
+#         TD(undef, 2*ngen),  # z_curr
+#         TD(undef, 2*ngen),  # z_prev
+#         TD(undef, 2*ngen),  # lz
+#         TD(undef, 2*ngen),  # Ax_plus_By
+#         TD(undef, 2*ngen),  # s_curr: [s^U, s^D]
+#         _t,                 # t
+#         _len_horizon        # len_horizon
+#     )
+#     return sol
+# end
 
 function Base.fill!(sol::SolutionUC, val)
     fill!(sol.u_curr, val)
@@ -114,6 +114,7 @@ end
 mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     info::IterationInformation
     uc_params::UCParameters{TI}             # uc related parameters
+    vr_solution::Vector{SolutionRamping{T,TD}} # v ramping solution
     uc_solution::SolutionUC{T, TM}          # uc related solution
 
     nvar::Int                               # total number of variables
@@ -134,9 +135,17 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         ngen = mod.mpmodel.models[1].grid_data.ngen
         mod.uc_params = UCParameters{TI,TD}(ngen)
 
-        # Resize ramping solution in ModelMpacopf
+        # Define vr_solution
+        mod.vr_solution = Vector{SolutionRamping{T,TD}}(undef, num_periods)
         for i=1:num_periods
-            mod.mpmodel.solution[i] = UCSolutionRamping(T, TD, ngen, i, num_periods)
+            mod.vr_solution[i] = SolutionRamping{T,TD}(ngen, ngen, i, num_periods)
+            fill!(mod.vr_solution[i], 0.)
+        end
+
+        # Re-size s_curr in ramping solution
+        for i=1:num_periods
+            mod.mpmodel.solution[i].s_curr = TD(undef, 2*ngen)
+            fill!(mod.mpmodel.solution[i].s_curr, 0.)
         end
 
         # Load UC parameters

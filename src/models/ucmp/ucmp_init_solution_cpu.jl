@@ -3,6 +3,7 @@
 function uc_init_mpmodel_solution!(
     mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     sol::Vector{SolutionRamping{Float64,Array{Float64,1}}},
+    vr_sol::Vector{SolutionRamping{Float64,Array{Float64,1}}},
     uc_sol::SolutionUC{Float64,Array{Float64,2}},
     rho_pq::Float64, rho_va::Float64
 )
@@ -23,8 +24,8 @@ function uc_init_mpmodel_solution!(
                 p_prev = mod.models[i-1].solution.v_curr[gen_start+2*(g-1)]
                 vhat = uc_sol.v_curr[g, 3*(i-1)-2]
                 gen_start = mod.models[i].gen_start
-                sol[i].u_curr[2*g-1] = mod.models[i-1].solution.v_curr[gen_start+2*(g-1)]
-                sol[i].u_curr[2*g] = vhat
+                sol[i].u_curr[g] = mod.models[i-1].solution.v_curr[gen_start+2*(g-1)]
+                vr_sol[i].u_curr[g] = vhat
                 sol[i].s_curr[2*g-1] = p_curr - p_prev - Ri*vhat - Si*w
                 sol[i].s_curr[2*g] = -(p_curr - p_prev + Ri*v + Si*y)    
             end
@@ -48,6 +49,10 @@ function init_solution!(
     rho_pq::Float64, rho_va::Float64
 )
     uc_solution = mod.uc_solution
-    uc_init_mpmodel_solution!(mod.mpmodel, mod.mpmodel.solution, uc_solution, rho_pq, rho_va)
+    vr_solution = mod.vr_solution
+    uc_init_mpmodel_solution!(mod.mpmodel, mod.mpmodel.solution, vr_solution, uc_solution, rho_pq, rho_va)
+    for i in 1:mod.mpmodel.len_horizon
+        fill!(vr_solution[i], 0.0)
+    end
     sol.rho .= rho_pq
 end
