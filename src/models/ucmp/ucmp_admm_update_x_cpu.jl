@@ -36,8 +36,8 @@ function ucmp_admm_update_x_gen(
         if i > 1
             ucmp_update_uc_membuf_with_ramping_kernel(
                 i, subdata.ngen,
-                sol_ramp.u_curr, sol_ramp.z_curr,
-                sol_ramp.l_curr, sol_ramp.rho,
+                v_ramp.u_curr, v_ramp.z_curr,
+                v_ramp.l_curr, v_ramp.rho,
                 mod.uc_membuf
             )
         end
