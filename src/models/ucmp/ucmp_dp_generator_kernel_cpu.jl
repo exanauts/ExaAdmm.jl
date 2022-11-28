@@ -15,9 +15,9 @@ function dp_generator_kernel(
         # const_cost = 0 # const_cost not needed for just finding the optimal UC scheduling
         lin_v_start, lin_w_start, lin_y_start = 0, T, 2*T
         for t in 1:T
-            param[I,lin_v_start+t] += uc_rho[I,7*t-6]/2 - uc_rho[I,7*t-6]*(uc_u[3*t-2]+uc_z[3*t-2]) - uc_l[I,7*t-6]
-            param[I,lin_w_start+t] += uc_rho[I,7*t-5]/2 - uc_rho[I,7*t-5]*(uc_u[3*t-1]+uc_z[3*t-1]) - uc_l[I,7*t-5]
-            param[I,lin_y_start+t] += uc_rho[I,7*t-4]/2 - uc_rho[I,7*t-4]*(uc_u[3*t]+uc_z[3*t]) - uc_l[I,7*t-4]
+            param[I,lin_v_start+t] += uc_rho[I,3*t-2]/2 - uc_rho[I,3*t-2]*(uc_u[3*t-2]+uc_z[3*t-2]) - uc_l[I,3*t-2]
+            param[I,lin_w_start+t] += uc_rho[I,3*t-1]/2 - uc_rho[I,3*t-1]*(uc_u[3*t-1]+uc_z[3*t-1]) - uc_l[I,3*t-1]
+            param[I,lin_y_start+t] += uc_rho[I,3*t]/2 - uc_rho[I,3*t]*(uc_u[3*t]+uc_z[3*t]) - uc_l[I,3*t]
         end
     
         v0 = v0s[I]

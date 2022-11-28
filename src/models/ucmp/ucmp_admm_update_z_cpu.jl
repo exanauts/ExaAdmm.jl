@@ -8,7 +8,6 @@ function admm_update_z(
 )
     admm_update_z(env, mod.mpmodel, device)
     # update z for binary variables
-    ngen = mod.mpmodel.models[1].grid_data.ngen
     par = env.params
     uc_sol = mod.uc_solution
     uc_sol.z_curr .= (-(uc_sol.lz .+ uc_sol.l_curr .+ uc_sol.rho .* (uc_sol.u_curr .- uc_sol.v_curr))) ./ (par.beta .+ uc_sol.rho)
