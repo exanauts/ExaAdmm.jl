@@ -56,8 +56,8 @@ mutable struct SolutionUC{T,TM} <: AbstractSolution{T,TM}
         sol = new{T,TM}(
             TM(undef, ngen, 3*_len_horizon), # u_curr: [v, w, y]
             TM(undef, ngen, 3*_len_horizon), # v_curr: [\bar{v}, \bar{w}, \bar{y}]
-            TM(undef, ngen, 7*_len_horizon), # l_curr: [λ_v, λ_w, λ_y, λ_pu, λ_pl, λ_qu, λ_ql]
-            TM(undef, ngen, 7*_len_horizon), # rho: [ρ_v, ρ_w, ρ_y, ρ_pu, ρ_pl, ρ_qu, ρ_ql]
+            TM(undef, ngen, 3*_len_horizon), # l_curr: [λ_v, λ_w, λ_y] (inner-level parameters λ_pu, λ_pl, λ_qu, λ_ql are not stored)
+            TM(undef, ngen, 3*_len_horizon), # rho: [ρ_v, ρ_w, ρ_y] (inner-level parameters ρ_pu, ρ_pl, ρ_qu, ρ_ql are not stored)
             TM(undef, ngen, 3*_len_horizon), # rd
             TM(undef, ngen, 3*_len_horizon), # rp
             TM(undef, ngen, 3*_len_horizon), # z_outer
