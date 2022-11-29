@@ -35,9 +35,9 @@ function uc_init_mpmodel_solution!(
             uc_sol.u_curr[g, 3*i] = y
             # s_curr: [s^{p,UB}, s^{p,LB}, s^{q,UB}, s^{q,LB}]
             uc_sol.s_curr[g, 4*i-3] = p_curr - Pmax*v 
-            uc_sol.s_curr[4*i-2] = -(p_curr - Pmin*v)
-            uc_sol.s_curr[4*i-1] = q_curr - Qmax*v
-            uc_sol.s_curr[4*i] = -(q_curr - Qmin*v)
+            uc_sol.s_curr[g, 4*i-2] = -(p_curr - Pmin*v)
+            uc_sol.s_curr[g, 4*i-1] = q_curr - Qmax*v
+            uc_sol.s_curr[g, 4*i] = -(q_curr - Qmin*v)
         end
     end
 end
