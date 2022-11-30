@@ -4,9 +4,7 @@ function admm_increment_outer(
     device=nothing
 )
     mod.info.outer += 1
-    for i=1:mod.mpmodel.len_horizon
-        admm_increment_outer(env, mod.mpmodel.models[i])
-    end
+    admm_increment_outer(env, mod.mpmodel, device)
     return
 end
 
@@ -16,9 +14,7 @@ function admm_increment_reset_inner(
     device=nothing
 )
     mod.info.inner = 0
-    for i=1:mod.mpmodel.len_horizon
-        admm_increment_reset_inner(env, mod.mpmodel.models[i])
-    end
+    admm_increment_reset_inner(env, mod.mpmodel, device)
     return
 end
 
@@ -29,8 +25,6 @@ function admm_increment_inner(
 )
     mod.info.inner += 1
     mod.info.cumul += 1
-    for i=1:mod.mpmodel.len_horizon
-        admm_increment_inner(env, mod.mpmodel.models[i])
-    end
+    admm_increment_inner(env, mod.mpmodel, device)
     return
 end
