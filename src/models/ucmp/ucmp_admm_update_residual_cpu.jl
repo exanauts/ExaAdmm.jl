@@ -61,5 +61,12 @@ function admm_update_residual(
         info.mismatch = max(info.mismatch, mod.mpmodel.models[i].info.mismatch)
     end
 
+    info.objval = mod.mpmodel.info.objval
+    on_cost, off_cost = mod.uc_params.con, mod.uc_params.coff
+    # add uc objective terms
+    for i=1:mod.mpmodel.len_horizon
+        info.objval += sum(uc_sol.u_curr[:, 3*i-1] .* on_cost) + sum(uc_sol.u_curr[:, 3*i] .* off_cost)
+    end
+
     return
 end
