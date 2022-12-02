@@ -15,9 +15,9 @@ function dp_generator_kernel(
         # const_cost = 0 # const_cost not needed for just finding the optimal UC scheduling
         lin_v_start, lin_w_start, lin_y_start = 0, T, 2*T
         for t in 1:T
-            param[I,lin_v_start+t] += uc_rho[I,3*t-2]/2 - uc_rho[I,3*t-2]*(uc_u[3*t-2]+uc_z[3*t-2]) - uc_l[I,3*t-2]
-            param[I,lin_w_start+t] += uc_rho[I,3*t-1]/2 - uc_rho[I,3*t-1]*(uc_u[3*t-1]+uc_z[3*t-1]) - uc_l[I,3*t-1]
-            param[I,lin_y_start+t] += uc_rho[I,3*t]/2 - uc_rho[I,3*t]*(uc_u[3*t]+uc_z[3*t]) - uc_l[I,3*t]
+            param[I,lin_v_start+t] += uc_rho[I,3*t-2]/2 - uc_rho[I,3*t-2]*(uc_u[I,3*t-2]+uc_z[I,3*t-2]) - uc_l[I,3*t-2]
+            param[I,lin_w_start+t] += uc_rho[I,3*t-1]/2 - uc_rho[I,3*t-1]*(uc_u[I,3*t-1]+uc_z[I,3*t-1]) - uc_l[I,3*t-1]
+            param[I,lin_y_start+t] += uc_rho[I,3*t]/2 - uc_rho[I,3*t]*(uc_u[I,3*t]+uc_z[I,3*t]) - uc_l[I,3*t]
         end
     
         v0 = v0s[I]
@@ -31,16 +31,22 @@ function dp_generator_kernel(
         costs = zeros(Float64, 2*T)
         for t in T:-1:1
             if v0 == 1 && t <= Hu
-                costs[v0+1] = costs[2*Hu+v0+1]
-                sols[v0+1] = sols[2*Hu+v0+1]
+                if T > Hu
+                    costs[v0+1] = costs[2*Hu+v0+1]
+                    sols[v0+1] = sols[2*Hu+v0+1]
+                end
+                Hu = min(Hu, T)
                 for tt in 1:Hu
                     costs[v0+1] += param[I,lin_v_start+tt]
                     sols[v0+1] += v0 * 2^(T-tt)
                 end
                 break
             elseif v0 == 0 && t <= Hd
-                costs[v0+1] = costs[2*Hd+v0+1]
-                sols[v0+1] = sols[2*Hd+v0+1]
+                if T > Hd
+                    costs[v0+1] = costs[2*Hd+v0+1]
+                    sols[v0+1] = sols[2*Hd+v0+1]
+                end
+                Hd = min(Hd, T)
                 for tt in 1:Hd
                     sols[v0+1] += v0 * 2^(T-tt)
                 end
@@ -79,13 +85,13 @@ function dp_generator_kernel(
         # Decode the sols back to binary and update solution
         sol = sols[v0+1]
         for t in 1:T
-            uc_v[3*t-2] = (sol >> (T-t)) % 2
+            uc_v[I,3*t-2] = (sol >> (T-t)) % 2
         end
-        uc_v[2] = Int(uc_v[1] > v0)
-        uc_v[3] = Int(uc_v[1] < v0)
+        uc_v[I,2] = Int(uc_v[I,1] > v0)
+        uc_v[I,3] = Int(uc_v[I,1] < v0)
         for t in 2:T
-            uc_v[3*t-1] = Int(uc_v[3*t-2] > uc_v[3*t-5])
-            uc_v[3*t] = Int(uc_v[3*t-2] < uc_v[3*t-5])
+            uc_v[I,3*t-1] = Int(uc_v[I,3*t-2] > uc_v[I,3*t-5])
+            uc_v[I,3*t] = Int(uc_v[I,3*t-2] < uc_v[I,3*t-5])
         end
     end
 end
