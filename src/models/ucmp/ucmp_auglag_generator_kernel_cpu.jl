@@ -104,17 +104,17 @@ function ucmp_auglag_generator_kernel(
         t > 1 ? x[7] = vr_u[I] : x[7] = 0.
         x[8] = min(xu[8], max(xl[8], r_s[2*I-1]))
         x[9] = min(xu[9], max(xl[9], r_s[2*I]))
-        x[10] = min(xu[10], max(xl[10], uc_s[I, 4*I-3]))
-        x[11] = min(xu[11], max(xl[11], uc_s[I, 4*I-2]))
-        x[12] = min(xu[12], max(xl[12], uc_s[I, 4*I-1]))
-        x[13] = min(xu[13], max(xl[13], uc_s[I, 4*I]))
+        x[10] = min(xu[10], max(xl[10], uc_s[I, 4*t-3]))
+        x[11] = min(xu[11], max(xl[11], uc_s[I, 4*t-2]))
+        x[12] = min(xu[12], max(xl[12], uc_s[I, 4*t-1]))
+        x[13] = min(xu[13], max(xl[13], uc_s[I, 4*t]))
 
         param[1,I] = l[pg_idx]
         param[2,I] = l[qg_idx]
         param[3,I] = r_l[I]
-        param[4,I] = uc_l[I, 3*I-2]
-        param[5,I] = uc_l[I, 3*I-1]
-        param[6,I] = uc_l[I, 3*I]
+        param[4,I] = uc_l[I, v_idx]
+        param[5,I] = uc_l[I, w_idx]
+        param[6,I] = uc_l[I, y_idx]
         param[7,I] = vr_l[I]
         # param[8,I] = r_l[4*I-1]
         # param[9,I] = r_l[4*I]
@@ -125,9 +125,9 @@ function ucmp_auglag_generator_kernel(
         param[14,I] = rho[pg_idx]
         param[15,I] = rho[qg_idx]
         param[16,I] = r_rho[I]
-        param[17,I] = uc_rho[3*I-2]
-        param[18,I] = uc_rho[3*I-1]
-        param[19,I] = uc_rho[3*I]
+        param[17,I] = uc_rho[I, v_idx]
+        param[18,I] = uc_rho[I, w_idx]
+        param[19,I] = uc_rho[I, y_idx]
         param[20,I] = vr_rho[I]
         # param[21,I] = r_rho[4*I-1]
         # param[22,I] = r_rho[4*I]
@@ -222,27 +222,18 @@ function ucmp_auglag_generator_kernel(
             qUB_cviol = x[2] - qgmax[I]*x[4] - x[12]
             qLB_cviol = x[2] - qgmin[I]*x[4] + x[13]
 
-            cnorms = Float64[0., 0., abs(pUB_cviol), abs(pLB_cviol), abs(qUB_cviol), abs(qLB_cviol)]
+            cvios = [0., 0., pUB_cviol, pLB_cviol, qUB_cviol, qLB_cviol]
             if t > 1
-                cnorms[1] = abs(x[1] - x[3] - param[34,I]*x[7] - param[35,I]*x[5] - x[8])
-                cnorms[2] = abs(x[1] - x[3] + param[36,I]*x[4] + param[37,I]*x[6] + x[9])
+                cvios[1] = x[1] - x[3] - param[34,I]*x[7] - param[35,I]*x[5] - x[8]
+                cvios[2] = x[1] - x[3] + param[36,I]*x[4] + param[37,I]*x[6] + x[9]
             end
 
             terminate = true
             for i in _st:6
-                if cnorms[i] <= etas[i]
-                    if cnorms[i] > 1e-6
+                if abs(cvios[i]) <= etas[i]
+                    if abs(cvios[i]) > 1e-6
                         terminate = false
-
-                        param[10,I] += param[23,I]*pUB_cviol
-                        param[11,I] += param[24,I]*pLB_cviol
-                        param[12,I] += param[25,I]*qUB_cviol
-                        param[13,I] += param[26,I]*qLB_cviol
-                        if t > 1
-                            param[8,I] += param[21,I]*pUB_cviol
-                            param[9,I] += param[22,I]*pLB_cviol    
-                        end
-                        
+                        param[7+i,I] += param[20+i,I]*cvios[i]                        
                         etas[i] = etas[i] / param[20+i,I]^0.9
                         omegas[i] = omegas[i] / param[20+i,I]
                     end
@@ -255,6 +246,7 @@ function ucmp_auglag_generator_kernel(
             end
 
             if it >= max_auglag
+                # println("inner auglag reach max iteration at time $(t) for generator $(I)")
                 terminate = true
             end
         end
@@ -264,10 +256,10 @@ function ucmp_auglag_generator_kernel(
         uc_u[I, v_idx] = x[4]
         uc_u[I, w_idx] = x[5]
         uc_u[I, y_idx] = x[6]
-        uc_s[I, 4*I-3] = x[10]
-        uc_s[I, 4*I-2] = x[11]
-        uc_s[I, 4*I-1] = x[12]
-        uc_s[I, 4*I] = x[13]
+        uc_s[I, 4*t-3] = x[10]
+        uc_s[I, 4*t-2] = x[11]
+        uc_s[I, 4*t-1] = x[12]
+        uc_s[I, 4*t] = x[13]
 
         if t > 1
             r_u[I] = x[3]
