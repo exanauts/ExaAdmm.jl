@@ -62,6 +62,7 @@ function admm_update_residual(
     end
 
     info.objval = mod.mpmodel.info.objval
+    info.auglag = mod.mpmodel.info.auglag
     on_cost, off_cost = mod.uc_params.con, mod.uc_params.coff
     # add uc objective terms
     for i=1:mod.mpmodel.len_horizon
