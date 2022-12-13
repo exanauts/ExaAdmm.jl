@@ -3,6 +3,7 @@ function admm_update_residual(
     mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     device::Nothing=nothing
 )
+    par = env.params
     info = mod.info
 
     info.primres = 0.0
@@ -52,5 +53,13 @@ function admm_update_residual(
     info.norm_z_curr = sqrt(info.norm_z_curr)
     info.mismatch = sqrt(info.mismatch)
     =#
+    info.objval = sum(mod.models[i].info.objval for i in 1:mod.len_horizon)
+    info.auglag = sum(mod.models[i].info.auglag for i in 1:mod.len_horizon)
+    for i=2:mod.len_horizon
+        sol = mod.solution[i]
+        info.auglag += sum(sol.lz .* sol.z_curr) + 0.5*par.beta*sum(sol.z_curr.^2) +
+                       sum(sol.l_curr .* sol.rp) + 0.5*sum(sol.rho .* (sol.rp).^2)
+    end
+
     return
 end
