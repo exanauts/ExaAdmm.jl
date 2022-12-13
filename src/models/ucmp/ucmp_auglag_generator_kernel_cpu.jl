@@ -89,9 +89,13 @@ function ucmp_auglag_generator_kernel(
 
         c2 = _c2[I]; c1 = _c1[I]; c0 = _c0[I]
 
+        xl[1] = xl[3] = pgmin[I]
+        xl[2] = qgmin[I]
         xl[8] = xl[9] = -2*ramp_limit[I] # TODO: double check this
         xl[10] = xl[11] = -pgmax[I]
         xl[12] = xl[13] = -qgmax[I]
+        xu[1] = xu[3] = pgmax[I]
+        xu[2] = qgmax[I]
         xu[4] = xu[5] = xu[6] = xu[7] = 1
         xu[8] = xu[9] = xu[10] = xu[11] = xu[12] = xu[13] = 0
 
