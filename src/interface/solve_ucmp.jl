@@ -1,6 +1,6 @@
 function solve_ucmp(case::String, load_prefix::String, gen_prefix::String;
     case_format="matpower", start_period=1, end_period=1,
-    outer_iterlim=20, inner_iterlim=1000, rho_pq=400.0, rho_va=40000.0,
+    outer_iterlim=20, inner_iterlim=1000, rho_pq=400.0, rho_va=40000.0, rho_uc=40000.0,
     obj_scale=1.0, scale=1e-4, storage_ratio=0.0, storage_charge_max=1.0,
     use_gpu=false, ka_device=nothing, use_linelimit=true, use_projection=false, tight_factor=1.0,
     outer_eps=2*1e-4, gpu_no=0, verbose=1, ramp_ratio=0.02, warm_start=true, multiperiod_tight=true
@@ -41,7 +41,7 @@ function solve_ucmp(case::String, load_prefix::String, gen_prefix::String;
         for i=1:mod.mpmodel.len_horizon
             admm_two_level(env, mod.mpmodel.models[i])
         end
-        init_solution!(mod, mod.uc_solution, rho_pq, rho_va)
+        init_solution!(mod, mod.uc_solution, rho_pq, rho_va, rho_uc)
     end
 
     admm_two_level(env, mod)
