@@ -16,7 +16,7 @@ function admm_update_z(
     vr_sols = mod.vr_solution
     for i=2:mod.mpmodel.len_horizon
         vr_sol = vr_sols[i]
-        v_curr = @view uc_sol.v_curr[:, 3*i-2]
+        v_curr = @view uc_sol.v_curr[:, 3*i-5]
         vr_sol.z_curr .= (-(vr_sol.lz .+ vr_sol.l_curr .+ vr_sol.rho .* (vr_sol.u_curr .- v_curr))) ./ (par.beta .+ vr_sol.rho)
     end
 
