@@ -43,7 +43,7 @@ function admm_update_residual(
     for i=2:mod.mpmodel.len_horizon
         vr_sol = vr_sols[i]
         model = mod.mpmodel.models[i]
-        v_curr = @view uc_sol.v_curr[:, 3*i-2]
+        v_curr = @view uc_sol.v_curr[:, 3*i-5]
         vr_sol.rp .= vr_sol.u_curr .- v_curr .+ vr_sol.z_curr
         vr_sol.rd .= vr_sol.z_curr .- vr_sol.z_prev
         vr_sol.Ax_plus_By .= vr_sol.rp .- vr_sol.z_curr
@@ -68,6 +68,7 @@ function admm_update_residual(
     for i=1:mod.mpmodel.len_horizon
         info.objval += sum(uc_sol.u_curr[:, 3*i-1] .* on_cost) + sum(uc_sol.u_curr[:, 3*i] .* off_cost)
     end
+    # TODO: update info.auglag with augmented terms from uc_solution and vr_solution?
 
     return
 end
