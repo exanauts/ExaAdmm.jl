@@ -91,9 +91,13 @@ function ucmp_auglag_generator_kernel(
 
         xl[1] = xl[3] = pgmin[I]
         xl[2] = qgmin[I]
-        xl[8] = xl[9] = -2*ramp_limit[I] # TODO: double check this
-        xl[10] = xl[11] = -pgmax[I]
-        xl[12] = xl[13] = -qgmax[I]
+        xl[8] = xl[9] = -4*ramp_limit[I]
+        xl[10] = xl[11] = -abs(pgmax[I])-abs(pgmin[I])
+        xl[12] = xl[13] = -abs(qgmax[I])-abs(qgmin[I])
+        # COMMENTED: THESE BOUNDS ARE TOO TIGHT FOR S VARIABLES. LEAD TO DIVERGENCE FOR 9-BUS CASE.
+        # xl[8] = xl[9] = -2*ramp_limit[I]
+        # xl[10] = xl[11] = -pgmax[I]
+        # xl[12] = xl[13] = -qgmax[I]
         xu[1] = xu[3] = pgmax[I]
         xu[2] = qgmax[I]
         xu[4] = xu[5] = xu[6] = xu[7] = 1
