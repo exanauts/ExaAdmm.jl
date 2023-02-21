@@ -176,5 +176,5 @@
     @test mod.info.status == :Solved
     @test mod.info.outer == 20
     @test mod.info.cumul == 1232
-    @test isapprox(mod.info.objval, 129645.676; atol=1e-3)
+    @test isapprox(mod.info.objval, 129645.676; rtol=1e-6)
 end

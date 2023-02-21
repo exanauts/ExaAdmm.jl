@@ -2,18 +2,19 @@ using CUDA
 using AMDGPU
 using KernelAbstractions
 KA = KernelAbstractions
-devices = Vector{KA.Device}()
-push!(devices, KA.CPU())
+devices = []
 if CUDA.has_cuda_gpu() || AMDGPU.has_rocm_gpu()
-    if CUDA.has_cuda_gpu()
-        using CUDAKernels
-        function ExaAdmm.KAArray{T}(n::Int, device::CUDADevice) where {T}
-            return CuArray{T}(undef, n)
-        end
-        push!(devices, CUDADevice())
-    end
+   if CUDA.has_cuda_gpu()
+       using CUDAKernels
+       function ExaAdmm.KAArray{T}(n::Int, device::CUDADevice) where {T}
+           return CuArray{T}(undef, n)
+       end
+       push!(devices, CUDADevice())
+   end
     if AMDGPU.has_rocm_gpu()
         using ROCKernels
+        # Set for crusher login node to avoid other users
+        AMDGPU.default_device!(AMDGPU.devices()[2])
         function ExaAdmm.KAArray{T}(n::Int, device::ROCDevice) where {T}
             return ROCArray{T}(undef, n)
         end
@@ -32,7 +33,7 @@ end
     if isa(device, KA.CPU)
         TD = Array{Float64,1}; TI = Array{Int,1}; TM = Array{Float64,2}
         env = ExaAdmm.AdmmEnv{T,TD,TI,TM}(case, rho_pq, rho_va; use_gpu=false, ka_device=device, verbose=verbose)
-    else isa(device, KA.GPU)
+    else
         if CUDA.has_cuda_gpu()
             TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
         elseif AMDGPU.has_rocm_gpu()

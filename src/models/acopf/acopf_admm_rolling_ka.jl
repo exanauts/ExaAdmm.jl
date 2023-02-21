@@ -19,7 +19,7 @@ end
 function admm_restart_rolling(
     env::AdmmEnv,
     mod::ModelAcopf,
-    device::KA.GPU,
+    device,
     start_period=1, end_period=6, result_file="warm-start")
 
     @assert env.load_specified == true

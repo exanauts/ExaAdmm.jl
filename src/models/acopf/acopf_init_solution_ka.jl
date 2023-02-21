@@ -53,7 +53,7 @@ end
 function init_solution!(
     model::AbstractOPFModel,
     sol::Solution,
-    rho_pq::Float64, rho_va::Float64, device::KA.GPU
+    rho_pq::Float64, rho_va::Float64, device
 )
     fill!(sol, 0.0)
     sol.rho .= rho_pq
