@@ -1,8 +1,8 @@
 """
-    auglag_linelimit_two_level_alternative_qpsub_ij_red()
+    auglag_linelimit_qpsub()
 
 - for certain line (i,j), update sol.u[pij_idx]
-- use Exatron, eval_A_auglag_branch_kernel_cpu_qpsub, eval_b_auglag_branch_kernel_cpu_qpsub, build_QP_DS
+- use Exatron, eval_A_b_branch_kernel_gpu_qpsub, eval_A_b_auglag_branch_kernel_gpu_qpsub_red, tron_gpu_test
 - LANCELOT ALM algorithm
 - with elimination of w_ijR and w_ijI (v2 in overleaf)
 - with multiplier output 
@@ -164,7 +164,7 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     while !terminate
          it += 1
 
-        eval_A_auglag_branch_kernel_cpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx,tx,Ctron,dtron,RH_1j,RH_1k)
+        eval_A_b_auglag_branch_kernel_gpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx,tx,Ctron,dtron,RH_1j,RH_1k)
 
         status, minor_iter = tron_gpu_test(n,Atron,btron,x,xl,xu)
 
@@ -201,8 +201,8 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
                 terminate = true
             else
                 if tx == 1
-                    membuf[3,lineidx] += mu*cviol3 #λ_1j #?not reset (following YD)
-                    membuf[4,lineidx] += mu*cviol4 #λ_1k #?not reset (following YD)
+                    membuf[3,lineidx] += mu*cviol3 #λ_1j 
+                    membuf[4,lineidx] += mu*cviol4 #λ_1k 
                 end
                 eta = eta / mu^0.9
 
