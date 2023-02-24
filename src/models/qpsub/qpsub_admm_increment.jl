@@ -13,8 +13,6 @@ function admm_increment_outer(
 end
 
 
-
-
 """
     admm_increment_reset_inner()
     
@@ -28,9 +26,6 @@ function admm_increment_reset_inner(
     mod.info.inner = 0
     return
 end
-
-
-
 
 
 """

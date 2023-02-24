@@ -1,11 +1,3 @@
-"""
-    solve_qpsub()
-    
-- main function solve qpsub problem 
-- TODO: integrate with SQP (check coefficient validity, use_projection)
-- TODO: clear lower level TODOs
-"""
-
 function solve_qpsub(
     case::String,
     Hs,
@@ -64,7 +56,6 @@ function solve_qpsub(
         case_format = case_format,
         use_gpu = use_gpu,
         use_linelimit = use_linelimit,
-        # use_twolevel=false,
         use_projection = use_projection,
         tight_factor = tight_factor,
         gpu_no = gpu_no,
@@ -98,8 +89,6 @@ function solve_qpsub(
     mod.qpsub_Pd = copy(Pd)
     mod.qpsub_Qd = copy(Qd)
 
-
-
     env.params.scale = scale
     env.params.obj_scale = obj_scale
     env.params.outer_eps = outer_eps
@@ -110,7 +99,7 @@ function solve_qpsub(
 
     init_solution!(mod, mod.solution, env.initial_rho_pq, env.initial_rho_va)
 
-    #onelevel or two level admm 
+    #one-level or two-level admm 
     if onelevel
         admm_one_level(env, mod)
     else

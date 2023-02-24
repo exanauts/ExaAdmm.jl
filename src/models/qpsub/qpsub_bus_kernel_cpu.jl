@@ -2,7 +2,7 @@
     bus_kernel_two_level_qpsub()
 
 - update sol.v[pij_idx], sol.v[pg_idx], sol.v[qp_idx] (full update) 
-- duplicate update for shard nodes
+- duplicate update for shared nodes
 - record generator and line index set 
 """
 
