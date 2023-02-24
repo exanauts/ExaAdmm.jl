@@ -100,9 +100,7 @@ function admm_update_x(
     mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
     admm_update_x_gen(env, mod, mod.gen_solution)
-
-    # println(mod.solution.u_curr)
-    admm_update_x_line(env, mod) #! comment out for gpu testing 
+    admm_update_x_line(env, mod) 
 
 
     return

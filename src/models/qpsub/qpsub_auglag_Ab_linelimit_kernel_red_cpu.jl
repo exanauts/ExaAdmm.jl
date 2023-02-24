@@ -96,7 +96,7 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
             status = ExaTron.solveProblem(tron)
             x .= tron.x
             sqp_line[:,lineidx] .= (Ctron * x + dtron)[3:8] #write to sqp_line
-            f = tron.f #! wont match with IPOPT since constant terms are ignored
+            f = tron.f #wont match with IPOPT obj because constant terms are ignored here
             trg = tron.g
 
             
@@ -111,8 +111,8 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
                 if cnorm <= 1e-6
                     terminate = true
                 else
-                    membuf[3,lineidx] += mu*cviol3 #λ_1j #?not reset (following YD)
-                    membuf[4,lineidx] += mu*cviol4 #λ_1k #?not reset (following YD)
+                    membuf[3,lineidx] += mu*cviol3 #λ_1j 
+                    membuf[4,lineidx] += mu*cviol4 #λ_1k 
 
                     eta = eta / mu^0.9
                 end
@@ -132,7 +132,7 @@ function auglag_Ab_linelimit_two_level_alternative_qpsub_ij_red(
 
        
 
-    #save variables TODO: check if sol.u is actually updated 
+    #save variables  
     u[shift_idx] = dot(supY[1,:],Ctron * x + dtron) + line_res[1]#pij
     u[shift_idx + 1] = dot(supY[2,:],Ctron * x + dtron) + line_res[2]#qij
     u[shift_idx + 2] = dot(supY[3,:],Ctron * x + dtron) + line_res[3]#pji
