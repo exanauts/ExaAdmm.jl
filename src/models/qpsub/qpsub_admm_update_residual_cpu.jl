@@ -2,8 +2,9 @@
     admm_update_residual()
 
 - compute termination errors and other info
-- update info.primres, info.dualres, info.norm_z_curr, info.mismatch, info. objval
+- update info.primres, info.dualres, info.mismatch, info.objval, info.auglag
 - update sol.rp, sol.rd, sol.Ax_plus_By
+- only used in one-level ADMM
 """
 
 function admm_update_residual(
@@ -14,7 +15,7 @@ function admm_update_residual(
 
 
     sol.rp .= sol.u_curr .- sol.v_curr #u-v
-    sol.rd .= sol.rho .* (sol.v_curr - mod.v_prev)#single level admm from Boyd
+    sol.rd .= sol.rho .* (sol.v_curr - mod.v_prev)#from Boyd's single-level admm
     sol.Ax_plus_By .= sol.rp #x-xbar
 
     info.primres = norm(sol.rp)

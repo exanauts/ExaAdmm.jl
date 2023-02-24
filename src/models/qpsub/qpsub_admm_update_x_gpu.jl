@@ -21,7 +21,7 @@ end
 """
     admm_update_x_line()
     
-- update xline: call auglag_linelimit_two_level_alternative_qpsub() = update sol.x[pij_idx]
+- update xline: call auglag_linelimit_qpsub() = update sol.x[pij_idx]
 - record run time info.user.time_branches, info.time_x_update
 """
 
@@ -57,8 +57,6 @@ function admm_update_x(
     mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
 )
     admm_update_x_gen(env, mod, mod.gen_solution)
-
-    # println(mod.solution.u_curr)
     admm_update_x_line(env, mod) 
 
 

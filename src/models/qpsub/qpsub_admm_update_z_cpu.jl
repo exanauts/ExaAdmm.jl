@@ -2,7 +2,8 @@
     admm_update_z()
 
 - update sol.z_curr for all coupling
-- record run time info.time_z_update 
+- record run time info.time_z_update
+- only called in two-level admm  
 """
 
 

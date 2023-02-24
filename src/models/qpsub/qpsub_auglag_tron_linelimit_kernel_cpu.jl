@@ -1,9 +1,8 @@
 """
     build_QP_*()
 
-- build any box-constrained QP with      
-- use Exatron.createproblem()
-- TODO: clean up  
+- build any box-constrained QP with Exatron.createproblem()
+- implement eval_f, eval_g, eval_h callback functions 
 """
 
 function build_QP_SP(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64, 1}, u::Array{Float64, 1})

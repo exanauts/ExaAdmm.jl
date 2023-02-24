@@ -1,5 +1,9 @@
 """
 Driver to run TRON on GPU. This should be called from a kernel.
+
+    tron_gpu_test()
+- solves bounded QP: 1/2 x^THx + b*x s.t xl <= x <= xu
+- includes eval_f_kernel(), eval_g_kernel(), and eval_h_kernel
 """
 @inline function tron_gpu_test(n::Int, H::CuDeviceArray{Float64,2}, b::CuDeviceArray{Float64,1}, x::CuDeviceArray{Float64,1}, xl::CuDeviceArray{Float64,1}, xu::CuDeviceArray{Float64,1})
     tx = threadIdx().x
@@ -25,7 +29,6 @@ Driver to run TRON on GPU. This should be called from a kernel.
     B = CuDynamicSharedArray(Float64, (n,n), (14*n+n^2 + (2*n + n^2 + 178))*sizeof(Float64)+(4*n)*sizeof(Int))
     L = CuDynamicSharedArray(Float64, (n,n), (14*n+2*n^2 + (2*n + n^2 + 178))*sizeof(Float64)+(4*n)*sizeof(Int))
 
-    #? what for 
     if tx <= n
         @inbounds for j=1:n
             A[tx,j] = 0.0

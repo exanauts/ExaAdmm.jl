@@ -1,3 +1,12 @@
+"""
+    admm_update_lz()
+    
+- update lz
+- record time info.time_lz_update
+- only used in two-level ADMM
+- GPU kernel: update_lz_kernel
+"""
+
 function update_lz_kernel(n::Int, max_limit::Float64, z::CuDeviceArray{Float64,1}, lz::CuDeviceArray{Float64,1}, beta::Float64)
     tx = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
 

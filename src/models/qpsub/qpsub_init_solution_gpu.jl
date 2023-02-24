@@ -2,8 +2,7 @@
     init_solution()
 
 - initialize sol.v_curr and sol.rho for all coupling
-- Note: initialize sol.l, par.beta, sol.lz in Solution{T,TD}()
-- initialize sqp variables as well  
+- initialize sqp_line, supY  
 """
 
 function init_generator_kernel_qpsub(n::Int, gen_start::Int,
@@ -54,7 +53,7 @@ function init_branch_bus_kernel_qpsub(n::Int, line_start::Int, rho_va::Float64,
         supY[4*(l-1) + 4,6] = -YttI[l]
 
 
-        v[pij_idx] = YftR[l]*sqp_line[1,l] + YftI[l]*sqp_line[2,l] + YffR[l]*sqp_line[3,l]  #CUBLAS.dot(4, supY[1,:],sqp_line[:,l])  #p_ij #? new dot function 
+        v[pij_idx] = YftR[l]*sqp_line[1,l] + YftI[l]*sqp_line[2,l] + YffR[l]*sqp_line[3,l]  #CUBLAS.dot(4, supY[1,:],sqp_line[:,l])  #p_ij 
         v[pij_idx+1] = -YftI[l]*sqp_line[1,l] + YftR[l]*sqp_line[2,l] - YffI[l]*sqp_line[3,l] #CUBLAS.dot(4, supY[2,:],sqp_line[:,l]) #q_ij
         v[pij_idx+2] = YtfR[l]*sqp_line[1,l] - YtfI[l]*sqp_line[2,l] + YttR[l]*sqp_line[4,l] #CUBLAS.dot(4, supY[3,:],sqp_line[:,l]) #p_ji
         v[pij_idx+3] = -YtfI[l]*sqp_line[1,l] - YtfR[l]*sqp_line[2,l] - YttI[l]*sqp_line[4,l] #CUBLAS.dot(4, supY[4,:],sqp_line[:,l]) #q_ji

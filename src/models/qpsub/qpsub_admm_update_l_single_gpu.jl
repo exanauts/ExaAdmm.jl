@@ -1,6 +1,13 @@
 """
-    update_l_kernel_single
+    admm_update_l()
+    
+- update l
+- record time info.time_l_update
+- only used in one-level ADMM
+- GPU kernel: update_l_kernel_single
 """
+
+
 function update_l_kernel_single(
     n::Int, l_curr::CuDeviceArray{Float64,1}, l_prev::CuDeviceArray{Float64,1}, u::CuDeviceArray{Float64,1},
     v::CuDeviceArray{Float64,1}, rho::CuDeviceArray{Float64,1}
@@ -16,12 +23,7 @@ function update_l_kernel_single(
     return
 end
 
-"""
-    admm_update_l()
-    
-- update l
-- record time info.time_l_update
-"""
+
 
 function admm_update_l_single(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},

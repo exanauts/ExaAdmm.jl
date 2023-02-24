@@ -1,3 +1,13 @@
+"""
+    admm_update_l()
+    
+- update l
+- record time info.time_l_update
+- only used in two-level ADMM
+- GPU kernel: update_l_kernel
+"""
+
+
 function update_l_kernel(
     n::Int, l::CuDeviceArray{Float64,1}, z::CuDeviceArray{Float64,1},
     lz::CuDeviceArray{Float64,1}, beta::Float64
@@ -13,12 +23,6 @@ function update_l_kernel(
     return
 end
 
-"""
-    admm_update_l()
-    
-- update l
-- record time info.time_l_update
-"""
 
 function admm_update_l(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},

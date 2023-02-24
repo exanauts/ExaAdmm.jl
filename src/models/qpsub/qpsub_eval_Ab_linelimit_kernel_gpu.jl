@@ -1,13 +1,4 @@
 """
-    eval_A_*(), eval_b_*()
-
-- prepare call backs for build_QP_DS and IPOPT benchmark (solve branch kernel directly)
-- use mod.membuf (see model.jl)
-- TODO: move A_ipopt, b_ipopt to SQOPF for better performance 
-"""
-
-
-"""
    Internal Solution Structure for branch
 
 - branch structure from u (8*nline):   
@@ -23,6 +14,12 @@
     - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|   
 """
 
+
+"""
+    eval_A_b_branch_kernel_gpu_qpsub()
+
+- prepare QP parameter of ADMM branch kernel (before ALM)
+"""
 
 
 function eval_A_b_branch_kernel_gpu_qpsub(
@@ -64,7 +61,16 @@ function eval_A_b_branch_kernel_gpu_qpsub(
 end
 
 
-function eval_A_auglag_branch_kernel_cpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx,tx,Ctron,dtron,RH_1j,RH_1k)
+
+"""
+    eval_A_b_auglag_branch_kernel_gpu_qpsub_red()
+
+- prepare QP parameter of ADMM branch kernel (after model reduction and ALM)
+- Input for Tron GPU 
+- use mod.membuf 
+"""
+
+function eval_A_b_auglag_branch_kernel_gpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx,tx,Ctron,dtron,RH_1j,RH_1k)
     if tx <= 1
         fill!(A_aug, 0.0)
         fill!(Atron, 0.0)
