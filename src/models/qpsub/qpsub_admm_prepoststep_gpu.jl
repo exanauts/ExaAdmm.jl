@@ -1,7 +1,8 @@
 """
     admm_outer_prestep()
     
-at start of each outer loop, preset info.norm_z_prev
+- at start of each outer loop, preset info.norm_z_prev
+- only used in two-level ADMM
 """
 
 function admm_outer_prestep(
@@ -15,12 +16,11 @@ end
 
 
 
-
-
 """
     admm_inner_prestep()
     
-at start of each inner loop, preset sol.z_prev
+- at start of each inner loop, preset sol.z_prev
+- only used in two-level ADMM 
 """
 
 function admm_inner_prestep(
@@ -35,13 +35,12 @@ end
 
 
 
-
-
 """
     admm_poststep()
     
 - after admm termination, fix solution pf_projection() and record time mod.info.time_projection
-- update info.objval with projected solution
+- update info.objval and info.auglag with projected solution
+- feed step solution, multipliers and KKT error info to SQOPF
 """
 
 function admm_poststep(
@@ -94,13 +93,13 @@ function admm_poststep(
     line_dual_infeas = vcat([Hs[6*(l-1)+1:6*l,1:6] * sqp_line[:,l] for l = 1:grid_data.nline]...)
     mod.dual_infeas = vcat(pg_dual_infeas, line_dual_infeas) #unscale 
 
-    #assign value to step variable
+    #assign value to step variable; due to inexact steps, other options include use u_curr, v_curr alone or average
     #generation
     @inbounds begin
         for g = 1: grid_data.ngen
             pg_idx = mod.gen_start + 2*(g-1)
             qg_idx = mod.gen_start + 2*(g-1) + 1
-            mod.dpg_sol[g] = u_curr[pg_idx] #? use u+v/2
+            mod.dpg_sol[g] = u_curr[pg_idx] 
             mod.dqg_sol[g] = u_curr[qg_idx]
         end
         

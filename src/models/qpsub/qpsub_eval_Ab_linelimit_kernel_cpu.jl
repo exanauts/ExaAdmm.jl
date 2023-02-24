@@ -2,7 +2,7 @@
     eval_A_*(), eval_b_*()
 
 - prepare call backs for build_QP_DS and IPOPT benchmark (solve branch kernel directly)
-- use mod.membuf (see model.jl)
+- use mod.membuf 
 """
 
 
@@ -21,18 +21,6 @@
 - Hessian inherited from SQP (6*nline):   
     - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|   
 """
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

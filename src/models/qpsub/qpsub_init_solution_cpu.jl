@@ -2,8 +2,7 @@
     init_solution()
 
 - initialize sol.v_curr and sol.rho for all coupling
-- Note: initialize sol.l, par.beta, sol.lz in Solution{T,TD}()
-- initialize sqp variables as well  
+- initialize sqp_line, supY  
 """
 
 function init_solution!(
@@ -46,7 +45,7 @@ function init_solution!(
         supY = [YftR[l] YftI[l] YffR[l] 0 0 0;
                -YftI[l] YftR[l] -YffI[l] 0 0 0;
                YtfR[l] -YtfI[l] 0 YttR[l] 0 0;
-               -YtfI[l] -YtfR[l] 0 -YttI[l] 0 0]
+               -YtfI[l] -YtfR[l] 0 -YttI[l] 0 0] #wijR, wijI, wi, wj, theta_i, theta_j
 
         #initialize sqp_line 
         sqp_line[:,l] = (ls[l,:] + us[l,:])/2  # order |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|        

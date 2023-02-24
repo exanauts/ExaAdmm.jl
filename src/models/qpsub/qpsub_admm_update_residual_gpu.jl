@@ -2,15 +2,17 @@
     admm_update_residual()
 
 - compute termination errors and other info
-- update info.primres, info.dualres, info.norm_z_curr, info.mismatch, info. objval
+- update info.primres, info.dualres, info.mismatch
 - update sol.rp, sol.rd, sol.Ax_plus_By
+- only used in one-level ADMM
+- GPU kernel: compute_primal_residual_kernel_qpsub, compute_dual_residual_kernel_qpsub, copy_data_kernel 
 """
 
 function compute_primal_residual_kernel_qpsub(n::Int, rp::CuDeviceArray{Float64,1}, u::CuDeviceArray{Float64,1}, v::CuDeviceArray{Float64,1})
     tx = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
 
     if tx <= n
-        rp[tx] = u[tx] - v[tx]
+        rp[tx] = u[tx] - v[tx] #u-v or x-xbar 
     end
 
     return
@@ -20,7 +22,7 @@ function compute_dual_residual_kernel_qpsub(n::Int, rd::CuDeviceArray{Float64,1}
     tx = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
 
     if tx <= n
-        rd[tx] = rho[tx] * (v_curr[tx] - v_prev[tx])
+        rd[tx] = rho[tx] * (v_curr[tx] - v_prev[tx]) #from Boyd's single-level admm
     end
 
     return

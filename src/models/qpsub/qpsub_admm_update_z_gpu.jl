@@ -1,3 +1,11 @@
+"""
+    admm_update_z()
+
+- update sol.z_curr for all coupling
+- record run time info.time_z_update
+- only called in two-level admm  
+"""
+
 function update_zv_kernel(n::Int, u, v, z, l, rho, lz, beta)
     tx = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
 

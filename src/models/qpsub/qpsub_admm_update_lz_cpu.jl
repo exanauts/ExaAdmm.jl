@@ -3,6 +3,7 @@
     
 - update lz
 - record time info.time_lz_update
+- only used in two-level ADMM
 """
 
 function admm_update_lz(
