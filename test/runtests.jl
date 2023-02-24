@@ -7,7 +7,8 @@ using LazyArtifacts
 
 # Data
 const INSTANCES_DIR = joinpath(artifact"ExaData", "ExaData")
-const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "matpower")
+const MP_DEMAND_DIR = joinpath(INSTANCES_DIR, "mp_demand")
+
 
 init_time = time()
 
