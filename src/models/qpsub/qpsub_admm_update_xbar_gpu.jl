@@ -17,7 +17,7 @@ function admm_update_xbar(
 
     @cuda threads=64 blocks=(div(mod.nvar-1, 64)+1) copy_data_kernel(mod.nvar, mod.v_prev, sol.v_curr)
 
-    bus_time = CUDA.@timed @cuda threads=32 blocks=nblk_bus bus_kernel_two_level_alternative_qpsub(data.baseMVA, data.nbus, mod.gen_start, mod.line_start,
+    bus_time = CUDA.@timed @cuda threads=32 blocks=nblk_bus bus_kernel_two_level_alternative(data.baseMVA, data.nbus, mod.gen_start, mod.line_start,
                                     data.FrStart, data.FrIdx, data.ToStart, data.ToIdx, data.GenStart,
                                     data.GenIdx, mod.qpsub_Pd, mod.qpsub_Qd, sol.u_curr, sol.v_curr, sol.z_curr,
                                     sol.l_curr, sol.rho, data.YshR, data.YshI)

@@ -165,12 +165,10 @@ include("interface/solve_qpsub.jl")
 
 # Define "struct ModelAcopf" for encapsulating an ACOPF model.
 include("models/qpsub/qpsub_model.jl")
-include("models/qpsub/qpsub_admm_increment.jl")
 
 # CPU
 include("models/qpsub/qpsub_init_solution_cpu.jl")
 include("models/qpsub/qpsub_generator_kernel_cpu.jl")
-include("models/qpsub/qpsub_bus_kernel_cpu.jl")
 include("models/qpsub/qpsub_admm_update_x_cpu.jl")
 include("models/qpsub/qpsub_admm_update_xbar_cpu.jl")
 include("models/qpsub/qpsub_admm_update_l_single_cpu.jl")
@@ -183,7 +181,6 @@ include("models/qpsub/qpsub_auglag_tron_linelimit_kernel_cpu.jl")
 # GPU
 include("models/qpsub/qpsub_init_solution_gpu.jl")
 include("models/qpsub/qpsub_generator_kernel_gpu.jl")
-include("models/qpsub/qpsub_bus_kernel_gpu.jl")
 include("models/qpsub/qpsub_admm_update_x_gpu.jl")
 include("models/qpsub/qpsub_admm_update_xbar_gpu.jl")
 include("models/qpsub/qpsub_admm_update_l_single_gpu.jl")
