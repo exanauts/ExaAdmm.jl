@@ -124,7 +124,6 @@ end
 
 @inline function eval_f_kernel(x::CuDeviceArray{Float64,1},A::CuDeviceArray{Float64,2},b::CuDeviceArray{Float64,1}) #f gpu
     f = 0.0
-    tx = threadIdx().x
         @inbounds begin
             for i = 1:6
                 for j = 1:6
@@ -145,7 +144,7 @@ end
     g4 = A[4,1]*x[1] + A[4,2]*x[2] + A[4,3]*x[3] + A[4,4]*x[4] + A[4,5]*x[5] + A[4,6]*x[6] + b[4]
     g5 = A[5,1]*x[1] + A[5,2]*x[2] + A[5,3]*x[3] + A[5,4]*x[4] + A[5,5]*x[5] + A[5,6]*x[6] + b[5]
     g6 = A[6,1]*x[1] + A[6,2]*x[2] + A[6,3]*x[3] + A[6,4]*x[4] + A[6,5]*x[5] + A[6,6]*x[6] + b[6]
-    if tx <= 1
+    if tx == 1
         g[1] = g1
         g[2] = g2
         g[3] = g3
@@ -158,7 +157,7 @@ end
 
 @inline function eval_h_kernel(A::CuDeviceArray{Float64,2}, H::CuDeviceArray{Float64,2})
     tx = threadIdx().x
-    if tx <= 1
+    if tx == 1
         @inbounds begin
             for i = 1:6
                 for j = 1:6

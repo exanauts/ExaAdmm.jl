@@ -82,7 +82,7 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     trg[6] = 0.0
 
     eval_A_b_branch_kernel_gpu_qpsub(
-    Hs, l_curr, rho, v_curr, z_curr, Hbr, bbr, lineidx, shift_idx, supY, tx, line_res)
+    Hs, l_curr, rho, v_curr, z_curr, Hbr, bbr, lineidx, shift_idx, supY, line_res)
 
     vec_1j[1] = 1 + LH_1j[lineidx,1]*supY[4*(lineidx - 1)+1,1] + LH_1j[lineidx,2]*supY[4*(lineidx - 1)+2,1]
     vec_1j[2] = LH_1j[lineidx,1]*supY[4*(lineidx - 1)+1,2] + LH_1j[lineidx,2]*supY[4*(lineidx - 1)+2,2]
@@ -164,7 +164,7 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     while !terminate
          it += 1
 
-        eval_A_b_auglag_branch_kernel_gpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx,tx,Ctron,dtron,RH_1j,RH_1k)
+        eval_A_b_auglag_branch_kernel_gpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx, Ctron,dtron,RH_1j,RH_1k)
 
         status, minor_iter = tron_gpu_test(n,Atron,btron,x,xl,xu)
 
@@ -214,7 +214,7 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
         end
 
         if it >= max_auglag #maximum iteration for auglag 
-            if tx <= 1
+            if tx == 1
                 @cuprintln("max iteration reach at block = ",lineidx, "and threads = ",tx)
             end
             terminate = true

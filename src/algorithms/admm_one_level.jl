@@ -40,7 +40,6 @@ function admm_one_level(
         while info.inner < par.inner_iterlim
             admm_increment_inner(env, mod)
             
-            
             admm_update_x(env, mod)
             
             admm_update_xbar(env, mod)
