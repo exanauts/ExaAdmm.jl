@@ -103,7 +103,7 @@ function solve_qpsub(
     if onelevel
         admm_one_level(env, mod)
     else
-        admm_two_level(env, mod)
+        @warn "two-level ADMM is not implemented in QPsub"
     end
     return env, mod
 end
