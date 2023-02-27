@@ -23,9 +23,9 @@
 
 
 function eval_A_b_branch_kernel_gpu_qpsub(
-    H, l, rho, v, z, A_ipopt, b_ipopt, id_line, shift_idx, supY, tx, line_res)
-
-    if tx <= 1
+    H, l, rho, v, z, A_ipopt, b_ipopt, id_line, shift_idx, supY, line_res)
+    tx = threadIdx().x
+    if tx == 1
         @inbounds begin
                 for i = 1:6
                     for j = 1:6
@@ -70,8 +70,9 @@ end
 - use mod.membuf 
 """
 
-function eval_A_b_auglag_branch_kernel_gpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx,tx,Ctron,dtron,RH_1j,RH_1k)
-    if tx <= 1
+function eval_A_b_auglag_branch_kernel_gpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx, Ctron,dtron,RH_1j,RH_1k)
+    tx = threadIdx().x
+    if tx == 1
         fill!(A_aug, 0.0)
         fill!(Atron, 0.0)
 
