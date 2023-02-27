@@ -1,31 +1,11 @@
 """
-    admm_update_x_gen()
-    
-- update xgen: call generator_kernel_two_level_qpsub() = update sol.x[pg_idx], sol.x[qp_idx]
-- record run time info.user.time_generators, info.time_x_update
-"""
-
-function admm_update_x_gen(
-    env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    gen_solution::EmptyGeneratorSolution{Float64,CuArray{Float64,1}}
-)
-    sol, info, data = mod.solution, mod.info, mod.grid_data
-    time_gen = generator_kernel_two_level_qpsub(mod, data.baseMVA, sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho)
-    info.user.time_generators += time_gen.time
-    info.time_x_update += time_gen.time
-    return
-end
-
-
-"""
-    admm_update_x_line()
+    acopf_admm_update_x_line()
     
 - update xline: call auglag_linelimit_qpsub() = update sol.x[pij_idx]
 - record run time info.user.time_branches, info.time_x_update
 """
 
-function admm_update_x_line(
+function acopf_admm_update_x_line(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
     mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
     )
@@ -43,22 +23,4 @@ function admm_update_x_line(
     info.time_x_update += time_br.time
     
 return
-end
-
-
-"""
-    admm_update_x()
-    
-update xgen and xline
-"""
-
-function admm_update_x(
-    env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
-)
-    admm_update_x_gen(env, mod, mod.gen_solution)
-    admm_update_x_line(env, mod) 
-
-
-    return
 end
