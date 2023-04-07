@@ -189,7 +189,7 @@ mutable struct UCMPModel{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         if num_periods == 1
             mod.nvar = mod.mpmodel.models[1].nvar
         else
-            mod.nvar = mod.mpmodel.models[1].nvar + ngen
+            mod.nvar = mod.mpmodel.models[1].nvar + ngen * 5
         end
 
         mod.info = IterationInformation{ComponentInformation}()
