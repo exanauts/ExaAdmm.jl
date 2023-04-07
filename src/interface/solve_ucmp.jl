@@ -38,9 +38,12 @@ function solve_ucmp(case::String, load_prefix::String, gen_prefix::String;
 
     # For warm start, solve each time period without ramp constraints.
     if warm_start
-        for i=1:mod.mpmodel.len_horizon
-            admm_two_level(env, mod.mpmodel.models[i])
-        end
+        # for i=1:mod.mpmodel.len_horizon
+        #     admm_two_level(env, mod.mpmodel.models[i])
+        # end
+        env.params.verbose = 0
+        admm_two_level(env, mod.mpmodel)
+        env.params.verbose = 1
         init_solution!(mod, mod.uc_solution, rho_pq, rho_va, rho_uc)
     end
 
