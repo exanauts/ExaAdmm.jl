@@ -17,27 +17,29 @@ end
         c[tx] = a[tx] - b[tx]
     end
 end
-@kernel function norm_kernel(::Val{n}, x,
-                    y
-                    ) where {n}
-    tx = @index(Local, Linear)
-    bx = @index(Group, Linear)
 
-    _x = @localmem Float64 (n,)
-    _x[tx] = x[tx]
+@kernel function norm_kernel(
+    ::Val{n},
+    x,
+    y
+) where {n}
+    I = @index(Global, Linear)
     @synchronize
-
-    v = ExaTron.dnrm2(n, _x, 1, tx)
-    if bx == 1 && tx == 1
-        y[1] = v
+    v = 0.0
+    for i in 1:n
+        @inbounds v += x[i]*x[i]
     end
-    @synchronize
 
+    @synchronize
+    if I == 1
+        y[1] = sqrt(v)
+    end
 end
+
 function LinearAlgebra.norm(x, device)
     y = KAArray{Float64}(1, device)
     n = length(x)
-    wait(norm_kernel(device,n)(Val{n}(), x, y,ndrange=(n,),dependencies=Event(device)))
+    wait(norm_kernel(device)(Val{n}(), x, y, ndrange=n, dependencies=Event(device)))
     ret = y |> Array
     return ret[1]
 end
