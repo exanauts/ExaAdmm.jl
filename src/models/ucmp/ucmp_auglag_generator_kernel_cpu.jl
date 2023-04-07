@@ -145,7 +145,7 @@ function ucmp_auglag_generator_kernel(
         # param[26,I] = uc_rho[7*I]
         param[27,I] = v[pg_idx] - z[pg_idx]
         param[28,I] = v[qg_idx] - z[qg_idx]
-        t > 1 ? param[29,I] = v[pg_idx-2] - r_z[I] : param[29,I] = 0.
+        t > 1 ? param[29,I] = r_v[I] - r_z[I] : param[29,I] = 0.
         param[30,I] = uc_v[I, v_idx] - uc_z[I, v_idx]
         param[31,I] = uc_v[I, w_idx] - uc_z[I, w_idx]
         param[32,I] = uc_v[I, y_idx] - uc_z[I, y_idx]
