@@ -9,7 +9,8 @@ function auglag_generator_kernel(
     pgmin::Array{Float64,1}, pgmax::Array{Float64,1},
     qgmin::Array{Float64,1}, qgmax::Array{Float64,1},
     ramp_limit::Array{Float64,1},
-    _c2::Array{Float64,1}, _c1::Array{Float64,1}, _c0::Array{Float64,1}, baseMVA::Float64
+    _c2::Array{Float64,1}, _c1::Array{Float64,1}, _c0::Array{Float64,1}, baseMVA::Float64,
+    on_status::Array{Int,1}, switch_on::Array{Int,1}, switch_off::Array{Int,1}
 )
     x = zeros(n)
     xl = zeros(n)
@@ -38,8 +39,8 @@ function auglag_generator_kernel(
         c2 = _c2[I]; c1 = _c1[I]; c0 = _c0[I]
         xl[1] = xl[2] = pgmin[I]
         xu[1] = xu[2] = pgmax[I]
-        xl[3] = -ramp_limit[I]
-        xu[3] = ramp_limit[I]
+        xl[3] = -ramp_limit[I]*on_status[I] - pgmax[I]*switch_off[I]
+        xu[3] = ramp_limit[I]*on_status[I] + pgmax[I]*switch_on[I]
 
         x[1] = min(xu[1], max(xl[1], u[pg_idx]))
         x[2] = min(xu[2], max(xl[2], r_u[I]))
