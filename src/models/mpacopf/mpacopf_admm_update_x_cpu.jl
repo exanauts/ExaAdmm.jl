@@ -7,10 +7,15 @@ function mpacopf_admm_update_x_gen(
     mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
 )
     par, info = env.params, mod.info
+    on_status = mod.on_status
 
     acopf_admm_update_x_gen(env, mod.models[1], mod.models[1].gen_solution)
     for i=2:mod.len_horizon
         submod, subsol, sol_ramp, subdata = mod.models[i], mod.models[i].solution, mod.solution[i], mod.models[i].grid_data
+        on_status = mod.on_status[:,i]
+        switch_on = Int[max(0, mod.on_status[j,i] - mod.on_status[j,i-1]) for j in 1:subdata.ngen]
+        switch_off = Int[max(0, mod.on_status[j,i-1] - mod.on_status[j,i])  for j in 1:subdata.ngen]
+
         time_gen = @timed auglag_generator_kernel(3, subdata.ngen, submod.gen_start,
             info.inner, par.max_auglag, par.mu_max, 1.0,
             subsol.u_curr, subsol.v_curr, subsol.z_curr,
@@ -21,7 +26,7 @@ function mpacopf_admm_update_x_gen(
             subdata.pgmin, subdata.pgmax,
             subdata.qgmin, subdata.qgmax,
             subdata.ramp_rate,
-            subdata.c2, subdata.c1, subdata.c0, subdata.baseMVA)
+            subdata.c2, subdata.c1, subdata.c0, subdata.baseMVA, on_status, switch_on, switch_off)
 
         submod.info.time_x_update += time_gen.time
         submod.info.user.time_generators += time_gen.time
