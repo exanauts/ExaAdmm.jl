@@ -91,6 +91,7 @@ mutable struct SolutionRamping{T,TD} <: AbstractSolution{T,TD}
 mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     info::IterationInformation
     solution::Vector{SolutionRamping{T,TD}} # ramp related solution
+    on_status::Matrix{Int}
 
     nvar::Int                               # total number of variables
     len_horizon::Int                        # the length of a time horizon
@@ -98,7 +99,8 @@ mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     models::Vector{ModelAcopf{T,TD,TI,TM}}       # a collection of time periods
 
     function ModelMpacopf{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM};
-        start_period=1, end_period=1, ramp_ratio=0.02) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
+        start_period=1, end_period=1, ramp_ratio=0.02,
+        on_status=nothing) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
 
         @assert env.load_specified == true
         @assert start_period >= 1 && start_period <= end_period && end_period <= size(env.load.pd,2)
@@ -137,6 +139,8 @@ mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         end
 
         mod.info = IterationInformation{ComponentInformation}()
+
+        mod.on_status = isnothing(on_status) ? ones(Int, ngen, num_periods) : on_status
 
         return mod
     end
