@@ -143,9 +143,9 @@ mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         mod.info = IterationInformation{ComponentInformation}()
 
-        mod.on_status = isnothing(on_status) ? TI[ones(Int, ngen) for _ in 1:num_periods] : TI[on_status[:,i] for i in 1:num_periods]
-        mod.switch_on = isnothing(switch_on) ? TI[zeros(Int, ngen) for _ in 1:num_periods] : TI[switch_on[:,i] for i in 1:num_periods]
-        mod.switch_off = isnothing(switch_off) ? TI[zeros(Int, ngen) for _ in 1:num_periods] : TI[switch_off[:,i] for i in 1:num_periods]
+        mod.on_status = isnothing(on_status) ? TI[ones(Int, ngen) for _ in 1:num_periods] : on_status
+        mod.switch_on = isnothing(switch_on) ? TI[zeros(Int, ngen) for _ in 1:num_periods] : switch_on
+        mod.switch_off = isnothing(switch_off) ? TI[zeros(Int, ngen) for _ in 1:num_periods] : switch_off
 
         return mod
     end
