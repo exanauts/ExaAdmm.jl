@@ -9,7 +9,8 @@ function auglag_generator_kernel(
     pgmin::CuDeviceArray{Float64,1}, pgmax::CuDeviceArray{Float64,1},
     qgmin::CuDeviceArray{Float64,1}, qgmax::CuDeviceArray{Float64,1},
     ramp_limit::CuDeviceArray{Float64,1},
-    _c2::CuDeviceArray{Float64,1}, _c1::CuDeviceArray{Float64,1}, _c0::CuDeviceArray{Float64,1}, baseMVA::Float64
+    _c2::CuDeviceArray{Float64,1}, _c1::CuDeviceArray{Float64,1}, _c0::CuDeviceArray{Float64,1}, baseMVA::Float64,
+    on_status::CuDeviceArray{Int,1}, switch_on::CuDeviceArray{Int,1}, switch_off::CuDeviceArray{Int,1}
 )
     tx = threadIdx().x
     I = blockIdx().x
@@ -42,8 +43,8 @@ function auglag_generator_kernel(
 
         xl[1] = xl[2] = pgmin[I]
         xu[1] = xu[2] = pgmax[I]
-        xl[3] = -ramp_limit[I]
-        xu[3] = ramp_limit[I]
+        xl[3] = -ramp_limit[I]*on_status[I] - pgmax[I]*switch_off[I]
+        xu[3] = ramp_limit[I]*on_status[I] + pgmax[I]*switch_on[I]
 
         x[1] = min(xu[1], max(xl[1], u[pg_idx]))
         x[2] = min(xu[2], max(xl[2], r_u[I]))

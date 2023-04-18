@@ -10,6 +10,9 @@ function mpacopf_admm_update_x_gen(
 
     for i=2:mod.len_horizon
         submod, subsol, sol_ramp, subdata = mod.models[i], mod.models[i].solution, mod.solution[i], mod.models[i].grid_data
+        on_status = mod.on_status[i]
+        switch_on = mod.switch_on[i]
+        switch_off = mod.switch_off[i]
         time_gen = @timed begin
 
         @cuda threads=32 blocks=ngen shmem=shmem_size auglag_generator_kernel(
@@ -23,7 +26,7 @@ function mpacopf_admm_update_x_gen(
             subdata.pgmin, subdata.pgmax,
             subdata.qgmin, subdata.qgmax,
             subdata.ramp_rate,
-            subdata.c2, subdata.c1, subdata.c0, subdata.baseMVA)
+            subdata.c2, subdata.c1, subdata.c0, subdata.baseMVA, on_status, switch_on, switch_off)
         CUDA.synchronize()
         end
 
