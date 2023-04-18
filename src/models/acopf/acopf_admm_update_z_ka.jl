@@ -17,12 +17,11 @@ function admm_update_z(
 )
     par, sol, info = env.params, mod.solution, mod.info
 
-    ev = update_zv_kernel_ka(device,64,mod.nvar)(
+    update_zv_kernel_ka(device,64,mod.nvar)(
         mod.nvar, sol.u_curr, sol.v_curr, sol.z_curr,
-        sol.l_curr, sol.rho, sol.lz, par.beta,
-        dependencies=Event(device)
+        sol.l_curr, sol.rho, sol.lz, par.beta
     )
-    wait(ev)
+    KA.synchronize(device)
     info.time_z_update += 0.0
     return
 end

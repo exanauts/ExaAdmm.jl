@@ -37,9 +37,8 @@ and the same example on an AMD GPU:
 ```julia
 using ExaAdmm
 using AMDGPU
-using ROCKernels
 
-ExaAdmm.KAArray{T}(n::Int, ::ROCDevice) where {T} = ROCArray{T}(undef, n)
+ExaAdmm.KAArray{T}(n::Int, ::ROCBackend) where {T} = ROCArray{T}(undef, n)
 
 env, mod = solve_acopf(
     "case1354pegase.m";
@@ -50,7 +49,7 @@ env, mod = solve_acopf(
     scale=1e-4,
     tight_factor=0.99,
     use_gpu=true,
-    ka_device = ROCDevice(),
+    ka_device = ROCBackend(),
     verbose=1
 )
 ```
