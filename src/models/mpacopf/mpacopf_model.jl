@@ -91,7 +91,9 @@ mutable struct SolutionRamping{T,TD} <: AbstractSolution{T,TD}
 mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     info::IterationInformation
     solution::Vector{SolutionRamping{T,TD}} # ramp related solution
-    on_status::Matrix{Int}
+    on_status::Vector{TI}
+    switch_on::Vector{TI}
+    switch_off::Vector{TI}
 
     nvar::Int                               # total number of variables
     len_horizon::Int                        # the length of a time horizon
@@ -100,7 +102,8 @@ mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
     function ModelMpacopf{T,TD,TI,TM}(env::AdmmEnv{T,TD,TI,TM};
         start_period=1, end_period=1, ramp_ratio=0.02,
-        on_status=nothing) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
+        on_status=nothing, switch_on=nothing, switch_off=nothing
+        ) where {T,TD<:AbstractArray{T},TI<:AbstractArray{Int},TM<:AbstractArray{T,2}}
 
         @assert env.load_specified == true
         @assert start_period >= 1 && start_period <= end_period && end_period <= size(env.load.pd,2)
@@ -140,7 +143,9 @@ mutable struct ModelMpacopf{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         mod.info = IterationInformation{ComponentInformation}()
 
-        mod.on_status = isnothing(on_status) ? ones(Int, ngen, num_periods) : on_status
+        mod.on_status = isnothing(on_status) ? TI[ones(Int, ngen) for _ in 1:num_periods] : TI[on_status[:,i] for i in 1:num_periods]
+        mod.switch_on = isnothing(switch_on) ? TI[zeros(Int, ngen) for _ in 1:num_periods] : TI[switch_on[:,i] for i in 1:num_periods]
+        mod.switch_off = isnothing(switch_off) ? TI[zeros(Int, ngen) for _ in 1:num_periods] : TI[switch_off[:,i] for i in 1:num_periods]
 
         return mod
     end
