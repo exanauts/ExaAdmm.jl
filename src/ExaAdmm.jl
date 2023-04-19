@@ -13,10 +13,6 @@ using ExaTron
 using Random
 
 const KA = KernelAbstractions
-## added by bowen
-using Test
-using JuMP
-using Ipopt
 
 export solve_acopf
 
@@ -178,9 +174,9 @@ include("models/qpsub/qpsub_admm_update_xbar_cpu.jl")
 include("models/qpsub/qpsub_admm_update_l_single_cpu.jl")
 include("models/qpsub/qpsub_admm_update_residual_cpu.jl")
 include("models/qpsub/qpsub_admm_prepoststep_cpu.jl")
-include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_cpu.jl") 
-include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_cpu.jl")  
-include("models/qpsub/qpsub_auglag_tron_linelimit_kernel_cpu.jl") 
+include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_cpu.jl")
+include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_cpu.jl")
+include("models/qpsub/qpsub_auglag_tron_linelimit_kernel_cpu.jl")
 
 # GPU
 include("models/qpsub/qpsub_init_solution_gpu.jl")
@@ -190,7 +186,7 @@ include("models/qpsub/qpsub_admm_update_xbar_gpu.jl")
 include("models/qpsub/qpsub_admm_update_l_single_gpu.jl")
 include("models/qpsub/qpsub_admm_update_residual_gpu.jl")
 include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_gpu.jl")
-include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_gpu.jl") 
+include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_gpu.jl")
 include("models/qpsub/qpsub_tron_linelimit_kernel.jl")
 include("models/qpsub/qpsub_admm_prepoststep_gpu.jl")
 
