@@ -5,7 +5,7 @@ function admm_two_level(
     info = mod.info
 
     sqrt_d = sqrt(mod.nvar)
-    OUTER_TOL = sqrt_d*(par.outer_eps) #adjusted outer loop tolerance 
+    OUTER_TOL = sqrt_d*(par.outer_eps) #adjusted outer loop tolerance
 
     fill!(info, 0)
     info.mismatch = Inf
