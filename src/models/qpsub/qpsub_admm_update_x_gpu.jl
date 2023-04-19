@@ -1,6 +1,6 @@
 """
     acopf_admm_update_x_line()
-    
+
 - update xline: call auglag_linelimit_qpsub() = update sol.x[pij_idx]
 - record run time info.user.time_branches, info.time_x_update
 """
@@ -21,6 +21,6 @@ function acopf_admm_update_x_line(
 
     info.user.time_branches += time_br.time
     info.time_x_update += time_br.time
-    
+
 return
 end

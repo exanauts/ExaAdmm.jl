@@ -1,9 +1,9 @@
 """
     admm_update_l()
-    
+
 - update l
 - record time info.time_l_update
-- only used in one-level ADMM 
+- only used in one-level ADMM
 """
 
 function admm_update_l_single(

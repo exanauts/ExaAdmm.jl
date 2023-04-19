@@ -1,6 +1,6 @@
 """
     admm_increment_outer()
-    
+
 increment outer iteration
 """
 
@@ -15,7 +15,7 @@ end
 
 """
     admm_increment_reset_inner()
-    
+
 reset inner iteration when outer iteration just incremented
 """
 
@@ -30,7 +30,7 @@ end
 
 """
     admm_increment_inner()
-    
+
 increment inner iteration
 """
 

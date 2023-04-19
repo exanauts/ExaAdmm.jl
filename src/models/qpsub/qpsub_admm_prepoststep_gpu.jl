@@ -1,6 +1,6 @@
 """
     admm_poststep()
-    
+
 - after admm termination, fix solution pf_projection() and record time mod.info.time_projection
 - update info.objval and info.auglag with projected solution
 - feed step solution, multipliers and KKT error info to SQOPF
@@ -40,21 +40,21 @@ function admm_poststep(
 
     Hs = Array(mod.Hs)
 
-    #final objective and auglag 
+    #final objective and auglag
     info.objval = sum(c2[g]*(grid_data.baseMVA*u_curr[mod.gen_start+2*(g-1)])^2 +
                     c1[g]*(grid_data.baseMVA*u_curr[mod.gen_start+2*(g-1)])
-                    for g in 1:grid_data.ngen) + 
-                        sum(0.5*dot(sqp_line[:,l],Hs[6*(l-1)+1:6*l,1:6],sqp_line[:,l]) for l=1:grid_data.nline) 
-    
+                    for g in 1:grid_data.ngen) +
+                        sum(0.5*dot(sqp_line[:,l],Hs[6*(l-1)+1:6*l,1:6],sqp_line[:,l]) for l=1:grid_data.nline)
+
     info.auglag = info.objval +
                         sum(l_curr[i]*rp[i] for i=1:mod.nvar) +
-                        0.5*sum(rho[i]*(rp[i])^2 for i=1:mod.nvar) 
+                        0.5*sum(rho[i]*(rp[i])^2 for i=1:mod.nvar)
 
 
     #find dual infeas kkt for SQP integration
     pg_dual_infeas = [2*c2[g]*(grid_data.baseMVA)^2*u_curr[mod.gen_start+2*(g-1)] for g = 1:grid_data.ngen]
     line_dual_infeas = vcat([Hs[6*(l-1)+1:6*l,1:6] * sqp_line[:,l] for l = 1:grid_data.nline]...)
-    mod.dual_infeas = vcat(pg_dual_infeas, line_dual_infeas) #unscale 
+    mod.dual_infeas = vcat(pg_dual_infeas, line_dual_infeas) #unscale
 
     #assign value to step variable; due to inexact steps, other options include use u_curr, v_curr alone or average
     #generation
@@ -62,10 +62,10 @@ function admm_poststep(
         for g = 1: grid_data.ngen
             pg_idx = mod.gen_start + 2*(g-1)
             qg_idx = mod.gen_start + 2*(g-1) + 1
-            mod.dpg_sol[g] = u_curr[pg_idx] 
+            mod.dpg_sol[g] = u_curr[pg_idx]
             mod.dqg_sol[g] = u_curr[qg_idx]
         end
-        
+
         copyto!(mod.dline_var, sqp_line)
 
         for l = 1:grid_data.nline
@@ -101,5 +101,5 @@ function admm_poststep(
             mod.dtheta_sol[b] = dt_sum/dt_ct #average
         end
     end #inbound
-    return   
+    return
 end

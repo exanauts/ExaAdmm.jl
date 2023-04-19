@@ -7,7 +7,7 @@ Driver to run TRON on GPU. This should be called from a kernel.
 """
 @inline function tron_gpu_test(n::Int, H::CuDeviceArray{Float64,2}, b::CuDeviceArray{Float64,1}, x::CuDeviceArray{Float64,1}, xl::CuDeviceArray{Float64,1}, xu::CuDeviceArray{Float64,1})
     tx = threadIdx().x
-    
+
 
     g = CuDynamicSharedArray(Float64, n, (3*n + (2*n + n^2 + 178))*sizeof(Float64))
     xc = CuDynamicSharedArray(Float64, n, (4*n + (2*n + n^2 + 178))*sizeof(Float64))
@@ -84,7 +84,7 @@ Driver to run TRON on GPU. This should be called from a kernel.
 
         if task == 0
             gnorm0 = ExaAdmm.ExaTron.dnrm2(n, g, 1)
-            delta = gnorm0 
+            delta = gnorm0
         end
 
         if search
@@ -114,9 +114,9 @@ Driver to run TRON on GPU. This should be called from a kernel.
         if task == 4 || task == 10
             search = false
         end
-     end # end while 
-    
-     
+     end # end while
+
+
     CUDA.sync_threads()
 
     return status, minor_iter
@@ -133,7 +133,7 @@ end
             end
         end
     CUDA.sync_threads()
-    return f 
+    return f
 end
 
 @inline function eval_g_kernel(x::CuDeviceArray{Float64,1}, g::CuDeviceArray{Float64,1}, A::CuDeviceArray{Float64,2}, b::CuDeviceArray{Float64,1})

@@ -2,7 +2,7 @@
     init_solution()
 
 - initialize sol.v_curr and sol.rho for all coupling
-- initialize sqp_line, supY  
+- initialize sqp_line, supY
 """
 
 function init_generator_kernel_qpsub(n::Int, gen_start::Int,
@@ -53,7 +53,7 @@ function init_branch_bus_kernel_qpsub(n::Int, line_start::Int, rho_va::Float64,
         supY[4*(l-1) + 4,6] = -YttI[l]
 
 
-        v[pij_idx] = YftR[l]*sqp_line[1,l] + YftI[l]*sqp_line[2,l] + YffR[l]*sqp_line[3,l]  #CUBLAS.dot(4, supY[1,:],sqp_line[:,l])  #p_ij 
+        v[pij_idx] = YftR[l]*sqp_line[1,l] + YftI[l]*sqp_line[2,l] + YffR[l]*sqp_line[3,l]  #CUBLAS.dot(4, supY[1,:],sqp_line[:,l])  #p_ij
         v[pij_idx+1] = -YftI[l]*sqp_line[1,l] + YftR[l]*sqp_line[2,l] - YffI[l]*sqp_line[3,l] #CUBLAS.dot(4, supY[2,:],sqp_line[:,l]) #q_ij
         v[pij_idx+2] = YtfR[l]*sqp_line[1,l] - YtfI[l]*sqp_line[2,l] + YttR[l]*sqp_line[4,l] #CUBLAS.dot(4, supY[3,:],sqp_line[:,l]) #p_ji
         v[pij_idx+3] = -YtfI[l]*sqp_line[1,l] - YtfR[l]*sqp_line[2,l] - YttI[l]*sqp_line[4,l] #CUBLAS.dot(4, supY[4,:],sqp_line[:,l]) #q_ji
@@ -77,7 +77,7 @@ function init_solution!(
     )
 
     data = model.grid_data
-    
+
     fill!(sol, 0.0)
     fill!(model.lambda, 0.0)
 
@@ -87,11 +87,11 @@ function init_solution!(
 
     @cuda threads=64 blocks=(div(data.ngen-1,64)+1) init_generator_kernel_qpsub(data.ngen, model.gen_start,
                     model.qpsub_pgmax, model.qpsub_pgmin, model.qpsub_qgmax, model.qpsub_qgmin, sol.v_curr)
-    
+
     @cuda threads=64 blocks=(div(data.nline-1,64)+1) init_branch_bus_kernel_qpsub(data.nline, model.line_start, rho_va,
                     data.YffR, data.YffI, data.YftR, data.YftI,
                     data.YtfR, data.YtfI, data.YttR, data.YttI, model.us, model.ls, model.sqp_line, sol.v_curr, sol.rho, model.supY)
-    CUDA.synchronize()                
+    CUDA.synchronize()
 
     return
 end

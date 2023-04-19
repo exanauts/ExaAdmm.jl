@@ -6,28 +6,28 @@ This contains the parameters specific to QPSUB model instance.
 
 
 """
-    Solution Structure: 
+    Solution Structure:
 - solution.u contain variables for generator and branch kernel
 - solution.v contains variables for bus kernel
 - Summary Table:
 
-|  dimension     |   ngen  |  ngen  |  nline    |  nline  | nline     | nline    |  nline  |  nline   | nline      | nline       | 
+|  dimension     |   ngen  |  ngen  |  nline    |  nline  | nline     | nline    |  nline  |  nline   | nline      | nline       |
 |:--------------:|:-------:| :----: |:----:     |:----:   |:----:     |:----:    |:----:   |:----:    |:----:      |:----:       |
 |structure for u |   pg    |  qg    |  p_ij     |  q_ij   |   p_ji    |  q_ji    | wi(ij)  |  wj(ji)  | thetai(ij) |  thetaj(ji) |
 |structure for v |   pg(i) |  qg(i) |  p_ij(i)  |  q_ij(i)|   p_ji(j) |  q_ji(j) | wi      |  wj      | thetai     | thetaj      |
 
-- structure for l and ρ is wrt all element of [x - xbar + z]  with same dimension  
+- structure for l and ρ is wrt all element of [x - xbar + z]  with same dimension
 
 - structure for sqp_line: 6*nline
     |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
 
-- Note: line has shared nodes => xbar contain duplications. 
+- Note: line has shared nodes => xbar contain duplications.
     For example line(1,2) and line(2,3): w2 and theta2 exist twice in v.
 
 - qpsub_membuf structure (dim = 5, used in auglag):
-    - |λ_1h | λ_1i | λ_1j| λ_1k | ρ_{1h,1i,1j,1k}| 
+    - |λ_1h | λ_1i | λ_1j| λ_1k | ρ_{1h,1i,1j,1k}|
     - For c(x) = 0, ALM = λ*c(x) + (ρ/2)c(x)^2
-    - For 1j and 1k, introduce slack t_ij and t_ji (see internal branch structure for Exatron) 
+    - For 1j and 1k, introduce slack t_ij and t_ji (see internal branch structure for Exatron)
 
 """
 mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
@@ -50,30 +50,30 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
     membuf::TM      # memory buffer for line kernel
     gen_membuf::TM  # memory buffer for generator kernel
-    
+
     v_prev::TD
-   
-    
-    
+
+
+
     #qpsub_construct
     Hs::TM  # Hessian information for all lines 6*nline x 6: |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
-    
+
     #QP coefficient for orignal branch kernel QP problem
     LH_1h::TM  # nline * 4 : w_ijR w_ijI wi(ij) wj(ji)
-    RH_1h::TD  # nline   
+    RH_1h::TD  # nline
     LH_1i::TM  # nline * 4 : w_ijR w_ijI thetai(ij) thetaj(ji)
-    RH_1i::TD  # nline    
-    
+    RH_1i::TD  # nline
+
     LH_1j::TM #nline * 2 : pij qij
-    RH_1j::TD #nline 
-    LH_1k::TM #nline * 2 : pji qji 
+    RH_1j::TD #nline
+    LH_1k::TM #nline * 2 : pji qji
     RH_1k::TD #nline
 
     ls::TM # nline * 6
-    us::TM # nline * 6 
+    us::TM # nline * 6
 
     is_HS_sym::Array{Bool,1} #nline
-    is_HS_PSD::Array{Bool,1} #nline 
+    is_HS_PSD::Array{Bool,1} #nline
 
     line_res::TM #4*nline
 
@@ -92,14 +92,14 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
     #qpsub_solve
     qpsub_membuf::TM #memory buffer for qpsub 5*nline
-    sqp_line::TM #6 * nline 
-    
-    #collect qpsub solution 
+    sqp_line::TM #6 * nline
+
+    #collect qpsub solution
     dpg_sol::Array{Float64,1} #ngen
     dqg_sol::Array{Float64,1} #ngen
 
     dline_var::Array{Float64,2} #6*nline: w_ijR, w_ijI, w_i, w_j, theta_i, theta_j
-    dline_fl::Array{Float64,2} #4*nline: p_ij, q_ij, p_ji, q_ji 
+    dline_fl::Array{Float64,2} #4*nline: p_ij, q_ij, p_ji, q_ji
 
     dtheta_sol::Array{Float64,1} #nbus consensus with line_var
     dw_sol::Array{Float64,1} #nbus consensus with line_var
@@ -119,8 +119,8 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
     lambda::TM #14h i j k multiplier
 
     # additional memory allocation for branch kernel (GPU)
-    # NOTE: added by bowen 
-    supY::TM #in gpu initialization 
+    # NOTE: added by bowen
+    supY::TM #in gpu initialization
 
 
     function ModelQpsub{T,TD,TI,TM}() where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
@@ -143,9 +143,9 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         model.nvar = 2*model.grid_data.ngen + 8*model.grid_data.nline
         model.nvar_padded = model.nvar + 8*(model.nline_padded - model.grid_data.nline) #useless
-        model.gen_start = 1 #location starting generator variables 
+        model.gen_start = 1 #location starting generator variables
         model.line_start = 2*model.grid_data.ngen + 1 #location starting branch variables
-        
+
 
         model.pgmin_curr = TD(undef, model.grid_data.ngen)
         model.pgmax_curr = TD(undef, model.grid_data.ngen)
@@ -171,10 +171,10 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         # Memory space is allocated based on the padded size.
         model.solution = Solution{T,TD}(model.nvar_padded)
-        
+
         model.gen_solution = EmptyGeneratorSolution{T,TD}()
-        
-        #old memory buffer used in the auglag_linelimit with Tron 
+
+        #old memory buffer used in the auglag_linelimit with Tron
         model.membuf = TM(undef, (31, model.grid_data.nline))
         fill!(model.membuf, 0.0)
         model.membuf[29,:] .= model.grid_data.rateA
@@ -183,11 +183,11 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         #new solution structure for tron (Hessian inherited from SQP: 6*nline)
         model.sqp_line = TM(undef, (6,model.grid_data.nline))
-        fill!(model.sqp_line, 0.0)  
+        fill!(model.sqp_line, 0.0)
 
         #new v_prev for dual reshape
         model.v_prev = TD(undef, model.nvar)
-        fill!(model.v_prev, 0.0) 
+        fill!(model.v_prev, 0.0)
 
         #new memory buffer used in the new auglag_Ab with Tron
         model.qpsub_membuf = TM(undef, (5,model.grid_data.nline))
@@ -206,7 +206,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         model.RH_1h = TD(undef,model.grid_data.nline)
         fill!(model.RH_1h, 0.0)
-        
+
         #1i
         model.LH_1i = TM(undef,(model.grid_data.nline,4))
         fill!(model.LH_1i, 0.0)
@@ -214,21 +214,21 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.RH_1i = TD(undef,model.grid_data.nline)
         fill!(model.RH_1i, 0.0)
 
-        #1j 
+        #1j
         model.LH_1j = TM(undef,(model.grid_data.nline,2))
         fill!(model.LH_1j, 0.0)
 
         model.RH_1j = TD(undef,model.grid_data.nline)
         fill!(model.RH_1j, 0.0)
 
-        #1k 
+        #1k
         model.LH_1k = TM(undef,(model.grid_data.nline,2))
         fill!(model.LH_1k, 0.0)
 
         model.RH_1k = TD(undef,model.grid_data.nline)
         fill!(model.RH_1k, 0.0)
 
-        # l and u 
+        # l and u
         model.ls = TM(undef,(model.grid_data.nline,6))
         fill!(model.ls, 0.0)
 
@@ -259,7 +259,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.qpsub_qgmin = TD(undef, model.grid_data.ngen)
         fill!(model.qpsub_qgmin, 0.0)
 
-        model.qpsub_Pd = TD(undef, model.grid_data.nbus) 
+        model.qpsub_Pd = TD(undef, model.grid_data.nbus)
         fill!(model.qpsub_Pd, 0.0)
 
         model.qpsub_Qd = TD(undef, model.grid_data.nbus)
@@ -271,7 +271,7 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
 
         model.dqg_sol = Array{Float64,1}(undef, model.grid_data.ngen)
         fill!(model.dqg_sol, 0.0)
-        
+
         model.dline_var = Array{Float64,2}(undef,(6, model.grid_data.nline))
         fill!(model.dline_var, 0.0)
 
@@ -284,16 +284,16 @@ mutable struct ModelQpsub{T,TD,TI,TM} <: AbstractOPFModel{T,TD,TI,TM}
         model.dw_sol = Array{Float64,1}(undef, model.grid_data.nbus)
         fill!(model.dw_sol, 0.0)
 
-        # for SQP 
+        # for SQP
         model.dual_infeas = Array{Float64,1}(undef, model.grid_data.ngen + 6*model.grid_data.nline)
-        fill!(model.dual_infeas, 1000.0)  
+        fill!(model.dual_infeas, 1000.0)
 
         model.lambda = TM(undef, (4, model.grid_data.nline))
         fill!(model.lambda, 0.0)
 
         #additional options
         model.supY = TM(undef, (4*model.grid_data.nline, 8)) #see supY def in eval_A_b_branch_kernel_gpu_qpsub
-        fill!(model.supY, 0.0) 
+        fill!(model.supY, 0.0)
 
 
         return model
@@ -322,7 +322,7 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
 
     model.membuf = copy(ref.membuf)
     model.gen_membuf = copy(ref.gen_membuf)
-    model.qpsub_membuf = copy(ref.qpsub_membuf) 
+    model.qpsub_membuf = copy(ref.qpsub_membuf)
 
     model.nvar_u = ref.nvar_u
     model.nvar_v = ref.nvar_v
@@ -373,11 +373,11 @@ function Base.copy(ref::ModelQpsub{T,TD,TI,TM}) where {T, TD<:AbstractArray{T}, 
     model.qpsub_Pd = copy(ref.qpsub_Pd)
     model.qpsub_Qd = copy(ref.qpsub_Qd)
 
-    # for SQP 
+    # for SQP
     model.dual_infeas = copy(ref.dual_infeas)
     model.lambda = copy(ref.lambda)
 
-    #additional parameters 
+    #additional parameters
     model.supY = copy(ref.supY)
 
     return model

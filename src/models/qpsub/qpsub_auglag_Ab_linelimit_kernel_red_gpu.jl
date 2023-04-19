@@ -5,24 +5,24 @@
 - use Exatron, eval_A_b_branch_kernel_gpu_qpsub, eval_A_b_auglag_branch_kernel_gpu_qpsub_red, tron_gpu_test
 - LANCELOT ALM algorithm
 - with elimination of w_ijR and w_ijI (v2 in overleaf)
-- with multiplier output 
+- with multiplier output
 """
 
 
 """
    Internal Solution Structure for branch
 
-- branch structure from u (8*nline):   
+- branch structure from u (8*nline):
     - |p_ij   | q_ij  | p_ji   | q_ji    | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji) |
 
-- branch structure for Exatron (8*nline):  
+- branch structure for Exatron (8*nline):
     - | t_ij(linelimit) | t_ji(linelimit) | w_ijR  |  w_ijI   | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji)
 
 - branch structure for Exatron (6*nline): eliminate w_ijR, wij_I
     - | t_ij(linelimit) | t_ji(linelimit) | wi(ij) | wj(ji) | thetai(ij) | thetaj(ji)
 
-- Hessian inherited from SQP ie sqp_line (6*nline):   
-    - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|   
+- Hessian inherited from SQP ie sqp_line (6*nline):
+    - |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
 """
 
 
@@ -34,10 +34,10 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     lineidx = blockIdx().x
     shift_idx = line_start + 8*(lineidx-1)
 
-    
+
     n = 6
 
-    x = CuDynamicSharedArray(Float64, n) #memory allocation 
+    x = CuDynamicSharedArray(Float64, n) #memory allocation
     xl = CuDynamicSharedArray(Float64, n, n*sizeof(Float64))
     xu = CuDynamicSharedArray(Float64, n, (2*n)*sizeof(Float64))
     trg = CuDynamicSharedArray(Float64, n, (3*n)*sizeof(Float64))
@@ -50,7 +50,7 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     A_aug = CuDynamicSharedArray(Float64, (8,8), (5*n + n^2 + 72)*sizeof(Float64))
     Atron = CuDynamicSharedArray(Float64, (6,6), (5*n + n^2 + 136)*sizeof(Float64))
     btron = CuDynamicSharedArray(Float64, 6, (5*n + n^2 + 172)*sizeof(Float64))
-    
+
 
     #initialization: variable wrt branch structure wrt Exatron
     x[1] = 0.0
@@ -101,8 +101,8 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     vec_1k[6] = LH_1k[lineidx,1]*supY[4*(lineidx - 1)+3,6] + LH_1k[lineidx,2]*supY[4*(lineidx - 1)+4,6]
     vec_1k[7] = LH_1k[lineidx,1]*supY[4*(lineidx - 1)+3,7] + LH_1k[lineidx,2]*supY[4*(lineidx - 1)+4,7]
     vec_1k[8] = LH_1k[lineidx,1]*supY[4*(lineidx - 1)+3,8] + LH_1k[lineidx,2]*supY[4*(lineidx - 1)+4,8]
-    
-    
+
+
     prod = LH_1h[lineidx,1]*LH_1i[lineidx,2]-LH_1h[lineidx,2]*LH_1i[lineidx,1]
     inv11 =  LH_1i[lineidx,2]/prod
     inv12 = -LH_1h[lineidx,2]/prod
@@ -131,8 +131,8 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
 
     dtron[1] = 0.0
     dtron[2] = 0.0
-    dtron[3] = inv11*RH_1h[lineidx] + inv12*RH_1i[lineidx] 
-    dtron[4] = inv21*RH_1h[lineidx]  + inv22*RH_1i[lineidx] 
+    dtron[3] = inv11*RH_1h[lineidx] + inv12*RH_1i[lineidx]
+    dtron[4] = inv21*RH_1h[lineidx]  + inv22*RH_1i[lineidx]
     dtron[5] = 0.0
     dtron[6] = 0.0
     dtron[7] = 0.0
@@ -142,24 +142,24 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     # initialization on penalty
     if inner == 1 #info.inner = 1 (first inner iteration)
         membuf[5,lineidx] = 10.0 #reset ρ_1h = ρ_1i = ρ_1j = ρ_1k (let ρ the same for all AL terms)
-        mu = 10.0 # set mu = initial ρ_*      
+        mu = 10.0 # set mu = initial ρ_*
     else
         mu = membuf[5,lineidx] #inherit mu = ρ from the previous inner iteration
-    end    
+    end
 
-   
 
-    CUDA.sync_threads()    
+
+    CUDA.sync_threads()
     # set internal parameters eta omega mu to guide ALM convergence
     eta = 1 / mu^0.1
-  
-        
+
+
     it = 0 #iteration count
     terminate = false #termination status
 
 
 
-  
+
 
     while !terminate
          it += 1
@@ -174,23 +174,23 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
                 Ctron[2,5]*x[5] + Ctron[2,6]*x[6] + dtron[2]
 
         sqp_line[1,lineidx] = Ctron[3,1] * x[1] + Ctron[3,2]*x[2] + Ctron[3,3]*x[3] + Ctron[3,4]*x[4] +
-                                Ctron[3,5]*x[5] + Ctron[3,6]*x[6] + dtron[3] 
+                                Ctron[3,5]*x[5] + Ctron[3,6]*x[6] + dtron[3]
         sqp_line[2,lineidx] = Ctron[4,1] * x[1] + Ctron[4,2]*x[2] + Ctron[4,3]*x[3] + Ctron[4,4]*x[4] +
-                                Ctron[4,5]*x[5] + Ctron[4,6]*x[6] + dtron[4] 
+                                Ctron[4,5]*x[5] + Ctron[4,6]*x[6] + dtron[4]
         sqp_line[3,lineidx] = Ctron[5,1] * x[1] + Ctron[5,2]*x[2] + Ctron[5,3]*x[3] + Ctron[5,4]*x[4] +
-                                Ctron[5,5]*x[5] + Ctron[5,6]*x[6] + dtron[5] 
+                                Ctron[5,5]*x[5] + Ctron[5,6]*x[6] + dtron[5]
         sqp_line[4,lineidx] = Ctron[6,1] * x[1] + Ctron[6,2]*x[2] + Ctron[6,3]*x[3] + Ctron[6,4]*x[4] +
-                                Ctron[6,5]*x[5] + Ctron[6,6]*x[6] + dtron[6] 
+                                Ctron[6,5]*x[5] + Ctron[6,6]*x[6] + dtron[6]
         sqp_line[5,lineidx] = Ctron[7,1] * x[1] + Ctron[7,2]*x[2] + Ctron[7,3]*x[3] + Ctron[7,4]*x[4] +
-                                Ctron[7,5]*x[5] + Ctron[7,6]*x[6] + dtron[7] 
+                                Ctron[7,5]*x[5] + Ctron[7,6]*x[6] + dtron[7]
         sqp_line[6,lineidx] = Ctron[8,1] * x[1] + Ctron[8,2]*x[2] + Ctron[8,3]*x[3] + Ctron[8,4]*x[4] +
-                                Ctron[8,5]*x[5] + Ctron[8,6]*x[6] + dtron[8] 
+                                Ctron[8,5]*x[5] + Ctron[8,6]*x[6] + dtron[8]
 
 
-        
+
         cviol3 = vec_1j[1]*sqp0 + vec_1j[2]*sqp1 + vec_1j[3]*sqp_line[1,lineidx] + vec_1j[4]*sqp_line[2,lineidx] + vec_1j[5]*sqp_line[3,lineidx] +
                     vec_1j[6]*sqp_line[4,lineidx] + vec_1j[7]*sqp_line[5,lineidx] + vec_1j[8]*sqp_line[6,lineidx] - RH_1j[lineidx]
-        
+
         cviol4 = vec_1k[1]*sqp0 + vec_1k[2]*sqp1 + vec_1k[3]*sqp_line[1,lineidx] + vec_1k[4]*sqp_line[2,lineidx] + vec_1k[5]*sqp_line[3,lineidx] +
                     vec_1k[6]*sqp_line[4,lineidx] + vec_1k[7]*sqp_line[5,lineidx] + vec_1k[8]*sqp_line[6,lineidx] - RH_1k[lineidx]
 
@@ -201,8 +201,8 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
                 terminate = true
             else
                 if tx == 1
-                    membuf[3,lineidx] += mu*cviol3 #λ_1j 
-                    membuf[4,lineidx] += mu*cviol4 #λ_1k 
+                    membuf[3,lineidx] += mu*cviol3 #λ_1j
+                    membuf[4,lineidx] += mu*cviol4 #λ_1k
                 end
                 eta = eta / mu^0.9
 
@@ -210,31 +210,31 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
         else
             mu = min(mu_max, mu*10) #increase penalty
             eta = 1 / mu^0.1
-            membuf[5,lineidx] = mu #save penalty for current inner iteration 
+            membuf[5,lineidx] = mu #save penalty for current inner iteration
         end
 
-        if it >= max_auglag #maximum iteration for auglag 
+        if it >= max_auglag #maximum iteration for auglag
             if tx == 1
                 @cuprintln("max iteration reach at block = ",lineidx, "and threads = ",tx)
             end
             terminate = true
         end
-        
-        CUDA.sync_threads() 
+
+        CUDA.sync_threads()
     end #end while ALM
 
-   
+
 
     # #save variables
     u_curr[shift_idx] = supY[4*(lineidx - 1) + 1,3]*sqp_line[1,lineidx] + supY[4*(lineidx - 1) + 1,4]*sqp_line[2,lineidx] + supY[4*(lineidx - 1) + 1,5]*sqp_line[3,lineidx] +
                     supY[4*(lineidx - 1) + 1,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 1,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 1,8]*sqp_line[6,lineidx] + line_res[1,lineidx]
-    
+
     u_curr[shift_idx + 1] = supY[4*(lineidx - 1) + 2,3]*sqp_line[1,lineidx] + supY[4*(lineidx - 1) + 2,4]*sqp_line[2,lineidx] + supY[4*(lineidx - 1) + 2,5]*sqp_line[3,lineidx] +
                     supY[4*(lineidx - 1) + 2,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 2,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 2,8]*sqp_line[6,lineidx] + line_res[2,lineidx]
-    
+
     u_curr[shift_idx + 2] = supY[4*(lineidx - 1) + 3,3]*sqp_line[1,lineidx] + supY[4*(lineidx - 1) + 3,4]*sqp_line[2,lineidx] + supY[4*(lineidx - 1) + 3,5]*sqp_line[3,lineidx] +
                     supY[4*(lineidx - 1) + 3,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 3,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 3,8]*sqp_line[6,lineidx] + line_res[3,lineidx]
-    
+
     u_curr[shift_idx + 3] = supY[4*(lineidx - 1) + 4,3]*sqp_line[1,lineidx] + supY[4*(lineidx - 1) + 4,4]*sqp_line[2,lineidx] + supY[4*(lineidx - 1) + 4,5]*sqp_line[3,lineidx] +
                     supY[4*(lineidx - 1) + 4,6]*sqp_line[4,lineidx] + supY[4*(lineidx - 1) + 4,7]*sqp_line[5,lineidx] + supY[4*(lineidx - 1) + 4,8]*sqp_line[6,lineidx] + line_res[4,lineidx]
 
@@ -243,7 +243,7 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     u_curr[shift_idx + 6] = x[5] #thetai
     u_curr[shift_idx + 7] = x[6] #thetaj
 
-    
+
     #get multiplier
     tmpH11 = inv11
     tmpH12 = inv21
@@ -261,21 +261,21 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
 
     trg[2] = Atron[2,1] * x[1] + Atron[2,2]*x[2] + Atron[2,3]*x[3] + Atron[2,4]*x[4] +
             Atron[2,5]*x[5] + Atron[2,6]*x[6] + btron[2]
-            
+
     lambda[3,lineidx] = -abs(trg[1])
     lambda[4,lineidx] = -abs(trg[2])
 
-    rhs_1 = trg[1]*tmp14i_1 + trg[2]*tmp14h_1 + Hbr[1,1]*sqp_line[1,lineidx] + Hbr[1,2]*sqp_line[2,lineidx] + 
+    rhs_1 = trg[1]*tmp14i_1 + trg[2]*tmp14h_1 + Hbr[1,1]*sqp_line[1,lineidx] + Hbr[1,2]*sqp_line[2,lineidx] +
                 Hbr[1,3]*sqp_line[3,lineidx] + Hbr[1,4]*sqp_line[4,lineidx] + Hbr[1,5]*sqp_line[5,lineidx] +
                 Hbr[1,6]*sqp_line[6,lineidx] + bbr[1]
 
-    rhs_2 = trg[1]*tmp14i_2 + trg[2]*tmp14h_2 + Hbr[2,1]*sqp_line[1,lineidx] + Hbr[2,2]*sqp_line[2,lineidx] + 
+    rhs_2 = trg[1]*tmp14i_2 + trg[2]*tmp14h_2 + Hbr[2,1]*sqp_line[1,lineidx] + Hbr[2,2]*sqp_line[2,lineidx] +
                 Hbr[2,3]*sqp_line[3,lineidx] + Hbr[2,4]*sqp_line[4,lineidx] + Hbr[2,5]*sqp_line[5,lineidx] +
                 Hbr[2,6]*sqp_line[6,lineidx] + bbr[2]
 
     lambda[1,lineidx] = -tmpH11*rhs_1 - tmpH12*rhs_2
     lambda[2,lineidx] = -tmpH21*rhs_1 - tmpH22*rhs_2
-    
-    CUDA.sync_threads()   
-    return 
+
+    CUDA.sync_threads()
+    return
 end

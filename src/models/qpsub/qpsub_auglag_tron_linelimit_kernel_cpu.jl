@@ -2,7 +2,7 @@
     build_QP_*()
 
 - build any box-constrained QP with Exatron.createproblem()
-- implement eval_f, eval_g, eval_h callback functions 
+- implement eval_f, eval_g, eval_h callback functions
 """
 
 function build_QP_SP(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64, 1}, u::Array{Float64, 1})
@@ -11,14 +11,14 @@ function build_QP_SP(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64,
     q = b
     Iz, Jz, vals = findnz(P) #does not see symmetric record n*n
 
-    eval_f(x) = 0.5 * dot(x, P, x) + dot(q, x) #obj watch out for 1/2 
+    eval_f(x) = 0.5 * dot(x, P, x) + dot(q, x) #obj watch out for 1/2
 
     function eval_g(x, g)
         fill!(g, 0)
         mul!(g, P, x)
         g .+= q
     end
-    
+
     #eval_h store all n*n entries
     function eval_h(x, mode, rows, cols, obj_factor, lambda, values)
         if mode == :Structure
@@ -39,7 +39,7 @@ function build_QP_DS(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64,
     n=length(b)
 
 
-    eval_f(x) = 0.5 * dot(x, A, x) + dot(b, x) #obj watch out for 1/2 
+    eval_f(x) = 0.5 * dot(x, A, x) + dot(b, x) #obj watch out for 1/2
 
     function eval_g(x, g)
         fill!(g, 0)
@@ -51,7 +51,7 @@ function build_QP_DS(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64,
         if mode == :Structure
             nz = 1
             for j=1:n
-                for i in j:n 
+                for i in j:n
                     rows[nz] = i
                     cols[nz] = j
                     nz += 1
@@ -60,7 +60,7 @@ function build_QP_DS(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64,
         else
             nz = 1
             for j=1:n
-                for i in j:n 
+                for i in j:n
                     values[nz] = A[i, j]
                     nz += 1
                 end
@@ -68,5 +68,5 @@ function build_QP_DS(A::Matrix{Float64}, b::Array{Float64, 1}, l::Array{Float64,
         end
     end
     #with Youngdae's Param
-    return ExaTron.createProblem(n, l, u, Int64((n+1)*n/2), eval_f, eval_g, eval_h; :tol=> 1e-6, :matrix_type => :Dense, :max_minor => 200, :frtol => 1e-12)  
+    return ExaTron.createProblem(n, l, u, Int64((n+1)*n/2), eval_f, eval_g, eval_h; :tol=> 1e-6, :matrix_type => :Dense, :max_minor => 200, :frtol => 1e-12)
 end

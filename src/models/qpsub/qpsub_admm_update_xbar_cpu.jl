@@ -1,7 +1,7 @@
 """
     admm_update_xbar()
 
-- update xbar: call bus_kernel_two_level_alternative_qpsub() = update sol.v (full) 
+- update xbar: call bus_kernel_two_level_alternative_qpsub() = update sol.v (full)
 - record run time info.time_xbar_update, info.user.time_buses
 """
 
