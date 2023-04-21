@@ -150,29 +150,6 @@ mutable struct AdmmEnv{T,TD,TI,TM} <: AbstractAdmmEnv{T,TD,TI,TM}
     end
 end
 
-function ExaAdmm.AdmmEnv(opfdata, rho_va::Float64, rho_pq::Float64; use_gpu=false, ka_device=nothing, options...)
-    if use_gpu
-        if isa(ka_device, Nothing)
-            T = Float64
-            VT = CuVector{Float64}
-            VI = CuVector{Int}
-            MT = CuMatrix{Float64}
-        else
-            T = Float64
-            VT = typeof(KAArray{Float64}(undef, 0))
-            VI = typeof(KAArray{Int}(undef, 0))
-            MT = typeof(KAArray{Float64}(undef, 0, 0))
-        end
-    else
-        T = Float64
-        VT = Vector{Float64}
-        VI = Vector{Int}
-        MT = Matrix{Float64}
-    end
-    env = ExaAdmm.AdmmEnv{T,VT,VI,MT}(opfdata, "proxal", rho_pq, rho_va; use_gpu=use_gpu, ka_device=ka_device, options...)
-    return env
-end
-
 function AdmmEnv{T,TD,TI,TM}(
     case::String, rho_pq::Float64, rho_va::Float64; case_format="matpower", verbose::Int=1, options...
 ) where {T, TD<:AbstractArray{T}, TI<:AbstractArray{Int}, TM<:AbstractArray{T,2}}
