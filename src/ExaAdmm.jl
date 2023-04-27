@@ -27,6 +27,7 @@ include("utils/utilities_gpu.jl")
 include("utils/utilities_ka.jl")
 
 include("algorithms/admm_two_level.jl")
+include("algorithms/admm_one_level.jl")
 
 # ----------------------------------------
 # A single period ACOPF implementation
@@ -196,5 +197,40 @@ include("models/ucmp/ucmp_admm_update_l_gpu.jl")
 include("models/ucmp/ucmp_admm_update_residual_gpu.jl")
 include("models/ucmp/ucmp_admm_update_lz_gpu.jl")
 include("models/ucmp/ucmp_admm_prepoststep_gpu.jl")
+# Interface to use ADMM solving QPsub.
+include("interface/solve_qpsub.jl")
+
+# ----------------------------------------
+# Implementation for the QP approximation of ACOPF (SQP subproblem)
+# ----------------------------------------
+
+# Define "struct ModelAcopf" for encapsulating an ACOPF model.
+include("models/qpsub/qpsub_model.jl")
+
+# CPU
+include("models/qpsub/qpsub_init_solution_cpu.jl")
+include("models/qpsub/qpsub_generator_kernel_cpu.jl")
+include("models/qpsub/qpsub_admm_update_x_cpu.jl")
+include("models/qpsub/qpsub_admm_update_xbar_cpu.jl")
+include("models/qpsub/qpsub_admm_update_l_single_cpu.jl")
+include("models/qpsub/qpsub_admm_update_residual_cpu.jl")
+include("models/qpsub/qpsub_admm_prepoststep_cpu.jl")
+include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_cpu.jl")
+include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_cpu.jl")
+include("models/qpsub/qpsub_auglag_tron_linelimit_kernel_cpu.jl")
+
+# GPU
+include("models/qpsub/qpsub_init_solution_gpu.jl")
+include("models/qpsub/qpsub_generator_kernel_gpu.jl")
+include("models/qpsub/qpsub_admm_update_x_gpu.jl")
+include("models/qpsub/qpsub_admm_update_xbar_gpu.jl")
+include("models/qpsub/qpsub_admm_update_l_single_gpu.jl")
+include("models/qpsub/qpsub_admm_update_residual_gpu.jl")
+include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_gpu.jl")
+include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_gpu.jl")
+include("models/qpsub/qpsub_tron_linelimit_kernel.jl")
+include("models/qpsub/qpsub_admm_prepoststep_gpu.jl")
+
+
 
 end # module

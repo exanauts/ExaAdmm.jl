@@ -22,7 +22,7 @@ function admm_update_l(
     ev = update_l_kernel_ka(device,64,mod.nvar)(
         mod.nvar, sol.l_curr, sol.z_curr, sol.lz, par.beta
     )
-    wait(ev)
+    KA.synchronize(device)
     info.time_l_update += 0.0
     return
 end

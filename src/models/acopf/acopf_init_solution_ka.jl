@@ -60,18 +60,16 @@ function init_solution!(
 
     data = model.grid_data
 
-    ev = init_generator_kernel_one_level_ka(device, 64, data.ngen)(
+    init_generator_kernel_one_level_ka(device, 64, data.ngen)(
         data.ngen, model.gen_start,
-        data.pgmax, data.pgmin, data.qgmax, data.qgmin, sol.v_curr,
-        dependencies=Event(device)
+        data.pgmax, data.pgmin, data.qgmax, data.qgmin, sol.v_curr
     )
-    wait(ev)
-    ev = init_branch_bus_kernel_one_level_ka(device, 64, data.nline)(
+    KA.synchronize(device)
+    init_branch_bus_kernel_one_level_ka(device, 64, data.nline)(
         data.nline, model.line_start, rho_va,
         data.brBusIdx, data.Vmax, data.Vmin, data.YffR, data.YffI, data.YftR, data.YftI,
-        data.YtfR, data.YtfI, data.YttR, data.YttI, sol.u_curr, sol.v_curr, sol.rho,
-        dependencies=Event(device)
+        data.YtfR, data.YtfI, data.YttR, data.YttI, sol.u_curr, sol.v_curr, sol.rho
     )
-    wait(ev)
+    KA.synchronize(device)
 
 end

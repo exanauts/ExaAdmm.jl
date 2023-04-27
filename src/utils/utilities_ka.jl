@@ -39,7 +39,8 @@ end
 function LinearAlgebra.norm(x, device)
     y = KAArray{Float64}(1, device)
     n = length(x)
-    wait(norm_kernel(device)(Val{n}(), x, y, ndrange=n, dependencies=Event(device)))
+    norm_kernel(device)(Val{n}(), x, y, ndrange=n)
+    KA.synchronize(device)
     ret = y |> Array
     return ret[1]
 end
