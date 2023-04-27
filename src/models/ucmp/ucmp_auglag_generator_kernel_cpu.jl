@@ -217,8 +217,42 @@ function ucmp_auglag_generator_kernel(
         avg_tron_minor = 0
         terminate = false
 
+        # if I == 2
+        #     @printf("x_cpu = [%10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e]\n", x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[12], x[13])
+        #     # Everything up to here is consistent
+        # end
+
+        # if I == 2
+        #     @printf("param = [%10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e]\n",
+        #         param[1,I], param[2,I], param[3,I], param[4,I], param[5,I], param[6,I], param[7,I], param[8,I], param[9,I], param[10,I],
+        #         param[11,I], param[12,I], param[13,I], param[14,I], param[15,I], param[16,I], param[17,I], param[18,I], param[19,I], param[20,I],
+        #         param[21,I], param[22,I], param[23,I], param[24,I], param[25,I], param[26,I], param[27,I], param[28,I], param[29,I], param[30,I],
+        #         param[31,I], param[32,I], param[33,I], param[34,I], param[35,I], param[36,I], param[37,I], param[38,I], param[39,I], param[40,I],
+        #         param[41,I]
+        #     )
+        # end
+
+        # if I == 2
+        #     @printf("xl_cpu = [%10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e]\n", xl[1], xl[2], xl[3], xl[4], xl[5], xl[6], xl[7], xl[8], xl[9], xl[10], xl[11], xl[12], xl[13])
+        #     @printf("xu_cpu = [%10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e]\n", xu[1], xu[2], xu[3], xu[4], xu[5], xu[6], xu[7], xu[8], xu[9], xu[10], xu[11], xu[12], xu[13])
+        # end
+
         while !terminate
             it += 1
+            # if I == 2
+            #     println("mu = [", param[8,I], ", ", param[9,I], ", ", param[10,I], ", ", param[11,I], ", ", param[12,I], ", ", param[13,I], "]")
+            #     println("xi = [", param[21,I], ", ", param[22,I], ", ", param[23,I], ", ", param[24,I], ", ", param[25,I], ", ", param[26,I], "]")
+            # end
+
+            if I == 2 && t > 1
+                @printf("param = [%10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e]\n",
+                    param[1,I], param[2,I], param[3,I], param[4,I], param[5,I], param[6,I], param[7,I], param[8,I], param[9,I], param[10,I],
+                    param[11,I], param[12,I], param[13,I], param[14,I], param[15,I], param[16,I], param[17,I], param[18,I], param[19,I], param[20,I],
+                    param[21,I], param[22,I], param[23,I], param[24,I], param[25,I], param[26,I], param[27,I], param[28,I], param[29,I], param[30,I],
+                    param[31,I], param[32,I], param[33,I], param[34,I], param[35,I], param[36,I], param[37,I], param[38,I], param[39,I], param[40,I],
+                    param[41,I]
+                )
+            end
 
             ExaTron.solveProblem(tron)
             x .= tron.x
@@ -234,14 +268,22 @@ function ucmp_auglag_generator_kernel(
             if t > 1
                 cvios[1] = x[1] - x[3] - param[34,I]*x[7] - param[35,I]*x[5] - x[8]
                 cvios[2] = x[1] - x[3] + param[36,I]*x[4] + param[37,I]*x[6] + x[9]
+                if I == 2
+                    @printf("cvios = [%10.6e %10.6e %10.6e %10.6e %10.6e %10.6e]\n", cvios[1], cvios[2], cvios[3], cvios[4], cvios[5], cvios[6])
+                    @printf("x = [%10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e %10.6e]\n", x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[12], x[13])
+                end
             end
+            # if I == 2
+            #     @show x
+            #     @show cvios
+            # end
 
             terminate = true
             for i in _st:6
                 if abs(cvios[i]) <= etas[i]
                     if abs(cvios[i]) > 1e-6
                         terminate = false
-                        param[7+i,I] += param[20+i,I]*cvios[i]                        
+                        param[7+i,I] += param[20+i,I]*cvios[i]
                         etas[i] = etas[i] / param[20+i,I]^0.9
                         omegas[i] = omegas[i] / param[20+i,I]
                     end
@@ -275,6 +317,8 @@ function ucmp_auglag_generator_kernel(
             r_s[2*I-1] = x[8]
             r_s[2*I] = x[9]
         end
-
+        # if I == 2
+        #     @show x
+        # end
     end
 end
