@@ -224,4 +224,19 @@ include("models/ucmp/ucmp_admm_update_residual_cpu.jl")
 include("models/ucmp/ucmp_admm_update_lz_cpu.jl")
 include("models/ucmp/ucmp_admm_prepoststep_cpu.jl")
 
+# GPU specific implementation
+include("models/ucmp/ucmp_init_solution_gpu.jl")
+include("models/ucmp/ucmp_utils_gpu.jl")
+include("models/ucmp/ucmp_eval_generator_kernel_gpu.jl")
+include("models/ucmp/ucmp_tron_generator_kernel.jl")
+include("models/ucmp/ucmp_auglag_generator_kernel_gpu.jl")
+include("models/ucmp/ucmp_dp_generator_kernel_gpu.jl")
+include("models/ucmp/ucmp_admm_update_x_gpu.jl")
+include("models/ucmp/ucmp_admm_update_xbar_gpu.jl")
+include("models/ucmp/ucmp_admm_update_z_gpu.jl")
+include("models/ucmp/ucmp_admm_update_l_gpu.jl")
+include("models/ucmp/ucmp_admm_update_residual_gpu.jl")
+include("models/ucmp/ucmp_admm_update_lz_gpu.jl")
+include("models/ucmp/ucmp_admm_prepoststep_gpu.jl")
+
 end # module
