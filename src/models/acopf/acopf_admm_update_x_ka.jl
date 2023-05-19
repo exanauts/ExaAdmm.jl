@@ -46,6 +46,6 @@ function admm_update_x(
     device
 )
     acopf_admm_update_x_gen(env, mod, mod.gen_solution, device)
-    acopf_admm_update_x_line(env, mod, device)
+    # acopf_admm_update_x_line(env, mod, device)
     return
 end
