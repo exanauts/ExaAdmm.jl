@@ -17,21 +17,18 @@ function admm_update_residual(
 )
     sol, info = mod.solution, mod.info
 
-    ev = compute_primal_residual_kernel_ka(device,64,mod.nvar)(
-        mod.nvar, sol.rp, sol.u_curr, sol.v_curr, sol.z_curr,
-        dependencies=Event(device)
+    compute_primal_residual_kernel_ka(device,64,mod.nvar)(
+        mod.nvar, sol.rp, sol.u_curr, sol.v_curr, sol.z_curr
     )
-    wait(ev)
-    ev = vector_difference_ka(device,64,mod.nvar)(
-        mod.nvar, sol.rd, sol.z_curr, sol.z_prev,
-        dependencies=Event(device)
+    KA.synchronize(device)
+    vector_difference_ka(device,64,mod.nvar)(
+        mod.nvar, sol.rd, sol.z_curr, sol.z_prev
     )
-    wait(ev)
-    ev = vector_difference_ka(device,64,mod.nvar)(
-        mod.nvar, sol.Ax_plus_By, sol.rp, sol.z_curr,
-        dependencies=Event(device)
+    KA.synchronize(device)
+    vector_difference_ka(device,64,mod.nvar)(
+        mod.nvar, sol.Ax_plus_By, sol.rp, sol.z_curr
     )
-    wait(ev)
+    KA.synchronize(device)
 
     info.primres = norm(sol.rp, device)
     info.dualres = norm(sol.rd, device)

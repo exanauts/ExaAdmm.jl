@@ -29,12 +29,11 @@ function generator_kernel_two_level(
     zu, lu, rho_u, device
 )
     nblk = div(model.grid_data.ngen, 32, RoundUp)
-    ev = generator_kernel_two_level_ka(device,32,nblk*32)(
+    generator_kernel_two_level_ka(device,32,nblk*32)(
         baseMVA, model.grid_data.ngen, model.gen_start,
         u, xbar, zu, lu, rho_u, model.pgmin_curr, model.pgmax_curr, model.grid_data.qgmin, model.grid_data.qgmax,
-        model.grid_data.c2, model.grid_data.c1,
-        dependencies=Event(device)
+        model.grid_data.c2, model.grid_data.c1
     )
-    wait(ev)
+    KA.synchronize(device)
     return 0.0
 end

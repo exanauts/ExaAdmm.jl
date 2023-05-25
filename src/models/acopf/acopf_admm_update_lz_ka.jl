@@ -16,11 +16,10 @@ function admm_update_lz(
     device
 )
     par, sol, info = env.params, mod.solution, mod.info
-    ev = update_lz_kernel_ka(device,64,mod.nvar)(
-        mod.nvar, par.MAX_MULTIPLIER, sol.z_curr, sol.lz, par.beta,
-        dependencies=Event(device)
+    update_lz_kernel_ka(device,64,mod.nvar)(
+        mod.nvar, par.MAX_MULTIPLIER, sol.z_curr, sol.lz, par.beta
     )
-    wait(ev)
+    KA.synchronize(device)
     info.time_lz_update += 0.0
     return
 end

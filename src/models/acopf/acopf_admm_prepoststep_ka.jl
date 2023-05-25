@@ -14,11 +14,10 @@ function admm_inner_prestep(
     device
 )
     sol = mod.solution
-    ev = copy_data_kernel_ka(device, 64, mod.nvar)(
-        mod.nvar, sol.z_prev, sol.z_curr,
-        dependencies=Event(device)
+    copy_data_kernel_ka(device, 64, mod.nvar)(
+        mod.nvar, sol.z_prev, sol.z_curr
     )
-    wait(ev)
+    KA.synchronize(device)
 
     return
 end
