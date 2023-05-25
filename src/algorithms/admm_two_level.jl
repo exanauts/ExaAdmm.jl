@@ -56,8 +56,7 @@ function admm_two_level(
                         info.dualres, info.norm_z_curr, info.mismatch, OUTER_TOL, par.beta)
             end
 
-            # primres: x-xbar+z_curr
-            if info.primres <= info.eps_pri #|| info.dualres <= par.DUAL_TOL
+            if info.primres <= info.eps_pri || info.mismatch <= OUTER_TOL #|| info.dualres <= par.DUAL_TOL
                 break
             end
         end # while inner
