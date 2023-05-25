@@ -239,76 +239,88 @@ end
     param::CuDeviceArray{Float64,2}, scale::Float64, c2::Float64, c1::Float64, c0::Float64, baseMVA::Float64
 )
     @inbounds begin
+        for i in 1:13
+            for j in 1:13
+                H[i,j] = 0
+            end
+        end
         H[1,1] = scale*(2*c2*(baseMVA)^2 + param[14,I] + param[23,I] + param[24,I] )
         H[2,2] = scale*(param[15,I] + param[25,I] + param[26,I])
-        H[3,1] = 0
-        H[3,3] = 0
         H[4,1] = scale*(-param[23,I]*param[38,I] - param[24,I]*param[39,I])
+        H[1,4] = scale*(-param[23,I]*param[38,I] - param[24,I]*param[39,I])
         H[4,2] = scale*(-param[25,I]*param[40,I] - param[26,I]*param[41,I])
-        H[4,3] = 0
+        H[2,4] = scale*(-param[25,I]*param[40,I] - param[26,I]*param[41,I])
         H[4,4] = scale*(param[17,I] + param[23,I]*param[38,I]^2 + param[24,I]*param[39,I]^2 
                           + param[25,I]*param[40,I]^2 + param[26,I]*param[41,I]^2)
-        H[5,1] = 0
-        H[5,3] = 0
         H[5,5] = scale*(param[18,I])
-        H[6,1] = 0
-        H[6,3] = 0
-        H[6,4] = 0
         H[6,6] = scale*param[19,I]
-        H[7,1] = 0
-        H[7,3] = 0
-        H[7,5] = 0
-        H[7,7] = 0
-        H[8,1] = 0
-        H[8,3] = 0
-        H[8,5] = 0
-        H[8,7] = 0
-        H[8,8] = 0
-        H[9,1] = 0
-        H[9,3] = 0
-        H[9,4] = 0
-        H[9,6] = 0
-        H[9,9] = 0
         H[10,1] = scale*(-param[23,I])
+        H[1,10] = scale*(-param[23,I])
         H[10,4] = scale*param[23,I]*param[38,I]
+        H[4,10] = scale*param[23,I]*param[38,I]
         H[10,10] = scale*param[23,I]
         H[11,1] = scale*param[24,I]
+        H[1,11] = scale*param[24,I]
         H[11,4] = scale*(-param[24,I]*param[39,I])
+        H[4,11] = scale*(-param[24,I]*param[39,I])
         H[11,11] = scale*param[24,I]
         H[12,2] = scale*(-param[25,I])
+        H[2,12] = scale*(-param[25,I])
         H[12,4] = scale*param[25,I]*param[40,I]
+        H[4,12] = scale*param[25,I]*param[40,I]
         H[12,12] = scale*param[25,I]
         H[13,2] = scale*param[26,I]
+        H[2,13] = scale*param[26,I]
         H[13,4] = scale*(-param[26,I]*param[41,I])
+        H[4,13] = scale*(-param[26,I]*param[41,I])
         H[13,13] = scale*param[26,I]
 
         if t > 1
             H[1,1] += scale*(param[21,I]+param[22,I])
             H[3,1] += scale*(-param[21,I]-param[22,I])
+            H[1,3] += scale*(-param[21,I]-param[22,I])
             H[3,3] += scale*(param[16,I] + param[21,I] + param[22,I])
             H[4,1] += scale*(param[22,I]*param[36,I])
+            H[1,4] += scale*(param[22,I]*param[36,I])
             H[4,3] += scale*(-param[22,I]*param[36,I])
+            H[3,4] += scale*(-param[22,I]*param[36,I])
             H[4,4] += scale*(param[22,I]*param[36,I]^2)
             H[5,1] += scale*(-param[21,I]*param[35,I])
+            H[1,5] += scale*(-param[21,I]*param[35,I])
             H[5,3] += scale*param[21,I]*param[35,I]
+            H[3,5] += scale*param[21,I]*param[35,I]
             H[5,5] += scale*(param[21,I]*param[35,I]^2)
             H[6,1] += scale*(param[22,I]*param[37,I])
+            H[1,6] += scale*(param[22,I]*param[37,I])
             H[6,3] += scale*(-param[22,I]*param[37,I])
+            H[3,6] += scale*(-param[22,I]*param[37,I])
             H[6,4] += scale*param[22,I]*param[36,I]*param[37,I]
+            H[4,6] += scale*param[22,I]*param[36,I]*param[37,I]
             H[6,6] += scale*param[22,I]*param[37,I]^2
             H[7,1] += scale*(-param[21,I]*param[34,I])                                                         
+            H[1,7] += scale*(-param[21,I]*param[34,I])                                                         
             H[7,3] += scale*param[21,I]*param[34,I]
+            H[3,7] += scale*param[21,I]*param[34,I]
             H[7,5] += scale*param[21,I]*param[35,I]*param[34,I]
+            H[5,7] += scale*param[21,I]*param[35,I]*param[34,I]
             H[7,7] += scale*(param[20,I]+param[21,I]*param[34,I]^2)
             H[8,1] += scale*(-param[21,I])
+            H[1,8] += scale*(-param[21,I])
             H[8,3] += scale*param[21,I]
+            H[3,8] += scale*param[21,I]
             H[8,5] += scale*param[21,I]*param[35,I]
+            H[5,8] += scale*param[21,I]*param[35,I]
             H[8,7] += scale*param[21,I]*param[34,I]
+            H[7,8] += scale*param[21,I]*param[34,I]
             H[8,8] += scale*param[21,I]
             H[9,1] += scale*(param[22,I])
+            H[1,9] += scale*(param[22,I])
             H[9,3] += scale*(-param[22,I])
+            H[3,9] += scale*(-param[22,I])
             H[9,4] += scale*param[22,I]*param[36,I]
+            H[4,9] += scale*param[22,I]*param[36,I]
             H[9,6] += scale*param[22,I]*param[37,I]
+            H[6,9] += scale*param[22,I]*param[37,I]
             H[9,9] += scale*param[22,I]
         end
     end
