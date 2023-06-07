@@ -35,18 +35,18 @@ function admm_update_residual(
     device
 )
     sol, info, data, par, grid_data = mod.solution, mod.info, env.data, env.params, mod.grid_data
-
-    ev = compute_primal_residual_kernel_qpsub_ka(device,64,mod.nvar)(
+    nblk_nvar = div(mod.nvar-1, 64)+1
+    ev = compute_primal_residual_kernel_qpsub_ka(device,64,64*nblk_nvar)(
         mod.nvar, sol.rp, sol.u_curr, sol.v_curr
     )
     KA.synchronize(device)
 
-    ev = compute_dual_residual_kernel_qpsub_ka(device,64,mod.nvar)(
+    ev = compute_dual_residual_kernel_qpsub_ka(device,64,64*nblk_nvar)(
         mod.nvar, sol.rd, sol.v_curr, mod.v_prev, sol.rho
     )
     KA.synchronize(device)
 
-    ev = copy_data_kernel_ka(device,64,mod.nvar)(
+    ev = copy_data_kernel_ka(device,64,64*nblk_nvar)(
         mod.nvar, sol.Ax_plus_By, sol.rp
     ) # from gpu utility
     KA.synchronize(device)

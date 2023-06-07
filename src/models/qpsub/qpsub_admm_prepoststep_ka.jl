@@ -21,7 +21,7 @@ function admm_poststep(
     u_curr = zeros(mod.nvar)
     copyto!(u_curr, sol.u_curr)
 
-    l_curr = Array
+    l_curr = Array(sol.l_curr)
     rho = Array(sol.rho)
     rp = Array(sol.rp)
 
@@ -47,9 +47,9 @@ function admm_poststep(
                     for g in 1:grid_data.ngen) +
                         sum(0.5*dot(sqp_line[:,l],Hs[6*(l-1)+1:6*l,1:6],sqp_line[:,l]) for l=1:grid_data.nline)
 
-    info.auglag = info.objval +
-                        sum(l_curr[i]*rp[i] for i=1:mod.nvar) +
-                        0.5*sum(rho[i]*(rp[i])^2 for i=1:mod.nvar)
+    info.auglag = info.objval
+    info.auglag += sum(l_curr[i]*rp[i] for i=1:mod.nvar)
+    info.auglag += 0.5*sum(rho[i]*(rp[i])^2 for i=1:mod.nvar)
 
 
     #find dual infeas kkt for SQP integration

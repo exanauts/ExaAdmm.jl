@@ -87,11 +87,11 @@ function init_solution!(
 
 
     nblk_gen = div(data.ngen-1,64)+1
-    ev = init_generator_kernel_qpsub(device, 64, 64*nblk_gen)(data.ngen, model.gen_start,
+    ev = init_generator_kernel_qpsub_ka(device, 64, 64*nblk_gen)(data.ngen, model.gen_start,
                     model.qpsub_pgmax, model.qpsub_pgmin, model.qpsub_qgmax, model.qpsub_qgmin, sol.v_curr)
 
     nblk_line = div(data.nline-1,64)+1
-    ev = init_branch_bus_kernel_qpsub(device, 64, 64*nblk_line)(data.nline, model.line_start, rho_va,
+    ev = init_branch_bus_kernel_qpsub_ka(device, 64, 64*nblk_line)(data.nline, model.line_start, rho_va,
                     data.YffR, data.YffI, data.YftR, data.YftI,
                     data.YtfR, data.YtfI, data.YttR, data.YttI, model.us, model.ls, model.sqp_line, sol.v_curr, sol.rho, model.supY)
     KA.synchronize(device)

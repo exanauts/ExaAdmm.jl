@@ -30,8 +30,10 @@
     YftR, YftI, YttR, YttI, YtfR, YtfI, inner, max_auglag, mu_max, scale, lqp, uqp, sqp_line,
     membuf, LH_1h, RH_1h, LH_1i, RH_1i, LH_1j, RH_1j, LH_1k, RH_1k, lambda, line_start, nline, supY, line_res)
 
-    lineidx = @index(Group, Linear)
-    tx = @index(Local, Linear)
+    I = @index(Group, Linear)
+    J = @index(Local, Linear)
+    lineidx = I
+    tx = J
     shift_idx = line_start + 8*(lineidx-1)
 
 

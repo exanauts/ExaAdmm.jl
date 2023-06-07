@@ -12,7 +12,7 @@ function acopf_admm_update_x_line(
     )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
 
-    ev = auglag_linelimit_qpsub(device, 32, data.nline*32)(
+    ev = auglag_linelimit_qpsub_ka(device, 32, data.nline*32)(
         mod.Hs, sol.l_curr, sol.rho, sol.u_curr, sol.v_curr, sol.z_curr, mod.grid_data.YffR, mod.grid_data.YffI,
         mod.grid_data.YftR, mod.grid_data.YftI,
         mod.grid_data.YttR, mod.grid_data.YttI,

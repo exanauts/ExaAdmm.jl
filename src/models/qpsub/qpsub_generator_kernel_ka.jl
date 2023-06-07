@@ -10,7 +10,7 @@ function generator_kernel_two_level(
     device
     )
     nblk = div(model.grid_data.ngen, 32, RoundUp)
-    ev = generator_kernel_two_level(device, 32, nblk*32)(
+    ev = generator_kernel_two_level_ka(device, 32, nblk*32)(
         baseMVA, model.grid_data.ngen, model.gen_start,
         u, xbar, zu, lu, rho_u, model.qpsub_pgmin, model.qpsub_pgmax, model.qpsub_qgmin, model.qpsub_qgmax,
         model.qpsub_c2, model.qpsub_c1
