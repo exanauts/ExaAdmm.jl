@@ -25,7 +25,7 @@ function admm_update_residual(
         mod.nvar, sol.rd, sol.z_curr, sol.z_prev
     )
     KA.synchronize(device)
-    vector_difference_ka(device,64,mod.nvar)(
+    vector_difference_ka(device,64,64*nblk_nvar)(
         mod.nvar, sol.Ax_plus_By, sol.rp, sol.z_curr
     )
     KA.synchronize(device)

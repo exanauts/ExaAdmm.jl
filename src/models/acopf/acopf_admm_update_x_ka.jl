@@ -17,7 +17,7 @@ function acopf_admm_update_x_line(
 )
     par, sol, info, data = env.params, mod.solution, mod.info, mod.grid_data
     if env.use_linelimit
-        auglag_linelimit_two_level_alternative_ka(device, 32, data.nline*32)(
+        auglag_linelimit_two_level_alternative_ka(device, 32, 32*data.nline)(
             Val(mod.n), data.nline, mod.line_start,
             info.inner, par.max_auglag, par.mu_max, par.scale,
             sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho,
@@ -27,7 +27,7 @@ function acopf_admm_update_x_line(
         )
         KA.synchronize(device)
     else
-        polar_kernel_two_level_alternative_ka(device, 32, data.nline)(
+        polar_kernel_two_level_alternative_ka(device, 32, 32*data.nline)(
             mod.n, data.nline, mod.line_start, par.scale,
             sol.u_curr, sol.v_curr, sol.z_curr, sol.l_curr, sol.rho,
             par.shift_lines, mod.membuf, data.YffR, data.YffI, data.YftR, data.YftI,
