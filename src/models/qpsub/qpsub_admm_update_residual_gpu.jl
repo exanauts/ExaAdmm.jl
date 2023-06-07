@@ -31,7 +31,8 @@ end
 
 function admm_update_residual(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    device::Nothing=nothing
 )
     sol, info, data, par, grid_data = mod.solution, mod.info, env.data, env.params, mod.grid_data
 
