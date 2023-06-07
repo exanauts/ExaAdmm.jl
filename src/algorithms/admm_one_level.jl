@@ -62,7 +62,7 @@ function admm_one_level(
         end # while inner
 
         # mismatch: x-xbar
-        if info.mismatch <= OUTER_TOL && info.dualres <= OUTER_TOL*norm(sol.rho)/sqrt_d
+        if info.mismatch <= OUTER_TOL && info.dualres <= OUTER_TOL*norm(sol.rho, device)/sqrt_d
             info.status = :Solved
             break
         end
