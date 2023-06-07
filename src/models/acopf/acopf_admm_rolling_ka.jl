@@ -70,7 +70,7 @@ function admm_restart_rolling(
         #@printf(io, "Line violations (RateA) . . . . . . . . . %.6e\n", mod.solution.max_line_viol_rateA)
         @printf(io, "Time (secs) . . . . . . . . . . . . . . . %5.3f\n", mod.info.time_overall + mod.info.time_projection)
 
-        update_real_power_current_bounds_ka(device,64,ngen)(
+        update_real_power_current_bounds_ka(device,64, 64*nblk_gen)(
             mod.grid_data.ngen, mod.gen_start,
             mod.pgmin_curr, mod.pgmax_curr, mod.grid_data.pgmin, mod.grid_data.pgmax,
             mod.grid_data.ramp_rate, mod.solution.u_curr
