@@ -8,7 +8,8 @@
 
 function admm_poststep(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+    device::Nothing=nothing
 )
     par, data, sol, info, grid_data = env.params, env.data, mod.solution, mod.info, mod.grid_data
 

@@ -7,9 +7,9 @@
 """
 
 function admm_poststep(
-    env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    device::Nothing=nothing
+    env::AdmmEnv,
+    mod::ModelQpsub,
+    device
 )
     par, data, sol, info, grid_data = env.params, env.data, mod.solution, mod.info, mod.grid_data
 
@@ -21,7 +21,7 @@ function admm_poststep(
     u_curr = zeros(mod.nvar)
     copyto!(u_curr, sol.u_curr)
 
-    l_curr = Array(sol.l_curr)
+    l_curr = Array
     rho = Array(sol.rho)
     rp = Array(sol.rp)
 

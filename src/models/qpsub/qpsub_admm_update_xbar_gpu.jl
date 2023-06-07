@@ -9,7 +9,8 @@
 
 function admm_update_xbar(
     env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}}
+    mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
+    device::Nothing=nothing
     )
     sol, info, data = mod.solution, mod.info, mod.grid_data
 

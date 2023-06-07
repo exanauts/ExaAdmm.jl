@@ -5,30 +5,32 @@
 - initialize sqp_line, supY
 """
 
-function init_generator_kernel_qpsub(n::Int, gen_start::Int,
-    pgmax::CuDeviceArray{Float64,1}, pgmin::CuDeviceArray{Float64,1},
-    qgmax::CuDeviceArray{Float64,1}, qgmin::CuDeviceArray{Float64,1},
-    v::CuDeviceArray{Float64,1}
+@kernel function init_generator_kernel_qpsub_ka(n::Int, gen_start::Int,
+    pgmax, pgmin,
+    qgmax, qgmin,
+    v
 )
-    g = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
+    I = @index(Group, Linear)
+    J = @index(Local, Linear)
+    g = J + (@groupsize()[1] * (I - 1))
     if g <= n
         v[gen_start + 2*(g-1)] = 0.5*(pgmin[g] + pgmax[g])
         v[gen_start + 2*(g-1)+1] = 0.5*(qgmin[g] + qgmax[g])
     end
-
-    return
 end
 
 
-function init_branch_bus_kernel_qpsub(n::Int, line_start::Int, rho_va::Float64,
-    YffR::CuDeviceArray{Float64,1}, YffI::CuDeviceArray{Float64,1},
-    YftR::CuDeviceArray{Float64,1}, YftI::CuDeviceArray{Float64,1},
-    YtfR::CuDeviceArray{Float64,1}, YtfI::CuDeviceArray{Float64,1},
-    YttR::CuDeviceArray{Float64,1}, YttI::CuDeviceArray{Float64,1},
-    us::CuDeviceArray{Float64,2}, ls::CuDeviceArray{Float64,2}, sqp_line::CuDeviceArray{Float64,2},
-    v::CuDeviceArray{Float64,1}, rho::CuDeviceArray{Float64,1}, supY::CuDeviceArray{Float64,2}
+@kernel function init_branch_bus_kernel_qpsub_ka(n::Int, line_start::Int, rho_va::Float64,
+    YffR, YffI,
+    YftR, YftI,
+    YtfR, YtfI,
+    YttR, YttI,
+    us, ls, sqp_line,
+    v, rho, supY
 )
-    l = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
+    I = @index(Group, Linear)
+    J = @index(Local, Linear)
+    l = J + (@groupsize()[1] * (I - 1))
     if l <= n
         sqp_line[1,l] = (ls[l,1] + us[l,1])/2  # order |w_ijR  | w_ijI |  wi(ij) | wj(ji) |  thetai(ij) |  thetaj(ji)|
         sqp_line[2,l] = (ls[l,2] + us[l,2])/2
@@ -66,15 +68,13 @@ function init_branch_bus_kernel_qpsub(n::Int, line_start::Int, rho_va::Float64,
 
 
     end
-
-    return
 end
 
 function init_solution!(
-    model::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    sol::Solution{Float64,CuArray{Float64,1}},
+    model::ModelQpsub,
+    sol::Solution,
     rho_pq::Float64, rho_va::Float64,
-    device::Nothing
+    device
     )
 
     data = model.grid_data
@@ -86,13 +86,15 @@ function init_solution!(
     sol.rho .= rho_pq
 
 
-    @cuda threads=64 blocks=(div(data.ngen-1,64)+1) init_generator_kernel_qpsub(data.ngen, model.gen_start,
+    nblk_gen = div(data.ngen-1,64)+1
+    ev = init_generator_kernel_qpsub(device, 64, 64*nblk_gen)(data.ngen, model.gen_start,
                     model.qpsub_pgmax, model.qpsub_pgmin, model.qpsub_qgmax, model.qpsub_qgmin, sol.v_curr)
 
-    @cuda threads=64 blocks=(div(data.nline-1,64)+1) init_branch_bus_kernel_qpsub(data.nline, model.line_start, rho_va,
+    nblk_line = div(data.nline-1,64)+1
+    ev = init_branch_bus_kernel_qpsub(device, 64, 64*nblk_line)(data.nline, model.line_start, rho_va,
                     data.YffR, data.YffI, data.YftR, data.YftI,
                     data.YtfR, data.YtfI, data.YttR, data.YttI, model.us, model.ls, model.sqp_line, sol.v_curr, sol.rho, model.supY)
-    CUDA.synchronize()
+    KA.synchronize(device)
 
     return
 end
