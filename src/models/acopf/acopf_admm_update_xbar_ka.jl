@@ -4,9 +4,9 @@ function admm_update_xbar(
     device
 )
     sol, info, data = mod.solution, mod.info, mod.grid_data
-    # nblk_bus = div(data.nbus, 32, RoundUp)
+    nblk_bus = div(data.nbus, 32, RoundUp)
 
-    bus_kernel_two_level_alternative_ka(device,32,data.nbus)(
+    bus_kernel_two_level_alternative_ka(device,32,32*nblk_bus)(
         data.baseMVA, data.nbus, mod.gen_start, mod.line_start,
         data.FrStart, data.FrIdx, data.ToStart, data.ToIdx, data.GenStart,
         data.GenIdx, data.Pd, data.Qd, sol.u_curr, sol.v_curr,

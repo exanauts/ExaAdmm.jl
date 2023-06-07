@@ -16,8 +16,8 @@ function admm_update_z(
     device
 )
     par, sol, info = env.params, mod.solution, mod.info
-
-    update_zv_kernel_ka(device,64,mod.nvar)(
+    nblk_nvar = div(mod.nvar-1, 64)+1
+    update_zv_kernel_ka(device,64,64*nblk_nvar)(
         mod.nvar, sol.u_curr, sol.v_curr, sol.z_curr,
         sol.l_curr, sol.rho, sol.lz, par.beta
     )
