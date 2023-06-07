@@ -26,7 +26,6 @@ function admm_restart_rolling(
     @assert start_period >= 1 && end_period <= size(env.load.pd,2)
 
     nblk_gen = div(mod.grid_data.ngen-1, 64) + 1
-    ngen = mod.grid_data.ngen
 
     io = open(result_file*"_tight-factor"*string(env.tight_factor)*".txt", "w")
     @printf(io, " ** Parameters\n")
