@@ -8,7 +8,8 @@
 
 function admm_update_l_single(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}}
+    mod::ModelQpsub{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
+    device::Nothing=nothing
 )
     par, sol, info = env.params, mod.solution, mod.info
     sol.l_prev = sol.l_curr
