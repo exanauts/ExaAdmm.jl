@@ -32,8 +32,9 @@ function admm_update_l_single(
     )
     par, sol, info = env.params, mod.solution, mod.info
     sol.l_prev = sol.l_curr
-    ev = update_l_kernel_single_ka(device,64,mod.nvar)(
-        mod.nvar, sol.l_curr, sol.z_curr, sol.lz, par.beta
+    nblk_nvar = div(mod.nvar-1, 64)+1
+    ev = update_l_kernel_single_ka(device,64,64*nblk_nvar)(
+        mod.nvar, sol.l_curr, sol.l_prev, sol.u_curr, sol.v_curr, sol.rho
     )
     KA.synchronize(device)
     info.time_l_update += 0.0
