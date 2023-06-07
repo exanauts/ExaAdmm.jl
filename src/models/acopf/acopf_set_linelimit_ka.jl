@@ -16,6 +16,7 @@ function acopf_set_linelimit(
     info::IterationInformation,
     device
 )
-    ev = set_rateA_kernel_ka(device,64,mod.nline)(mod.nline, mod.membuf, mod.rateA)
+    nblk_line = div(mod.nline-1, 64)+1
+    ev = set_rateA_kernel_ka(device,64, 64*nblk_line)(mod.nline, mod.membuf, mod.rateA)
     KA.synchronize(device)
 end

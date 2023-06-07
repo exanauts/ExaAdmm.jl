@@ -19,7 +19,8 @@ function admm_update_l(
     device
 )
     par, sol, info = env.params, mod.solution, mod.info
-    ev = update_l_kernel_ka(device,64,mod.nvar)(
+    nblk_nvar = div(mod.nvar-1, 64)+1
+    ev = update_l_kernel_ka(device,64,64*nblk_nvar)(
         mod.nvar, sol.l_curr, sol.z_curr, sol.lz, par.beta
     )
     KA.synchronize(device)

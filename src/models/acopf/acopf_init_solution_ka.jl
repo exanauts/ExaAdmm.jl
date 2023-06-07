@@ -59,13 +59,14 @@ function init_solution!(
     sol.rho .= rho_pq
 
     data = model.grid_data
-
-    init_generator_kernel_one_level_ka(device, 64, data.ngen)(
+    nblk_ngen = div(data.ngen-1,64)+1
+    init_generator_kernel_one_level_ka(device, 64, 64*nblk_ngen)(
         data.ngen, model.gen_start,
         data.pgmax, data.pgmin, data.qgmax, data.qgmin, sol.v_curr
     )
     KA.synchronize(device)
-    init_branch_bus_kernel_one_level_ka(device, 64, data.nline)(
+    nblk_nline = div(data.nline-1,64)+1
+    init_branch_bus_kernel_one_level_ka(device, 64, 64*nblk_nline)(
         data.nline, model.line_start, rho_va,
         data.brBusIdx, data.Vmax, data.Vmin, data.YffR, data.YffI, data.YftR, data.YftI,
         data.YtfR, data.YtfI, data.YttR, data.YttI, sol.u_curr, sol.v_curr, sol.rho
