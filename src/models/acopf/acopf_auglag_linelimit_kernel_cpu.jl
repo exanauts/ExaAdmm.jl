@@ -148,7 +148,7 @@ function auglag_linelimit_two_level_alternative(
             end
 
             if it >= max_auglag
-                println("max_auglag reached for line I = ", I, " cnorm = ", cnorm)
+                # println("max_auglag reached for line I = ", I, " cnorm = ", cnorm)
                 terminate = true
             end
         end
