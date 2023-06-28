@@ -12,6 +12,7 @@ function ucmp_admm_update_x_gen(
     uc_sol = mod.uc_solution
     shmem_size = sizeof(Float64)*(14*13+18+3*13^2)+sizeof(Int)*(4*13)
 
+    # TODO: #49 Parallelize the time horizon. Can we parallelize this?
     for i=1:mpmod.len_horizon
         submod, subsol, sol_ramp, subdata = mpmod.models[i], mpmod.models[i].solution, mpmod.solution[i], mpmod.models[i].grid_data
         v_ramp = mod.vr_solution[i]
@@ -39,6 +40,7 @@ function ucmp_admm_update_x_gen(
 
         ngen = subdata.ngen
         if i > 1
+            # TODO: #48 why should this be separate from the above? Why does this have to use a different CUDA setting?
             CUDA.@sync @cuda threads=64 blocks=(div(ngen-1,64)+1) ucmp_update_uc_membuf_with_ramping_kernel(
                 i, subdata.ngen,
                 v_ramp.u_curr, v_ramp.z_curr,
