@@ -27,7 +27,7 @@ function admm_update_xbar(
     uc_params = mod.uc_params
     ngen = mod.mpmodel.models[1].grid_data.ngen
     uc_sol = mod.uc_solution
-    nblk = div(ngen, 32, RoundUp)
+    nblk = ngen
     shmem_size = 2 * mod.mpmodel.len_horizon * (sizeof(Float64)+sizeof(Int))
     dp_time = CUDA.@timed @cuda threads=32 blocks=nblk shmem=shmem_size dp_generator_kernel(
         ngen, mod.mpmodel.len_horizon,
