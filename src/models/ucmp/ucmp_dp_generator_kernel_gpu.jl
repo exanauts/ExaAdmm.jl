@@ -11,7 +11,7 @@
     uc_l::CuDeviceArray{Float64,2}, uc_rho::CuDeviceArray{Float64,2},
     param::CuDeviceArray{Float64,2}
 )
-    I = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
+    I = blockIdx.().x
     @inbounds begin
         if I <= ngen
             # const_cost = 0 # const_cost not needed for just finding the optimal UC scheduling
