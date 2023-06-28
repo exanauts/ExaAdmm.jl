@@ -1,6 +1,6 @@
 function solve_ucmp(case::String, load_prefix::String, gen_prefix::String;
     case_format="matpower", start_period=1, end_period=1,
-    outer_iterlim=20, inner_iterlim=1000, rho_pq=400.0, rho_va=40000.0, rho_uc=40000.0,
+    outer_iterlim=20, inner_iterlim=1000, max_auglag=50, rho_pq=400.0, rho_va=40000.0, rho_uc=40000.0,
     obj_scale=1.0, scale=1e-4, storage_ratio=0.0, storage_charge_max=1.0,
     use_gpu=false, ka_device=nothing, use_linelimit=true, use_projection=false, tight_factor=1.0,
     outer_eps=2*1e-4, gpu_no=0, verbose=1, ramp_ratio=0.02, warm_start=true, multiperiod_tight=true
@@ -35,6 +35,7 @@ function solve_ucmp(case::String, load_prefix::String, gen_prefix::String;
     env.params.outer_eps = outer_eps
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
+    env.params.max_auglag = max_auglag
 
     # For warm start, solve each time period without ramp constraints.
     if warm_start
