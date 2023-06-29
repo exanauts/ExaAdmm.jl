@@ -7,9 +7,9 @@
 """
 
 function admm_poststep(
-    env::AdmmEnv{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    mod::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
-    device::Nothing=nothing
+    env::AdmmEnv,
+    mod::ModelQpsub,
+    device
 )
     par, data, sol, info, grid_data = env.params, env.data, mod.solution, mod.info, mod.grid_data
 
@@ -47,9 +47,9 @@ function admm_poststep(
                     for g in 1:grid_data.ngen) +
                         sum(0.5*dot(sqp_line[:,l],Hs[6*(l-1)+1:6*l,1:6],sqp_line[:,l]) for l=1:grid_data.nline)
 
-    info.auglag = info.objval +
-                        sum(l_curr[i]*rp[i] for i=1:mod.nvar) +
-                        0.5*sum(rho[i]*(rp[i])^2 for i=1:mod.nvar)
+    info.auglag = info.objval
+    info.auglag += sum(l_curr[i]*rp[i] for i=1:mod.nvar)
+    info.auglag += 0.5*sum(rho[i]*(rp[i])^2 for i=1:mod.nvar)
 
 
     #find dual infeas kkt for SQP integration

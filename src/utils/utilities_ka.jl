@@ -36,6 +36,14 @@ end
     end
 end
 
+function LinearAlgebra.norm(x::Array, device::Nothing)
+    return norm(x)
+end
+
+function LinearAlgebra.norm(x::CuArray, device::Nothing)
+    return CUDA.norm(x)
+end
+
 function LinearAlgebra.norm(x, device)
     y = KAArray{Float64}(1, device)
     n = length(x)

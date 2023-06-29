@@ -231,6 +231,17 @@ include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_gpu.jl")
 include("models/qpsub/qpsub_tron_linelimit_kernel.jl")
 include("models/qpsub/qpsub_admm_prepoststep_gpu.jl")
 
+# KA
+include("models/qpsub/qpsub_init_solution_ka.jl")
+include("models/qpsub/qpsub_generator_kernel_ka.jl")
+include("models/qpsub/qpsub_admm_update_x_ka.jl")
+include("models/qpsub/qpsub_admm_update_xbar_ka.jl")
+include("models/qpsub/qpsub_admm_update_l_single_ka.jl")
+include("models/qpsub/qpsub_admm_update_residual_ka.jl")
+include("models/qpsub/qpsub_eval_Ab_linelimit_kernel_ka.jl")
+include("models/qpsub/qpsub_auglag_Ab_linelimit_kernel_red_ka.jl")
+include("models/qpsub/qpsub_tron_linelimit_kernel_ka.jl")
+include("models/qpsub/qpsub_admm_prepoststep_ka.jl")
 
 
 end # module

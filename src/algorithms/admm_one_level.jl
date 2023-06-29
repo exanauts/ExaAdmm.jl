@@ -1,5 +1,6 @@
 function admm_one_level(
-    env::AdmmEnv, mod::AbstractOPFModel
+    env::AdmmEnv, mod::AbstractOPFModel,
+    device = nothing
 )
     par = env.params
     info = mod.info
@@ -21,7 +22,7 @@ function admm_one_level(
     par.inner_iterlim = 1
 
     if par.verbose > 0
-        admm_update_residual(env, mod)
+        admm_update_residual(env, mod, device)
         @printf("%8s  %10s  %10s  %10s  %10s %10s %10s\n",
                 "Iter", "Objval", "Auglag", "PrimRes", "PrimTol", "DualRes", "DualTol")
 
@@ -33,20 +34,20 @@ function admm_one_level(
 
     overall_time = @timed begin
     while info.outer < par.outer_iterlim
-        admm_increment_outer(env, mod)
+        admm_increment_outer(env, mod, device)
 
 
         admm_increment_reset_inner(env, mod)
         while info.inner < par.inner_iterlim
-            admm_increment_inner(env, mod)
+            admm_increment_inner(env, mod, device)
 
-            admm_update_x(env, mod)
+            admm_update_x(env, mod, device)
 
-            admm_update_xbar(env, mod)
+            admm_update_xbar(env, mod, device)
 
-            admm_update_l_single(env, mod)
+            admm_update_l_single(env, mod, device)
 
-            admm_update_residual(env, mod)
+            admm_update_residual(env, mod, device)
 
             if par.verbose > 0
                 if (info.cumul % 50) == 0
@@ -61,7 +62,7 @@ function admm_one_level(
         end # while inner
 
         # mismatch: x-xbar
-        if info.mismatch <= OUTER_TOL && info.dualres <= OUTER_TOL*norm(sol.rho)/sqrt_d
+        if info.mismatch <= OUTER_TOL && info.dualres <= OUTER_TOL*norm(sol.rho, device)/sqrt_d
             info.status = :Solved
             break
         end
@@ -70,7 +71,7 @@ function admm_one_level(
     end # @timed
 
     info.time_overall = overall_time.time
-    admm_poststep(env, mod)
+    admm_poststep(env, mod, device)
 
     if par.verbose > 0
         print_statistics(env, mod)

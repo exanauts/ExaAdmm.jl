@@ -30,6 +30,7 @@ init_time = time()
 
     @testset "Testing ADMM algorithms using KA" begin
         include("algorithms/acopf_update_ka.jl")
+        include("algorithms/qpsub_update_ka.jl")
     end
 end
 

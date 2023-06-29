@@ -6,7 +6,8 @@ record cpu time: return tcpu
 
 function generator_kernel_two_level(
     model::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1}},
-    baseMVA::Float64, u, xbar, zu, lu, rho_u
+    baseMVA::Float64, u, xbar, zu, lu, rho_u,
+    device::Nothing=nothing
     )
     nblk = div(model.grid_data.ngen, 32, RoundUp)
     tgpu = CUDA.@timed @cuda threads=32 blocks=nblk generator_kernel_two_level(baseMVA, model.grid_data.ngen, model.gen_start,
