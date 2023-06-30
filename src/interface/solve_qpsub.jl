@@ -53,8 +53,8 @@ function solve_qpsub(
         TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
     elseif has_cuda_gpu()
             TD = CuArray{Float64,1}; TI = CuArray{Int,1}; TM = CuArray{Float64,2}
-    elseif has_rocm_gpu()
-        TD = ROCArray{Float64,1}; TI = ROCArray{Int,1}; TM = ROCArray{Float64,2}
+    # elseif has_rocm_gpu()
+    #     TD = ROCArray{Float64,1}; TI = ROCArray{Int,1}; TM = ROCArray{Float64,2}
     else
         error("Inconsistent device selection use_gpu=$use_gpu and ka_device=$(typeof(ka_device))")
     end
