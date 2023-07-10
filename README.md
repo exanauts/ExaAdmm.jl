@@ -38,8 +38,6 @@ and the same example on an AMD GPU:
 using ExaAdmm
 using AMDGPU
 
-ExaAdmm.KAArray{T}(n::Int, ::ROCBackend) where {T} = ROCArray{T}(undef, n)
-
 env, mod = solve_acopf(
     "case1354pegase.m";
     rho_pq=1e1,
