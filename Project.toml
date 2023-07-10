@@ -1,7 +1,7 @@
 name = "ExaAdmm"
 uuid = "4d6a948c-1075-4240-a564-361a5d4e22a2"
 authors = ["Youngdae Kim <youngdae@anl.gov>", "Kibaek Kim <kimk@anl.gov>", "Weiqi Zhang <wzhang483@wisc.edu>", "Bowen Li <libowen@umich.edu>", "François Pacaud <fpacaud@anl.gov>", "Michel Schanen <mschanen@anl.gov>"]
-version = "0.5.1"
+version = "0.6.0"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"

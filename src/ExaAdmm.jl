@@ -16,8 +16,6 @@ const KA = KernelAbstractions
 
 export solve_acopf
 
-struct KAArray{T} end
-
 include("utils/parse_matpower.jl")
 include("utils/opfdata.jl")
 include("utils/environment.jl")

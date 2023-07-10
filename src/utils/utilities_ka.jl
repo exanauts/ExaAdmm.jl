@@ -45,7 +45,7 @@ function LinearAlgebra.norm(x::CuArray, device::Nothing)
 end
 
 function LinearAlgebra.norm(x, device)
-    y = KAArray{Float64}(1, device)
+    y = adapt(device, zeros(eltype(x), 1))
     n = length(x)
     norm_kernel(device)(Val{n}(), x, y, ndrange=n)
     KA.synchronize(device)

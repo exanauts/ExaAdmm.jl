@@ -4,18 +4,10 @@ using KernelAbstractions
 KA = KernelAbstractions
 devices = []
 if CUDA.has_cuda_gpu() || AMDGPU.has_rocm_gpu()
-   if CUDA.has_cuda_gpu()
-       function ExaAdmm.KAArray{T}(n::Int, device::CUDABackend) where {T}
-           return CuArray{T}(undef, n)
-       end
-       push!(devices, CUDABackend())
-   end
+    if CUDA.has_cuda_gpu()
+        push!(devices, CUDABackend())
+    end
     if AMDGPU.has_rocm_gpu()
-        # Set for crusher login node to avoid other users
-        AMDGPU.default_device!(AMDGPU.devices()[2])
-        function ExaAdmm.KAArray{T}(n::Int, device::ROCBackend) where {T}
-            return ROCArray{T}(undef, n)
-        end
         push!(devices, ROCBackend())
     end
 end
