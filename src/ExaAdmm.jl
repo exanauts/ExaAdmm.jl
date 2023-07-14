@@ -1,5 +1,6 @@
 module ExaAdmm
 
+using Adapt
 using Printf
 using FileIO
 using DelimitedFiles
@@ -7,7 +8,6 @@ using LinearAlgebra
 using SparseArrays
 using MPI
 using CUDA
-import AMDGPU: ROCArray, has_rocm_gpu
 using KernelAbstractions
 using ExaTron
 using Random
@@ -15,8 +15,6 @@ using Random
 const KA = KernelAbstractions
 
 export solve_acopf
-
-struct KAArray{T} end
 
 include("utils/parse_matpower.jl")
 include("utils/opfdata.jl")
