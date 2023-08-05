@@ -122,7 +122,9 @@ function auglag_linelimit_two_level_alternative(
                 mu = min(mu_max, mu*10)
                 eta = 1 / mu^0.1
                 omega = 1 / mu
-                param[27,id_line] = mu
+                if tx == 1
+                    param[27,id_line] = mu
+                end
             end
 
             if it >= max_auglag
@@ -132,18 +134,19 @@ function auglag_linelimit_two_level_alternative(
             CUDA.sync_threads()
         end
 
-        vi_vj_cos = x[1]*x[2]*cos(x[3] - x[4])
-        vi_vj_sin = x[1]*x[2]*sin(x[3] - x[4])
-        u[pij_idx] = YffR*x[1]^2 + YftR*vi_vj_cos + YftI*vi_vj_sin
-        u[pij_idx+1] = -YffI*x[1]^2 - YftI*vi_vj_cos + YftR*vi_vj_sin
-        u[pij_idx+2] = YttR*x[2]^2 + YtfR*vi_vj_cos - YtfI*vi_vj_sin
-        u[pij_idx+3] = -YttI*x[2]^2 - YtfI*vi_vj_cos - YtfR*vi_vj_sin
-        u[pij_idx+4] = x[1]^2
-        u[pij_idx+5] = x[2]^2
-        u[pij_idx+6] = x[3]
-        u[pij_idx+7] = x[4]
-        param[27,id_line] = mu
-
+        if tx == 1
+            vi_vj_cos = x[1]*x[2]*cos(x[3] - x[4])
+            vi_vj_sin = x[1]*x[2]*sin(x[3] - x[4])
+            u[pij_idx] = YffR*x[1]^2 + YftR*vi_vj_cos + YftI*vi_vj_sin
+            u[pij_idx+1] = -YffI*x[1]^2 - YftI*vi_vj_cos + YftR*vi_vj_sin
+            u[pij_idx+2] = YttR*x[2]^2 + YtfR*vi_vj_cos - YtfI*vi_vj_sin
+            u[pij_idx+3] = -YttI*x[2]^2 - YtfI*vi_vj_cos - YtfR*vi_vj_sin
+            u[pij_idx+4] = x[1]^2
+            u[pij_idx+5] = x[2]^2
+            u[pij_idx+6] = x[3]
+            u[pij_idx+7] = x[4]
+            param[27,id_line] = mu
+        end
         CUDA.sync_threads()
     end
 
