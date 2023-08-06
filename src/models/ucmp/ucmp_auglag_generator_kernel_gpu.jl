@@ -31,100 +31,100 @@ function ucmp_auglag_generator_kernel(
 
         c2 = _c2[I]; c1 = _c1[I]; c0 = _c0[I]
 
-        xl[1] = xl[3] = pgmin[I]
-        xl[2] = qgmin[I]
-        xl[8] = xl[9] = -4*ramp_limit[I]
-        xl[10] = xl[11] = -abs(pgmax[I])-abs(pgmin[I])
-        xl[12] = xl[13] = -abs(qgmax[I])-abs(qgmin[I])
-        # COMMENTED: THESE BOUNDS ARE TOO TIGHT FOR S VARIABLES. LEAD TO DIVERGENCE FOR 9-BUS CASE.
-        # xl[8] = xl[9] = -2*ramp_limit[I]
-        # xl[10] = xl[11] = -pgmax[I]
-        # xl[12] = xl[13] = -qgmax[I]
-        xu[1] = xu[3] = pgmax[I]
-        xu[2] = qgmax[I]
-        xu[4] = xu[5] = xu[6] = xu[7] = 1
-        xu[8] = xu[9] = xu[10] = xu[11] = xu[12] = xu[13] = 0
-
-        CUDA.sync_threads()
+        if tx == 1
+            xl[1] = xl[3] = pgmin[I]
+            xl[2] = qgmin[I]
+            xl[8] = xl[9] = -4*ramp_limit[I]
+            xl[10] = xl[11] = -abs(pgmax[I])-abs(pgmin[I])
+            xl[12] = xl[13] = -abs(qgmax[I])-abs(qgmin[I])
+            # COMMENTED: THESE BOUNDS ARE TOO TIGHT FOR S VARIABLES. LEAD TO DIVERGENCE FOR 9-BUS CASE.
+            # xl[8] = xl[9] = -2*ramp_limit[I]
+            # xl[10] = xl[11] = -pgmax[I]
+            # xl[12] = xl[13] = -qgmax[I]
+            xu[1] = xu[3] = pgmax[I]
+            xu[2] = qgmax[I]
+            xu[4] = xu[5] = xu[6] = xu[7] = 1
+            xu[8] = xu[9] = xu[10] = xu[11] = xu[12] = xu[13] = 0
         
-        x[1] = min(xu[1], max(xl[1], u[pg_idx]))
-        x[2] = min(xu[2], max(xl[2], u[qg_idx]))
-        x[3] = min(xu[3], max(xl[3], r_u[I]))
-        x[4] = uc_u[I, v_idx]
-        x[5] = uc_u[I, w_idx]
-        x[6] = uc_u[I, y_idx]
-        t > 1 ? x[7] = vr_u[I] : x[7] = 0.
-        x[8] = min(xu[8], max(xl[8], r_s[2*I-1]))
-        x[9] = min(xu[9], max(xl[9], r_s[2*I]))
-        x[10] = min(xu[10], max(xl[10], uc_s[I, 4*t-3]))
-        x[11] = min(xu[11], max(xl[11], uc_s[I, 4*t-2]))
-        x[12] = min(xu[12], max(xl[12], uc_s[I, 4*t-1]))
-        x[13] = min(xu[13], max(xl[13], uc_s[I, 4*t]))
+            x[1] = min(xu[1], max(xl[1], u[pg_idx]))
+            x[2] = min(xu[2], max(xl[2], u[qg_idx]))
+            x[3] = min(xu[3], max(xl[3], r_u[I]))
+            x[4] = uc_u[I, v_idx]
+            x[5] = uc_u[I, w_idx]
+            x[6] = uc_u[I, y_idx]
+            t > 1 ? x[7] = vr_u[I] : x[7] = 0.
+            x[8] = min(xu[8], max(xl[8], r_s[2*I-1]))
+            x[9] = min(xu[9], max(xl[9], r_s[2*I]))
+            x[10] = min(xu[10], max(xl[10], uc_s[I, 4*t-3]))
+            x[11] = min(xu[11], max(xl[11], uc_s[I, 4*t-2]))
+            x[12] = min(xu[12], max(xl[12], uc_s[I, 4*t-1]))
+            x[13] = min(xu[13], max(xl[13], uc_s[I, 4*t]))
 
-        param[1,I] = l[pg_idx]
-        param[2,I] = l[qg_idx]
-        param[3,I] = r_l[I]
-        param[4,I] = uc_l[I, v_idx]
-        param[5,I] = uc_l[I, w_idx]
-        param[6,I] = uc_l[I, y_idx]
-        param[7,I] = vr_l[I]
-        # param[8,I] = r_l[4*I-1]
-        # param[9,I] = r_l[4*I]
-        # param[10,I] = uc_l[I, 7*t-3]
-        # param[11,I] = uc_l[I, 7*t-2]
-        # param[12,I] = uc_l[I, 7*t-1]
-        # param[13,I] = uc_l[I, 7*t]
-        param[14,I] = rho[pg_idx]
-        param[15,I] = rho[qg_idx]
-        param[16,I] = r_rho[I]
-        param[17,I] = uc_rho[I, v_idx]
-        param[18,I] = uc_rho[I, w_idx]
-        param[19,I] = uc_rho[I, y_idx]
-        param[20,I] = vr_rho[I]
-        # param[21,I] = r_rho[4*I-1]
-        # param[22,I] = r_rho[4*I]
-        # param[23,I] = uc_rho[7*I-3]
-        # param[24,I] = uc_rho[7*I-2]
-        # param[25,I] = uc_rho[7*I-1]
-        # param[26,I] = uc_rho[7*I]
-        param[27,I] = v[pg_idx] - z[pg_idx]
-        param[28,I] = v[qg_idx] - z[qg_idx]
-        t > 1 ? param[29,I] = r_v[I] - r_z[I] : param[29,I] = 0.
-        param[30,I] = uc_v[I, v_idx] - uc_z[I, v_idx]
-        param[31,I] = uc_v[I, w_idx] - uc_z[I, w_idx]
-        param[32,I] = uc_v[I, y_idx] - uc_z[I, y_idx]
-        t > 1 ? param[33,I] = uc_v[I, v_idx-3] - vr_z[I] : param[33,I] = 0.
-        param[34,I] = ramp_limit[I]
-        param[35,I] = ramp_limit[I]
-        param[36,I] = ramp_limit[I]
-        param[37,I] = ramp_limit[I]
-        param[38,I] = pgmax[I]
-        param[39,I] = pgmin[I]
-        param[40,I] = qgmax[I]
-        param[41,I] = qgmin[I]
+            param[1,I] = l[pg_idx]
+            param[2,I] = l[qg_idx]
+            param[3,I] = r_l[I]
+            param[4,I] = uc_l[I, v_idx]
+            param[5,I] = uc_l[I, w_idx]
+            param[6,I] = uc_l[I, y_idx]
+            param[7,I] = vr_l[I]
+            # param[8,I] = r_l[4*I-1]
+            # param[9,I] = r_l[4*I]
+            # param[10,I] = uc_l[I, 7*t-3]
+            # param[11,I] = uc_l[I, 7*t-2]
+            # param[12,I] = uc_l[I, 7*t-1]
+            # param[13,I] = uc_l[I, 7*t]
+            param[14,I] = rho[pg_idx]
+            param[15,I] = rho[qg_idx]
+            param[16,I] = r_rho[I]
+            param[17,I] = uc_rho[I, v_idx]
+            param[18,I] = uc_rho[I, w_idx]
+            param[19,I] = uc_rho[I, y_idx]
+            param[20,I] = vr_rho[I]
+            # param[21,I] = r_rho[4*I-1]
+            # param[22,I] = r_rho[4*I]
+            # param[23,I] = uc_rho[7*I-3]
+            # param[24,I] = uc_rho[7*I-2]
+            # param[25,I] = uc_rho[7*I-1]
+            # param[26,I] = uc_rho[7*I]
+            param[27,I] = v[pg_idx] - z[pg_idx]
+            param[28,I] = v[qg_idx] - z[qg_idx]
+            t > 1 ? param[29,I] = r_v[I] - r_z[I] : param[29,I] = 0.
+            param[30,I] = uc_v[I, v_idx] - uc_z[I, v_idx]
+            param[31,I] = uc_v[I, w_idx] - uc_z[I, w_idx]
+            param[32,I] = uc_v[I, y_idx] - uc_z[I, y_idx]
+            t > 1 ? param[33,I] = uc_v[I, v_idx-3] - vr_z[I] : param[33,I] = 0.
+            param[34,I] = ramp_limit[I]
+            param[35,I] = ramp_limit[I]
+            param[36,I] = ramp_limit[I]
+            param[37,I] = ramp_limit[I]
+            param[38,I] = pgmax[I]
+            param[39,I] = pgmin[I]
+            param[40,I] = qgmax[I]
+            param[41,I] = qgmin[I]
 
-        # Initialization of Augmented Lagrangian Method Parameters
-        if major_iter <= 1
-            # mu (Lagrangian term parameter)
-            param[10,I] = 10.0
-            param[11,I] = 10.0
-            param[12,I] = 10.0
-            param[13,I] = 10.0
-            # xi (augmented term parameter)
-            param[23,I] = 10.0
-            param[24,I] = 10.0
-            param[25,I] = 10.0
-            param[26,I] = 10.0
-            if t > 1
-                # mu
-                param[8,I] = 10.0
-                param[9,I] = 10.0
-                # xi
-                param[21,I] = 10.0
-                param[22,I] = 10.0    
+            # Initialization of Augmented Lagrangian Method Parameters
+            if major_iter <= 1
+                # mu (Lagrangian term parameter)
+                param[10,I] = 10.0
+                param[11,I] = 10.0
+                param[12,I] = 10.0
+                param[13,I] = 10.0
+                # xi (augmented term parameter)
+                param[23,I] = 10.0
+                param[24,I] = 10.0
+                param[25,I] = 10.0
+                param[26,I] = 10.0
+                if t > 1
+                    # mu
+                    param[8,I] = 10.0
+                    param[9,I] = 10.0
+                    # xi
+                    param[21,I] = 10.0
+                    param[22,I] = 10.0    
+                end
+            # else
+            #     xi = param[43,I]
             end
-        # else
-        #     xi = param[43,I]
         end
 
         CUDA.sync_threads()
@@ -134,9 +134,11 @@ function ucmp_auglag_generator_kernel(
         etas = CuDynamicSharedArray(Float64, 6, (3*n)*sizeof(Float64))
         omegas = CuDynamicSharedArray(Float64, 6, (3*n+6)*sizeof(Float64))
         cvios = CuDynamicSharedArray(Float64, 6, (3*n+12)*sizeof(Float64))
-        for i in _st:6
-            etas[i] = 1 / param[20+i,I]^0.1
-            omegas[i] = 1 / param[20+i,I]
+        if tx == 1
+            for i in _st:6
+                etas[i] = 1 / param[20+i,I]^0.1
+                omegas[i] = 1 / param[20+i,I]
+            end
         end
         
         it = 0
@@ -167,15 +169,20 @@ function ucmp_auglag_generator_kernel(
                 if abs(cvios[i]) <= etas[i]
                     if abs(cvios[i]) > 1e-6
                         terminate = false
-                        if tx == 1
+                    end
+                else
+                    terminate = false
+                end
+            end
+            if tx == 1
+                for i in _st:6
+                    if abs(cvios[i]) <= etas[i]
+                        if abs(cvios[i]) > 1e-6
                             param[7+i,I] += param[20+i,I]*cvios[i]                        
                             etas[i] = etas[i] / param[20+i,I]^0.9
                             omegas[i] = omegas[i] / param[20+i,I]
                         end
-                    end
-                else
-                    terminate = false
-                    if tx == 1
+                    else
                         param[20+i,I] = min(xi_max, param[20+i,I]*10)
                         etas[i] = 1 / param[20+i,I]^0.1
                         omegas[i] = 1 / param[20+i,I]
@@ -188,23 +195,24 @@ function ucmp_auglag_generator_kernel(
             CUDA.sync_threads()
         end
 
-        u[pg_idx] = x[1]
-        u[qg_idx] = x[2]
-        uc_u[I, v_idx] = x[4]
-        uc_u[I, w_idx] = x[5]
-        uc_u[I, y_idx] = x[6]
-        uc_s[I, 4*t-3] = x[10]
-        uc_s[I, 4*t-2] = x[11]
-        uc_s[I, 4*t-1] = x[12]
-        uc_s[I, 4*t] = x[13]
+        if tx == 1
+            u[pg_idx] = x[1]
+            u[qg_idx] = x[2]
+            uc_u[I, v_idx] = x[4]
+            uc_u[I, w_idx] = x[5]
+            uc_u[I, y_idx] = x[6]
+            uc_s[I, 4*t-3] = x[10]
+            uc_s[I, 4*t-2] = x[11]
+            uc_s[I, 4*t-1] = x[12]
+            uc_s[I, 4*t] = x[13]
 
-        if t > 1
-            r_u[I] = x[3]
-            vr_u[I] = x[7]
-            r_s[2*I-1] = x[8]
-            r_s[2*I] = x[9]
+            if t > 1
+                r_u[I] = x[3]
+                vr_u[I] = x[7]
+                r_s[2*I-1] = x[8]
+                r_s[2*I] = x[9]
+            end
         end
-
         CUDA.sync_threads()
     end
     return
