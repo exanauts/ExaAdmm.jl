@@ -14,7 +14,7 @@ function admm_update_residual(
     device::Nothing=nothing;
     normalized=true
 )
-    sol, info = mod.solution, mod.info
+    sol, info, par = mod.solution, mod.info, env.params
 
     @cuda threads=64 blocks=(div(mod.nvar-1, 64)+1) compute_primal_residual_kernel(mod.nvar, sol.rp, sol.u_curr, sol.v_curr, sol.z_curr)
     @cuda threads=64 blocks=(div(mod.nvar-1, 64)+1) vector_difference(mod.nvar, sol.rd, sol.z_curr, sol.z_prev)

@@ -3,7 +3,7 @@ function admm_update_residual(
     mod::ModelMpacopf{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     device::Nothing=nothing
 )
-    info = mod.info
+    info, par = mod.info, env.params
 
     info.primres = 0.0
     info.dualres = 0.0

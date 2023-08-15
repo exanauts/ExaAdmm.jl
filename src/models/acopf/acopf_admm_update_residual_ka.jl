@@ -16,7 +16,7 @@ function admm_update_residual(
     device;
     normalized=true
 )
-    sol, info = mod.solution, mod.info
+    sol, info, par = mod.solution, mod.info, env.params
     nblk_nvar = div(mod.nvar-1, 64)+1
     compute_primal_residual_kernel_ka(device,64,64*nblk_nvar)(
         mod.nvar, sol.rp, sol.u_curr, sol.v_curr, sol.z_curr

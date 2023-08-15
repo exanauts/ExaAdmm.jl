@@ -16,7 +16,7 @@ function admm_update_residual(
     mod::ModelMpacopf{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
     device::Nothing=nothing
 )
-    info = mod.info
+    info, par = mod.info, env.params
 
     info.primres = 0.0
     info.dualres = 0.0
@@ -48,7 +48,7 @@ function admm_update_residual(
         mod.models[i].info.dualres = sqrt(mod.models[i].info.dualres^2 + CUDA.norm(sol_ramp.rd)^2)
         mod.models[i].info.norm_z_curr = sqrt(mod.models[i].info.norm_z_curr^2 + CUDA.norm(sol_ramp.z_curr)^2)
         mod.models[i].info.mismatch = sqrt(mod.models[i].info.mismatch^2 + CUDA.norm(sol_ramp.Ax_plus_By)^2)
-        info.primsca = max(info.primsca, CUDA.norm(sol_ramp.u_curr), CUDA.norm(v_curr), CUDA.norm(sol_ramp.z_curr))
+        info.primsca = max(info.primsca, CUDA.norm(sol_ramp.u_curr), CUDA.norm(sol_ramp.v_curr), CUDA.norm(sol_ramp.z_curr))
         info.dualsca = max(info.dualsca, CUDA.norm(sol_ramp.l_curr))
     #=
         info.primres += norm(sol_ramp.rp)^2
