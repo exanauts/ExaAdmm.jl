@@ -140,6 +140,7 @@ function ucmp_auglag_generator_kernel(
                 omegas[i] = 1 / param[20+i,I]
             end
         end
+        CUDA.sync_threads()
         
         it = 0
         terminate = false
