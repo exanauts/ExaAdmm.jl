@@ -17,6 +17,10 @@ mutable struct Parameters
     rt_inc::Float64     #? not used
     rt_dec::Float64     #? not used
     eta::Float64        #? not used
+    rb_switch::Bool     # residual balancing on/off
+    rb_tau::Float64     # residual balancing multiplier
+    rb_beta1::Float64   # residual balancing criterion
+    rb_beta2::Float64   # residual balancing criterion
     verbose::Int
 
     # MPI implementation
@@ -51,6 +55,10 @@ mutable struct Parameters
         par.rt_inc = 2.0
         par.rt_dec = 2.0
         par.eta = 0.99
+        par.rb_switch = false
+        par.rb_tau = 2
+        par.rb_beta1 = 10
+        par.rb_beta2 = 10
         par.max_auglag = 50
         par.ABSTOL = 1e-6
         par.RELTOL = 1e-5
