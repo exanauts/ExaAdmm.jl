@@ -68,7 +68,7 @@ function admm_one_level(
         end
 
         # residual balancing
-        if rb_switch
+        if par.rb_switch
             if info.primres > par.rb_beta1 * info.dualres
                 sol.rho .*= par.rb_tau
             elseif par.rb_beta2 * info.primres < info.dualres
