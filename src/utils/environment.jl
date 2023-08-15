@@ -333,6 +333,10 @@ mutable struct IterationInformation{U}
     objval::Float64
     primres::Float64
     dualres::Float64
+    primtol::Float64 # normalized primal tolerance; this may be redundant to eps_pri below.
+    dualtol::Float64 # normalized dual tolerance
+    primsca::Float64 # primal normalization scalar
+    dualsca::Float64 # primal normalization scalar
     mismatch::Float64
     auglag::Float64
     eps_pri::Float64
@@ -365,6 +369,10 @@ function Base.fill!(info::IterationInformation, val)
     info.objval = val
     info.primres = val
     info.dualres = val
+    info.primtol = val
+    info.dualtol = val
+    info.primsca = val
+    info.dualsca = val
     info.mismatch = val
     info.auglag = val
     info.eps_pri = val
@@ -389,6 +397,10 @@ function Base.copy(ref::IterationInformation{ComponentInformation})
     info.objval = ref.objval
     info.primres = ref.primres
     info.dualres = ref.dualres
+    info.primtol = ref.primtol
+    info.dualtol = ref.dualtol
+    info.primsca = ref.primsca
+    info.dualsca = ref.dualsca
     info.mismatch = ref.mismatch
     info.auglag = ref.auglag
     info.eps_pri = ref.eps_pri

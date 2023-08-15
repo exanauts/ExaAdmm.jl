@@ -42,7 +42,7 @@ function admm_two_level(
             admm_update_residual(env, mod, device)
 
             # an adjusting termination criteria for inner loop (i.e., inner loop is not solved to exact)
-            info.eps_pri = sqrt_d / (2500*info.outer)
+            info.eps_pri = min(sqrt_d / (2500*info.outer) * info.primsca, info.primres)
 
             if par.verbose > 0
                 if (info.cumul % 50) == 0

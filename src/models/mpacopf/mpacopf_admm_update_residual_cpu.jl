@@ -7,11 +7,15 @@ function admm_update_residual(
 
     info.primres = 0.0
     info.dualres = 0.0
+    info.primsca = 0.0
+    info.dualsca = 0.0
     info.norm_z_curr = 0.0
     info.mismatch = 0.0
 
     for i=1:mod.len_horizon
-        admm_update_residual(env, mod.models[i])
+        admm_update_residual(env, mod.models[i], normalized = false)
+        info.primsca = max(info.primsca, mod.models[i].info.primsca)
+        info.dualsca = max(info.dualsca, mod.models[i].info.dualsca)
     #=
         info.primres += mod.models[i].info.primres^2
         info.dualres += mod.models[i].info.dualres^2
@@ -31,6 +35,8 @@ function admm_update_residual(
         mod.models[i].info.dualres = sqrt(mod.models[i].info.dualres^2 + norm(sol_ramp.rd)^2)
         mod.models[i].info.norm_z_curr = sqrt(mod.models[i].info.norm_z_curr^2 + norm(sol_ramp.z_curr)^2)
         mod.models[i].info.mismatch = sqrt(mod.models[i].info.mismatch^2 + norm(sol_ramp.Ax_plus_By)^2)
+        info.primsca = max(info.primsca, norm(sol_ramp.u_curr), norm(v_curr), norm(sol_ramp.z_curr))
+        info.dualsca = max(info.dualsca, norm(sol_ramp.l_curr))
     #=
         info.primres += norm(sol_ramp.rp)^2
         info.dualres += norm(sol_ramp.rd)^2
@@ -45,6 +51,10 @@ function admm_update_residual(
         info.norm_z_curr = max(info.norm_z_curr, mod.models[i].info.norm_z_curr)
         info.mismatch = max(info.mismatch, mod.models[i].info.mismatch)
     end
+    info.primres /= info.primsca
+    info.dualres /= info.dualsca
+    info.primtol = sqrt(mod.nvar) * par.ABSTOL / info.primsca + par.RELTOL
+    info.dualtol = sqrt(mod.nvar) * par.ABSTOL / info.dualsca + par.RELTOL
 
     #=
     info.primres = sqrt(info.primres)

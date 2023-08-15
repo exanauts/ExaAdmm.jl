@@ -42,11 +42,12 @@ function admm_update_residual(
 
     @cuda threads=64 blocks=(div(mod.nvar-1, 64)+1) copy_data_kernel(mod.nvar, sol.Ax_plus_By, sol.rp) # from gpu utility
 
-
-    info.primres = CUDA.norm(sol.rp)
-
-    info.dualres = CUDA.norm(sol.rd)
-
+    info.primsca = max(CUDA.norm(sol.u_curr), CUDA.norm(sol.v_curr))
+    info.dualsca = CUDA.norm(sol.l_curr)
+    info.primres = CUDA.norm(sol.rp) / info.primsca
+    info.dualres = CUDA.norm(sol.rd) / info.dualsca
+    info.primtol = sqrt(mod.nvar) * par.ABSTOL / info.primsca + par.RELTOL
+    info.dualtol = sqrt(mod.nvar) * par.ABSTOL / info.dualsca + par.RELTOL
     info.mismatch = CUDA.norm(sol.Ax_plus_By)
 
     return

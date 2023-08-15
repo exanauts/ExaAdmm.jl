@@ -6,8 +6,8 @@ function admm_one_level(
     info = mod.info
     sol = mod.solution
 
-    sqrt_d = sqrt(mod.nvar)
-    OUTER_TOL = sqrt_d*(par.outer_eps) #adjusted outer loop tolerance
+    info.primtol = par.RELTOL
+    info.dualtol = par.RELTOL
 
     fill!(info, 0)
     info.mismatch = Inf
@@ -27,7 +27,7 @@ function admm_one_level(
                 "Iter", "Objval", "Auglag", "PrimRes", "PrimTol", "DualRes", "DualTol")
 
         @printf("%8d  %10.3e  %10.3e  %10.3e  %10.3e %10.3e  %10.3e\n",
-                info.outer, info.objval, info.auglag, info.mismatch, OUTER_TOL, info.dualres, OUTER_TOL*norm(sol.rho)/sqrt_d)
+                info.outer, info.objval, info.auglag, info.mismatch, info.primtol, info.dualres, info.dualtol)
     end
 
     info.status = :IterationLimit
@@ -56,13 +56,13 @@ function admm_one_level(
                 end
 
                 @printf("%8d  %10.3e  %10.3e  %10.3e  %10.3e %10.3e  %10.3e\n",
-                        info.outer, info.objval, info.auglag, info.mismatch, OUTER_TOL, info.dualres, OUTER_TOL*norm(sol.rho)/sqrt_d)
+                        info.outer, info.objval, info.auglag, info.primres, info.primtol, info.dualres, info.dualtol)
             end
 
         end # while inner
 
         # mismatch: x-xbar
-        if info.mismatch <= OUTER_TOL && info.dualres <= OUTER_TOL*norm(sol.rho, device)/sqrt_d
+        if info.primres <= info.primtol && info.dualres <= info.dualtol
             info.status = :Solved
             break
         end
