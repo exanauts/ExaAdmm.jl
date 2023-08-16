@@ -51,6 +51,10 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     Atron = CuDynamicSharedArray(Float64, (6,6), (5*n + n^2 + 136)*sizeof(Float64))
     btron = CuDynamicSharedArray(Float64, 6, (5*n + n^2 + 172)*sizeof(Float64))
 
+    fill!(Ctron,0.0)
+    fill!(A_aug, 0.0)
+    fill!(Atron, 0.0)
+    CUDA.sync_threads()
 
     #initialization: variable wrt branch structure wrt Exatron
     x[1] = 0.0
@@ -108,7 +112,6 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     inv12 = -LH_1h[lineidx,2]/prod
     inv21 = -LH_1i[lineidx,1]/prod
     inv22 = LH_1h[lineidx,1]/prod
-    fill!(Ctron,0.0)
     Ctron[1,1] = 1.0
     Ctron[2,2] = 1.0
     Ctron[3,1] = 0.0
@@ -162,7 +165,7 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
 
 
     while !terminate
-         it += 1
+        it += 1
 
         eval_A_b_auglag_branch_kernel_gpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx, Ctron,dtron,RH_1j,RH_1k)
 
