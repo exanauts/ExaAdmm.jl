@@ -217,9 +217,9 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
         end
 
         if it >= max_auglag #maximum iteration for auglag
-            if tx == 1
-                @cuprintln("max iteration reach at block = ",lineidx, "and threads = ",tx)
-            end
+            # if tx == 1
+            #     @cuprintln("max iteration reach at block = ",lineidx, "and threads = ",tx)
+            # end
             terminate = true
         end
 
