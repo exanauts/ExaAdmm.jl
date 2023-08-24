@@ -26,7 +26,7 @@ function init_branch_bus_kernel_qpsub(n::Int, line_start::Int, rho_va::Float64,
     YtfR::CuDeviceArray{Float64,1}, YtfI::CuDeviceArray{Float64,1},
     YttR::CuDeviceArray{Float64,1}, YttI::CuDeviceArray{Float64,1},
     us::CuDeviceArray{Float64,2}, ls::CuDeviceArray{Float64,2}, sqp_line::CuDeviceArray{Float64,2},
-    v::CuDeviceArray{Float64,1}, rho::CuDeviceArray{Float64,1}, supY::CuDeviceArray{Float64,2}
+    v::CuDeviceArray{Float64,1}, rho::CuDeviceArray{Float64,1}, supY::CuDeviceArray{Float64,2}, warm_start::Bool
 )
     l = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
     if l <= n
@@ -53,16 +53,18 @@ function init_branch_bus_kernel_qpsub(n::Int, line_start::Int, rho_va::Float64,
         supY[4*(l-1) + 4,6] = -YttI[l]
 
 
-        v[pij_idx] = YftR[l]*sqp_line[1,l] + YftI[l]*sqp_line[2,l] + YffR[l]*sqp_line[3,l]  #CUBLAS.dot(4, supY[1,:],sqp_line[:,l])  #p_ij
-        v[pij_idx+1] = -YftI[l]*sqp_line[1,l] + YftR[l]*sqp_line[2,l] - YffI[l]*sqp_line[3,l] #CUBLAS.dot(4, supY[2,:],sqp_line[:,l]) #q_ij
-        v[pij_idx+2] = YtfR[l]*sqp_line[1,l] - YtfI[l]*sqp_line[2,l] + YttR[l]*sqp_line[4,l] #CUBLAS.dot(4, supY[3,:],sqp_line[:,l]) #p_ji
-        v[pij_idx+3] = -YtfI[l]*sqp_line[1,l] - YtfR[l]*sqp_line[2,l] - YttI[l]*sqp_line[4,l] #CUBLAS.dot(4, supY[4,:],sqp_line[:,l]) #q_ji
-        v[pij_idx+4] = sqp_line[3,l] #w_i
-        v[pij_idx+5] = sqp_line[4,l] #w_j
-        v[pij_idx+6] = sqp_line[5,l] #theta_i
-        v[pij_idx+7] = sqp_line[6,l] #theta_j
+        if !warm_start
+            v[pij_idx] = YftR[l]*sqp_line[1,l] + YftI[l]*sqp_line[2,l] + YffR[l]*sqp_line[3,l]  #CUBLAS.dot(4, supY[1,:],sqp_line[:,l])  #p_ij
+            v[pij_idx+1] = -YftI[l]*sqp_line[1,l] + YftR[l]*sqp_line[2,l] - YffI[l]*sqp_line[3,l] #CUBLAS.dot(4, supY[2,:],sqp_line[:,l]) #q_ij
+            v[pij_idx+2] = YtfR[l]*sqp_line[1,l] - YtfI[l]*sqp_line[2,l] + YttR[l]*sqp_line[4,l] #CUBLAS.dot(4, supY[3,:],sqp_line[:,l]) #p_ji
+            v[pij_idx+3] = -YtfI[l]*sqp_line[1,l] - YtfR[l]*sqp_line[2,l] - YttI[l]*sqp_line[4,l] #CUBLAS.dot(4, supY[4,:],sqp_line[:,l]) #q_ji
+            v[pij_idx+4] = sqp_line[3,l] #w_i
+            v[pij_idx+5] = sqp_line[4,l] #w_j
+            v[pij_idx+6] = sqp_line[5,l] #theta_i
+            v[pij_idx+7] = sqp_line[6,l] #theta_j
 
-        rho[pij_idx:pij_idx+7] .= rho_va
+            rho[pij_idx:pij_idx+7] .= rho_va
+        end
 
 
     end
@@ -73,25 +75,24 @@ end
 function init_solution!(
     model::ModelQpsub{Float64,CuArray{Float64,1},CuArray{Int,1},CuArray{Float64,2}},
     sol::Solution{Float64,CuArray{Float64,1}},
-    rho_pq::Float64, rho_va::Float64,
-    device::Nothing
+    rho_pq::Float64, rho_va::Float64, warm_start::Bool,
+    device::Nothing; 
     )
 
     data = model.grid_data
 
-    fill!(sol, 0.0)
-    fill!(model.lambda, 0.0)
-
-    #qpsub var
-    sol.rho .= rho_pq
-
-
-    @cuda threads=64 blocks=(div(data.ngen-1,64)+1) init_generator_kernel_qpsub(data.ngen, model.gen_start,
-                    model.qpsub_pgmax, model.qpsub_pgmin, model.qpsub_qgmax, model.qpsub_qgmin, sol.v_curr)
-
+    if !warm_start
+        fill!(sol, 0.0)
+        fill!(model.lambda, 0.0)
+    
+        #qpsub var
+        sol.rho .= rho_pq
+        @cuda threads=64 blocks=(div(data.ngen-1,64)+1) init_generator_kernel_qpsub(data.ngen, model.gen_start,
+                        model.qpsub_pgmax, model.qpsub_pgmin, model.qpsub_qgmax, model.qpsub_qgmin, sol.v_curr)
+    end
     @cuda threads=64 blocks=(div(data.nline-1,64)+1) init_branch_bus_kernel_qpsub(data.nline, model.line_start, rho_va,
                     data.YffR, data.YffI, data.YftR, data.YftI,
-                    data.YtfR, data.YtfI, data.YttR, data.YttI, model.us, model.ls, model.sqp_line, sol.v_curr, sol.rho, model.supY)
+                    data.YtfR, data.YtfI, data.YttR, data.YttI, model.us, model.ls, model.sqp_line, sol.v_curr, sol.rho, model.supY, warm_start)
     CUDA.synchronize()
 
     return
