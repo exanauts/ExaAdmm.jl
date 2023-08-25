@@ -52,8 +52,6 @@ function auglag_linelimit_qpsub(Hs, l_curr, rho, u_curr, v_curr, z_curr, YffR, Y
     btron = CuDynamicSharedArray(Float64, 6, (5*n + n^2 + 172)*sizeof(Float64))
 
     fill!(Ctron,0.0)
-    fill!(A_aug, 0.0)
-    fill!(Atron, 0.0)
     CUDA.sync_threads()
 
     #initialization: variable wrt branch structure wrt Exatron
