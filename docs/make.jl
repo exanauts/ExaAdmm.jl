@@ -15,7 +15,6 @@ makedocs(
     ),
     modules = [ExaAdmm],
     repo = "https://github.com/exanauts/ExaAdmm.jl/blob/{commit}{path}#{line}",
-    strict = true,
     checkdocs = :exports,
     pages = [
         "Home" => "index.md",
