@@ -19,7 +19,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Adapt = "3"
-CUDA = "4.1"
+CUDA = "4.1, 5"
 ExaTron = "3"
 FileIO = "1.14"
 KernelAbstractions = "0.9"
