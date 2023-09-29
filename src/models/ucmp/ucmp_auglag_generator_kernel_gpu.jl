@@ -31,8 +31,8 @@ function ucmp_auglag_generator_kernel(
 
         c2 = _c2[I]; c1 = _c1[I]; c0 = _c0[I]
 
-		xl[1] = pgmin[I]
-		xl[3] = pgmin[I]
+		xl[1] = 0.0
+		xl[3] = 0.0
 		xl[2] = qgmin[I]
         xl[4] = 0.0
         xl[5] = 0.0
