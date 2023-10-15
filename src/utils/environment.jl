@@ -17,6 +17,10 @@ mutable struct Parameters
     rt_inc::Float64     #? not used
     rt_dec::Float64     #? not used
     eta::Float64        #? not used
+    rb_switch::Bool     # residual balancing on/off
+    rb_tau::Float64     # residual balancing multiplier
+    rb_beta1::Float64   # residual balancing criterion
+    rb_beta2::Float64   # residual balancing criterion
     verbose::Int
 
     # MPI implementation
@@ -51,6 +55,10 @@ mutable struct Parameters
         par.rt_inc = 2.0
         par.rt_dec = 2.0
         par.eta = 0.99
+        par.rb_switch = false
+        par.rb_tau = 2
+        par.rb_beta1 = 10
+        par.rb_beta2 = 10
         par.max_auglag = 50
         par.ABSTOL = 1e-6
         par.RELTOL = 1e-5
@@ -333,6 +341,10 @@ mutable struct IterationInformation{U}
     objval::Float64
     primres::Float64
     dualres::Float64
+    primtol::Float64 # normalized primal tolerance; this may be redundant to eps_pri below.
+    dualtol::Float64 # normalized dual tolerance
+    primsca::Float64 # primal normalization scalar
+    dualsca::Float64 # primal normalization scalar
     mismatch::Float64
     auglag::Float64
     eps_pri::Float64
@@ -365,6 +377,10 @@ function Base.fill!(info::IterationInformation, val)
     info.objval = val
     info.primres = val
     info.dualres = val
+    info.primtol = val
+    info.dualtol = val
+    info.primsca = val
+    info.dualsca = val
     info.mismatch = val
     info.auglag = val
     info.eps_pri = val
@@ -389,6 +405,10 @@ function Base.copy(ref::IterationInformation{ComponentInformation})
     info.objval = ref.objval
     info.primres = ref.primres
     info.dualres = ref.dualres
+    info.primtol = ref.primtol
+    info.dualtol = ref.dualtol
+    info.primsca = ref.primsca
+    info.dualsca = ref.dualsca
     info.mismatch = ref.mismatch
     info.auglag = ref.auglag
     info.eps_pri = ref.eps_pri

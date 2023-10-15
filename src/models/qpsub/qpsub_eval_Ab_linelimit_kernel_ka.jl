@@ -72,9 +72,6 @@ end
 function eval_A_b_auglag_branch_kernel_gpu_qpsub_red(Hbr, bbr, A_aug, Atron, btron, scale,vec_1j,vec_1k,membuf,lineidx, Ctron,dtron,RH_1j,RH_1k, I, J)
     tx = J
     if tx == 1
-        fill!(A_aug, 0.0)
-        fill!(Atron, 0.0)
-
         @inbounds begin
                     for i = 3:8
                         for j = 3:8

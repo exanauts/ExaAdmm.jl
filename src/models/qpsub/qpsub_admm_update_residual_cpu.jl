@@ -19,8 +19,12 @@ function admm_update_residual(
     sol.rd .= sol.rho .* (sol.v_curr - mod.v_prev)#from Boyd's single-level admm
     sol.Ax_plus_By .= sol.rp #x-xbar
 
-    info.primres = norm(sol.rp)
-    info.dualres = norm(sol.rd)
+    info.primsca = max(norm(sol.u_curr), norm(sol.v_curr))
+    info.dualsca = norm(sol.l_curr)
+    info.primres = norm(sol.rp) / info.primsca
+    info.dualres = norm(sol.rd) / info.dualsca
+    info.primtol = sqrt(mod.nvar) * par.ABSTOL / info.primsca + par.RELTOL
+    info.dualtol = sqrt(mod.nvar) * par.ABSTOL / info.dualsca + par.RELTOL
     info.mismatch = norm(sol.Ax_plus_By)
 
 

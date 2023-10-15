@@ -6,8 +6,8 @@ function admm_one_level(
     info = mod.info
     sol = mod.solution
 
-    sqrt_d = sqrt(mod.nvar)
-    OUTER_TOL = sqrt_d*(par.outer_eps) #adjusted outer loop tolerance
+    info.primtol = par.RELTOL
+    info.dualtol = par.RELTOL
 
     fill!(info, 0)
     info.mismatch = Inf
@@ -23,11 +23,11 @@ function admm_one_level(
 
     if par.verbose > 0
         admm_update_residual(env, mod, device)
-        @printf("%8s  %10s  %10s  %10s  %10s %10s %10s\n",
-                "Iter", "Objval", "Auglag", "PrimRes", "PrimTol", "DualRes", "DualTol")
+        @printf("%8s  %10s  %10s  %10s  %10s  %10s  %10s %10s %10s %10s\n",
+                "Iter", "Objval", "Auglag", "PrimScal", "PrimRes", "PrimTol", "DualScal", "DualRes", "DualTol", "rho")
 
-        @printf("%8d  %10.3e  %10.3e  %10.3e  %10.3e %10.3e  %10.3e\n",
-                info.outer, info.objval, info.auglag, info.mismatch, OUTER_TOL, info.dualres, OUTER_TOL*norm(sol.rho)/sqrt_d)
+        @printf("%8d  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e %10.3e  %10.3e  %10.3e\n",
+                info.outer, info.objval, info.auglag, info.primsca, info.primres, info.primtol, info.dualsca, info.dualres, info.dualtol, sol.rho[1])
     end
 
     info.status = :IterationLimit
@@ -51,20 +51,29 @@ function admm_one_level(
 
             if par.verbose > 0
                 if (info.cumul % 50) == 0
-                    @printf("%8s  %10s  %10s  %10s  %10s  %10s  %10s\n",
-                            "Iter", "Objval", "Auglag", "PrimRes", "PrimTol", "DualRes", "DualTol")
+                    @printf("%8s  %10s  %10s  %10s  %10s  %10s  %10s %10s %10s %10s\n",
+                            "Iter", "Objval", "Auglag", "PrimScal", "PrimRes", "PrimTol", "DualScal", "DualRes", "DualTol", "rho")
                 end
 
-                @printf("%8d  %10.3e  %10.3e  %10.3e  %10.3e %10.3e  %10.3e\n",
-                        info.outer, info.objval, info.auglag, info.mismatch, OUTER_TOL, info.dualres, OUTER_TOL*norm(sol.rho)/sqrt_d)
+                @printf("%8d  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e  %10.3e %10.3e  %10.3e  %10.3e\n",
+                info.outer, info.objval, info.auglag, info.primsca, info.primres, info.primtol, info.dualsca, info.dualres, info.dualtol, sol.rho[1])
             end
 
         end # while inner
 
         # mismatch: x-xbar
-        if info.mismatch <= OUTER_TOL && info.dualres <= OUTER_TOL*norm(sol.rho, device)/sqrt_d
+        if info.primres <= info.primtol # && info.dualres <= info.dualtol
             info.status = :Solved
             break
+        end
+
+        # residual balancing
+        if par.rb_switch
+            if info.primres > par.rb_beta1 * info.dualres
+                sol.rho .= min.(sol.rho * par.rb_tau, 1e+16)
+            elseif par.rb_beta2 * info.primres < info.dualres
+                sol.rho .= max.(sol.rho / par.rb_tau, 1e-16)
+            end
         end
 
     end # while outer

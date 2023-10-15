@@ -34,7 +34,8 @@ function solve_qpsub(
     use_linelimit = true,
     use_projection = false,
     tight_factor = 1.0,
-    outer_eps = 2 * 1e-4,
+    ABSTOL = 2 * 1e-4,
+    RELTOL = 1e-4,
     gpu_no = 0,
     verbose = 1,
     onelevel = true,
@@ -102,7 +103,8 @@ function solve_qpsub(
 
     env.params.scale = scale
     env.params.obj_scale = obj_scale
-    env.params.outer_eps = outer_eps
+    env.params.ABSTOL = ABSTOL
+    env.params.RELTOL = RELTOL
     env.params.outer_iterlim = outer_iterlim
     env.params.inner_iterlim = inner_iterlim
     env.params.shmem_size = sizeof(Float64) * (16 * mod.n + 4 * mod.n^2 + 178) + sizeof(Int) * (4 * mod.n)

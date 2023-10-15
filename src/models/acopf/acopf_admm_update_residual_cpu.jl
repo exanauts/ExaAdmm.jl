@@ -13,7 +13,8 @@ The primal and dual residuals are stored in `mod.solution.rp` and `mod.solution.
 function admm_update_residual(
     env::AdmmEnv{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
     mod::AbstractOPFModel{Float64,Array{Float64,1},Array{Int,1},Array{Float64,2}},
-    device::Nothing=nothing
+    device::Nothing=nothing;
+    normalized=true
 )
     sol, info, data, par, grid_data = mod.solution, mod.info, env.data, env.params, mod.grid_data
 
@@ -21,8 +22,18 @@ function admm_update_residual(
     sol.rd .= sol.z_curr .- sol.z_prev
     sol.Ax_plus_By .= sol.rp .- sol.z_curr
 
+    info.primsca = max(norm(sol.u_curr), norm(sol.v_curr), norm(sol.z_curr))
+    info.dualsca = norm(sol.l_curr)
     info.primres = norm(sol.rp)
     info.dualres = norm(sol.rd)
+    info.primtol = sqrt(mod.nvar) * par.ABSTOL + par.RELTOL * info.primsca
+    info.dualtol = sqrt(mod.nvar) * par.ABSTOL + par.RELTOL * info.dualsca
+    if normalized
+        info.primres /= info.primsca
+        info.dualres /= info.dualsca
+        info.primtol /= info.primsca
+        info.dualtol /= info.dualsca
+    end
     info.norm_z_curr = norm(sol.z_curr)
     info.mismatch = norm(sol.Ax_plus_By)
     info.objval = sum(data.generators[g].coeff[data.generators[g].n-2]*(grid_data.baseMVA*sol.u_curr[mod.gen_start+2*(g-1)])^2 +

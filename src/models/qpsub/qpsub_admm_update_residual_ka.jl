@@ -51,11 +51,12 @@ function admm_update_residual(
     ) # from gpu utility
     KA.synchronize(device)
 
-
-    info.primres = norm(sol.rp, device)
-
-    info.dualres = norm(sol.rd, device)
-
+    info.primsca = max(norm(sol.u_curr, device), norm(sol.v_curr, device))
+    info.dualsca = norm(sol.l_curr, device)
+    info.primres = norm(sol.rp, device) / info.primsca
+    info.dualres = norm(sol.rd, device) / info.dualsca
+    info.primtol = sqrt(mod.nvar) * par.ABSTOL / info.primsca + par.RELTOL
+    info.dualtol = sqrt(mod.nvar) * par.ABSTOL / info.dualsca + par.RELTOL
     info.mismatch = norm(sol.Ax_plus_By, device)
 
     return
